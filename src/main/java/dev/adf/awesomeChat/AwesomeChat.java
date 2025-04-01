@@ -32,6 +32,7 @@ public final class AwesomeChat extends JavaPlugin {
     // AutoBroadcaster configuration file
     private File autoBroadcasterFile;
     private FileConfiguration autoBroadcasterConfig;
+    private int autoBroadcasterTaskId = -1;
 
     @Override
     public void onEnable() {
@@ -236,7 +237,12 @@ public final class AwesomeChat extends JavaPlugin {
     }
 
     public void startAutoBroadcaster() {
-        new BukkitRunnable() {
+        // Cancel previous task if it exists
+        if (autoBroadcasterTaskId != -1) {
+            Bukkit.getScheduler().cancelTask(autoBroadcasterTaskId);
+        }
+
+        autoBroadcasterTaskId = new BukkitRunnable() {
             @Override
             public void run() {
                 List<Map<?, ?>> broadcasts = getAutoBroadcasterBroadcasts();
@@ -245,7 +251,7 @@ public final class AwesomeChat extends JavaPlugin {
                     List<String> messages = (List<String>) currentBroadcast.get("message");
                     String soundName = (String) currentBroadcast.get("sound");
 
-                    // Format the messages (colors will be applied)
+                    // Format the messages
                     String message = formatColors(String.join("\n", messages));
                     Bukkit.broadcastMessage(message);
 
@@ -263,8 +269,11 @@ public final class AwesomeChat extends JavaPlugin {
                     currentAutoBroadcastIndex = (currentAutoBroadcastIndex + 1) % broadcasts.size();
                 }
             }
-        }.runTaskTimer(this, 0L, getAutoBroadcasterInterval() * 20L); // Interval is in seconds
+        }.runTaskTimer(this, 0L, getAutoBroadcasterInterval() * 20L).getTaskId(); // Interval is in seconds
+        getLogger().info("AutoBroadcaster interval: " + getAutoBroadcasterInterval() + " seconds");
+
     }
+
 
 
     // Load AutoBroadcaster.yml file
