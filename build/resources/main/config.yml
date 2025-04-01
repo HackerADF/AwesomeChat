@@ -1,0 +1,150 @@
+# ================================================================
+#                 ADF (Awesome Chat Features) Config
+#    ________  ________  ________
+#   |\   __  \|\   ___ \|\  _____\
+#   \ \  \|\  \ \  \_|\ \ \  \__/
+#    \ \   __  \ \  \ \\ \ \   __\
+#     \ \  \ \  \ \  \_\\ \ \  \_|
+#      \ \__\ \__\ \_______\ \__\
+#       \|__|\|__|\|_______|\|__|
+#
+# ================================================================
+#
+# This is the configuration file for the AwesomeChat plugin.
+# Customize the settings below to adjust chat formatting,
+# placeholder integration, clickable messages, hover effects,
+# and LuckPerms compatibility.
+#
+# Features to configure:
+# - PlaceholderAPI support
+# - LuckPerms prefix/suffix
+# - Custom placeholders
+# - Bukkit color code support
+# - Per-Group chat formatting
+# - Clickable chat messages (with multi-action support)
+# - Hoverable chat messages
+# - Command for broadcasts (/broadcast)
+#
+# ================================================================
+#
+# Color code formatting guide:
+#  - Dark Red: &4
+#  - Red: &c
+#  - Gold: &6
+#  - Yellow: &e
+#  - Dark Green: &2
+#  - Green: &a
+#  - Dark Aqua: &3
+#  - Aqua: &b
+#  - Dark Blue: &1
+#  - Blue: &9
+#  - Light Purple: &d
+#  - Dark Purple: &5
+#  - White: &f
+#  - Gray: &7
+#  - Dark Gray: &8
+#  - Black: &0
+#  - Reset: &r (Resets all formatting)
+#
+# Text formatting codes:
+#  - Bold: &l
+#  - Strikethrough: &m
+#  - Underline: &n
+#  - Italic: &o
+#  - Obfuscated (Random): &k
+#
+# Additional color code for Minecraft 1.16+ (Hexadecimal colors):
+#  - Example: &#RRGGBB (e.g. &#FF5733 for a custom orange color)
+#
+# ================================================================
+# A |\/| F
+# (A - Represents the first letter of "ADF")
+# |\/| - Represents "D"
+# F - The final letter
+# (troll ^)
+# ================================================================
+#             Configuration settings are below:                  =
+# ================================================================
+
+# Plugin Prefix
+prefix: "&7[&bAwesomeChat&7] "
+
+# Enable or disable PlaceholderAPI integration
+placeholderAPI:
+  enabled: true
+
+# LuckPerms integration settings
+luckperms:
+  enabled: true
+  prefix-suffix: true  # Set to true to use LuckPerms' prefixes and suffixes in chat
+
+# Custom placeholders
+placeholders:
+  enabled: true
+  chat:
+    username: "{player}"  # Default placeholder for player username
+    message: "{message}"  # Default placeholder for the chat message
+    prefix: "{prefix}" # Default placeholder for the player's prefix
+    suffix: "{suffix}" # Default placeholder for the player's suffix
+
+# Enable Bukkit color code support (true/false)
+color-codes:
+  enabled: true  # Allows use of color codes in chat messages
+
+# Clickable chat messages settings
+clickable-messages:
+  enabled: true
+  action: "fill"  # Options: "fill" (default), "execute", "copy"
+  command: "/msg %player% "  # Default command for the click action
+
+# Hoverable chat messages (true/false)
+hoverable-messages:
+  enabled: true
+  text-lines:
+    - "&bPlayer&f: &f%player%"
+    - "&bMoney&f: &f%vault_eco_balance%"
+    - ""
+    - "&aClick to message this player!"
+    - "&7Click: [/msg %player%]"
+
+# Chat format customization
+chat-format:
+  global_format: "{prefix}&r &e{player}&7: &f{message}"  # Default format for chat
+
+  # Per-group formats
+  per-group-format:
+    enabled: true
+    groups:
+      owner: "&cOwner&r &6{player}&7: &f{message}"
+      admin: "&6&lAdmin &e{player}&f: &f{message}" # Admin format example
+      moderator: "&3&lMod &b{player}&f: &f{message}" # Moderator format example
+      default: "{prefix} &7[&f{player}&7]: &f{message}"
+
+
+# ================================================================
+#            Configuration for commands are below:               =
+# ================================================================
+
+# Command /broadcast
+broadcast: # Command Permission: awesomechat.broadcast
+  enabled: true
+  sound: "ENTITY_EXPERIENCE_ORB_PICKUP" # Set to "none" to disable
+  # Cooldowns can also be set, by setting the following permission node:
+  # awesomechat.broadcast.cooldown.<time in seconds>
+  format:
+    - "&7[&cBroadcast&7]"
+    - "&f%message%"
+
+
+# ================================================================
+#             Additional settings to configure:                  =
+# ================================================================
+
+# MiniMessage formatting, see "https://docs.advntr.dev/minimessage/index.html" for more details.
+# Please note that enabling this will disable "&" color codes.
+minimessage:
+  enabled: false
+
+# Enable/Disable chat formatting
+chat-formatting:
+  enabled: true

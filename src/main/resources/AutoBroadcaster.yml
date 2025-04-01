@@ -1,0 +1,19 @@
+# AutoBroadcaster Configuration
+enabled: true
+interval: 300 # Time in seconds between broadcasts
+
+broadcasts:
+  - message:
+      - "&aWelcome to the server!"
+      - "&7Remember to read the rules!"
+    sound: "ENTITY_PLAYER_LEVELUP"
+
+  - message:
+      - "&bJoin our Discord for updates!"
+      - "&3discord.gg/yourserver"
+    sound: "BLOCK_NOTE_BLOCK_PLING"
+
+  - message:
+      - "&eDon't forget to vote for rewards!"
+      - "&6Use /vote to get started."
+    sound: "ENTITY_EXPERIENCE_ORB_PICKUP"
