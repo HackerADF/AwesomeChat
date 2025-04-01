@@ -102,7 +102,7 @@ hoverable-messages:
   enabled: true
   text-lines:
     - "&bPlayer&f: &f%player%"
-    - "&bMoney&f: &f%vault_eco_balance%"
+    - "&bMoney&f: &f%vault_eco_balance_formatted%"
     - ""
     - "&aClick to message this player!"
     - "&7Click: [/msg %player%]"
