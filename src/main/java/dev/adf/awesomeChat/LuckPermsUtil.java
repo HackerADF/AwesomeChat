@@ -16,6 +16,7 @@ public class LuckPermsUtil {
         }
     }
 
+    // This method returns the players LuckPerms group (parent)
     public static String getPlayerGroup(Player player) {
         User user = luckPerms.getUserManager().getUser(player.getUniqueId());
         if (user != null) {
@@ -24,6 +25,7 @@ public class LuckPermsUtil {
         return "default";  // Default group if not found
     }
 
+    // This method returns the players LuckPerms prefix
     public static String getPlayerPrefix(Player player) {
         if (luckPerms == null) {
             return "";
@@ -35,6 +37,7 @@ public class LuckPermsUtil {
         return "";
     }
 
+    // This method returns the players LuckPerms suffix
     public static String getPlayerSuffix(Player player) {
         if (luckPerms == null) {
             return "";
