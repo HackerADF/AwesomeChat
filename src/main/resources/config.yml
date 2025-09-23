@@ -23,6 +23,9 @@
 # - Per-Group chat formatting
 # - Clickable chat messages (with multi-action support)
 # - Hoverable chat messages
+# - Chat filter
+# - Chat filter auto punishments
+# - Player messaging
 # - Command for broadcasts (/broadcast)
 #
 # ================================================================
@@ -59,7 +62,7 @@
 # ================================================================
 # A |\/| F
 # (A - Represents the first letter of "ADF")
-# |\/| - Represents "D"
+# |\/| - Represents "D", but you gotta make it two lines
 # F - The final letter
 # (troll ^)
 # ================================================================
@@ -120,6 +123,28 @@ chat-format:
       moderator: "&3&lMod &b{player}&f: &f{message}" # Moderator format example
       default: "{prefix} &7[&f{player}&7]: &f{message}"
 
+# ================================================================
+#            Private Messaging System (PM) Config                =
+# ================================================================
+private-messages:
+  enabled: true
+  socialspy:
+    enabled: true
+
+  format:
+    sender: "&7[&bYou &7-> &b{receiver}&7] &f{message}"
+    receiver: "&7[&b{sender} &7-> &bYou&7] &f{message}"
+    spy: "&7[&cSpy&7] &b{sender} &7-> &b{receiver}&7: &f{message}"
+
+  errors:
+    use-plugin-prefix: true
+
+    player-not-found: "&cThat player could not be found!"
+    reply-target-not-found: "&cYou have nobody to reply to!"
+    cannot-message-yourself: "&cYou cannot message yourself!"
+    messages-disabled: "&cThat player has private messages disabled!"
+    self-messages-disabled: "&cYou have private messages disabled!"
+    no-permission: "&cYou do not have permission to do this!"
 
 # ================================================================
 #            Configuration for commands are below:               =
@@ -134,6 +159,168 @@ broadcast: # Command Permission: awesomechat.broadcast
   format:
     - "&7[&cBroadcast&7]"
     - "&f%message%"
+
+# ================================================================
+#            Chat Filter System (Regex + Offenses)               =
+# ================================================================
+chat-filter:
+  prefix: "&8[&cChatFilter&8]&r "
+
+  enabled: true
+
+  filter-commands: true
+  announce-actions: true
+
+  # Basic filtering
+  cooldown-ms: 2000
+  similarity-threshold: 0.85
+  spam-limit: 3
+
+  # Players with this permission will bypass all filters
+  # Permission: awesomechat.filter.bypass
+  bypass-permission: true
+
+  # Banned word list (case-insensitive)
+  banned-words:
+    - "fuck"
+    - "fucking"
+    - "fucked"
+    - "shit"
+    - "bullshit"
+    - "bitch"
+    - "bastard"
+    - "asshole"
+    - "dick"
+    - "cock"
+    - "pussy"
+    - "cunt"
+    - "slut"
+    - "whore"
+    - "fag"
+    - "faggot"
+    - "retard"
+    - "retarded"
+    - "nigger"
+    - "nigga"
+    - "chink"
+    - "spic"
+    - "kike"
+    - "dyke"
+    - "tranny"
+    - "queer"
+    - "hoe"
+    - "skank"
+    - "cum"
+    - "semen"
+    - "penis"
+    - "vagina"
+    - "boobs"
+    - "tits"
+    - "nipples"
+    - "dildo"
+    - "anal"
+    - "sex"
+    - "porn"
+    - "porno"
+    - "blowjob"
+    - "handjob"
+    - "fucktard"
+    - "dipshit"
+    - "jackass"
+    - "dumbass"
+    - "motherfucker"
+    - "sonofabitch"
+    - "twat"
+    - "prick"
+    - "balls"
+    - "nuts"
+    - "boner"
+    - "jerkoff"
+    - "masturbate"
+    - "rape"
+    - "rapist"
+    - "molest"
+    - "incest"
+  # Punishment thresholds
+  # If the player's offense number is higher than what's specified below,
+  # It will execute the 'repeat' command below
+  punishments:
+    3: "warn {player} &cPlease watch your language!"
+    5: "mute {player} 1d &cMuted for inappropriate language."
+    7: "mute {player} 7d &cMuted for repeated filter violations."
+
+    # This will be triggered after the player has reached the max offense above
+    # This will trigger every offense, leave blank to disable
+    repeat: "mute {player} 14d &cMuted for repeated filter violations."
+
+  # Messages
+  player-message: "&cPlease do not use profanity!"
+  staff-message: "&c{player} used profanity in chat: &7{message}"
+
+  # Global anti-advertising settings
+  anti-advertising:
+    enabled: true
+    block-tlds: true
+
+    player-message: "&cAdvertising is not allowed."
+    staff-message: "&c{player} attempted to advertise in chat: &7{message}"
+
+    punishments:
+      3: "warn {player} &cPlease watch your language!"
+      5: "mute {player} 1d &cMuted for inappropriate language."
+      7: "ban {player} &cBanned for repeated filter violations."
+      repeat: ""
+
+    tlds:
+      - ".com"
+      - ".org"
+      - ".net"
+      - ".gg"
+      - ".xyz"
+      - ".pro"
+      - ".co"
+      - ".info"
+    block-phrases:
+      - "join my server"
+      - "play at"
+      - "server ip"
+
+  # Custom rules (regex support)
+  rules:
+    - name: "swear-words"
+      regex: "(?i)(fuck|shit|bitch|asshole|ass|nigg|cum|cunt|gger|fuk|fak|)"
+      player-message: "&cPlease do not use profanity!"
+      staff-message: "&c{player} used profanity in chat: &7{message}"
+      punishments:
+        3: "warn {player} [AUTOMUTE] Repeatedly attempting to use profanity"
+        5: "mute {player} 1d [AUTOMUTE] Repeated attempts to use profanity"
+        7: "mute {player} 7d [AUTOMUTE] Repeated attempts to use profanity"
+        repeat: ""
+
+    - name: "advertising"
+      regex: "(?i)(join\\s+my\\s+server|[a-z0-9-]+\\.[a-z]{2,})"
+      player-message: "&cAdvertising is not allowed!"
+      staff-message: "&e{player} attempted to advertise: &7{message}"
+      punishments:
+        3: "mute {player} 1d [AUTOMUTE] Repeatedly attempting to advertise"
+        5: "mute {player} 7d [AUTOMUTE] Repeatedly attempting to advertise"
+        7: "ban {player} 7d [AUTOBAN] Advertising"
+        repeat: ""
+
+    - name: "spam"
+      regex: "(.)\\1{6,}"
+      player-message: "&cSpamming is not allowed!"
+      staff-message: "&6{player} was caught spamming: &7{message}"
+      punishments:
+        3: "warn {player} spam"
+        5: "mute {player} 30m Repeatedly attempting to spam"
+        repeat: ""
+
+  # Logging of filtered messages
+  logging:
+    enabled: true
+    file: "filter-violations.log"
+
 
 # ================================================================
 #            Configuration for plugin messages:                  =
@@ -154,3 +341,6 @@ minimessage:
 chat-formatting:
   enabled: true
   format-color-codes-in-messages: false
+
+# DO NOT TOUCH
+config-version: 1

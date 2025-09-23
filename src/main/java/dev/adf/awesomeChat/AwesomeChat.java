@@ -1,9 +1,16 @@
 package dev.adf.awesomeChat;
 
+import dev.adf.awesomeChat.commands.*;
+import dev.adf.awesomeChat.managers.*;
+
 import org.bukkit.Bukkit;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.Sound;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -15,7 +22,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -24,39 +30,76 @@ import java.util.regex.Pattern;
 
 public final class AwesomeChat extends JavaPlugin {
 
-    // Cooldowns for broadcast
+    // init manager instances
+    private AutoBroadcasterManager autoBroadcasterManager;
+    private ChatFilterManager chatFilterManager;
+    private PrivateMessageManager privateMessageManager;
+    private SocialSpyManager socialSpyManager;
+
+    // misc
     private final Map<UUID, Long> broadcastCooldowns = new HashMap<>();
-
-    private int currentAutoBroadcastIndex = 0;
-
-    // AutoBroadcaster configuration file
     private File autoBroadcasterFile;
     private FileConfiguration autoBroadcasterConfig;
-    private int autoBroadcasterTaskId = -1;
 
     @Override
     public void onEnable() {
+        checkHardDependencies();
+        registerPluginDependencyChecks();
+
         // Save default config if it doesn't exist
         saveDefaultConfig();
 
-        // Load AutoBroadcaster.yml
-        loadAutoBroadcasterConfig();
+        // initialize the manager classes safely
+        try {
+            privateMessageManager = new PrivateMessageManager();
+            getLogger().info("PrivateMessageManager loaded.");
+        } catch (Exception e) {
+            getLogger().warning("PrivateMessageManager failed to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
+            socialSpyManager = new SocialSpyManager();
+            getLogger().info("SocialSpyManager loaded.");
+        } catch (Exception e) {
+            getLogger().warning("SocialSpyManager failed to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
+            chatFilterManager = new ChatFilterManager(this);
+            getLogger().info("ChatFilterManager loaded.");
+        } catch (Exception e) {
+            getLogger().warning("ChatFilterManager failed to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
+            autoBroadcasterManager = new AutoBroadcasterManager(this);
+            autoBroadcasterManager.start();
+            getLogger().info("AutoBroadcasterManager loaded.");
+        } catch (Exception e) {
+            getLogger().warning("AutoBroadcasterManager failed to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         // Register the event listener for chat
         getServer().getPluginManager().registerEvents(new ChatListener(this), this);
+        getServer().getPluginManager().registerEvents(new CommandListener(this), this);
 
         // Register commands
         getCommand("awesomechat").setExecutor(new AwesomeChatCommand(this));
         getCommand("awesomechat").setTabCompleter(new AwesomeChatTabCompleter());
         getCommand("broadcast").setExecutor(new BroadcastCommand(this));
+        getCommand("msg").setExecutor(new MessageCommand(this));
+        getCommand("message").setTabCompleter(new MessageTabCompleter());
+        getCommand("reply").setExecutor(new ReplyCommand(this));
+        getCommand("msgtoggle").setExecutor(new MsgToggleCommand(this));
+        getCommand("msgtoggle").setTabCompleter(new MsgToggleTabCompleter());
+        getCommand("socialspy").setExecutor(new SocialSpyCommand(this));
+        getCommand("socialspy").setTabCompleter(new SocialSpyTabCompleter());
 
-        // Start AutoBroadcaster
-        startAutoBroadcaster();
-
-        // Check fir LuckPerms and PAPI
-        checkPluginDependency("LuckPerms", "Successfully hooked into LuckPerms", "LuckPerms is not installed. Prefixes will not work.");
-        checkPluginDependency("PlaceholderAPI", "Successfully hooked into PlaceholderAPI", "PlaceholderAPI is not installed. Most placeholders will not work.");
-
+        getLogger().info("Attempting to hook into PlaceholderAPI...");
         getLogger().info("AwesomeChat has been enabled!");
 
         // Install PlaceholderAPI expansions, should find a better method to implement
@@ -68,11 +111,41 @@ public final class AwesomeChat extends JavaPlugin {
         getLogger().info("AwesomeChat has been disabled!");
     }
 
+    private void registerPluginDependencyChecks() {
+        // Check immediately for already loaded plugins
+        checkPluginDependency("LuckPerms", "Successfully hooked into LuckPerms", "LuckPerms has not yet initialized, waiting to hook...");
+        checkPluginDependency("PlaceholderAPI", "Successfully hooked into PlaceholderAPI", "PlaceholerAPI has not yet initialized, waiting to hook...");
+
+        // Listen for plugins that enable after AwesomeChat
+        getServer().getPluginManager().registerEvents(new Listener() {
+            @EventHandler
+            public void onPluginEnable(PluginEnableEvent event) {
+                String name = event.getPlugin().getName();
+                switch (name) {
+                    case "LuckPerms" -> checkPluginDependency("LuckPerms", "Successfully hooked into LuckPerms", "LuckPerms is not installed. This is a dependency, AwesomeChat will be disabled.");
+                    case "PlaceholderAPI" -> checkPluginDependency("PlaceholderAPI", "Successfully hooked into PlaceholderAPI", "PlaceholderAPI is not installed. Most placeholders will not work.");
+                }
+            }
+        }, this);
+    }
+
+    private void checkHardDependencies() {
+        if (getServer().getPluginManager().getPlugin("LuckPerms") == null) {
+            getLogger().severe("LuckPerms is not installed! AwesomeChat cannot run without it.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        getLogger().info("Successfully hooked into LuckPerms");
+    }
 
     /**
      * Checks if a plugin is installed and logs its status
      */
     private void checkPluginDependency(String pluginName, String successMessage, String failureMessage) {
+        getLogger().info("Pulling server plugins:");
+        for (org.bukkit.plugin.Plugin plugin : Bukkit.getPluginManager().getPlugins()) {
+            getLogger().info(" - " + plugin.getName() + " v" + plugin.getDescription().getVersion());
+        }
         if (isPluginEnabled(pluginName)) {
             getLogger().info(successMessage);
         } else {
@@ -119,30 +192,23 @@ public final class AwesomeChat extends JavaPlugin {
     }
 
     /**
-     * Get all the broadcast entries from AutoBroadcaster.yml
-     *
-     * @return List of broadcasts with message and sound info
-     */
-    public List<Map<?, ?>> getAutoBroadcasterBroadcasts() {
-        return getAutoBroadcasterConfig().getMapList("broadcasts");
-    }
-
-    /**
-     * Get the interval for the AutoBroadcaster (in seconds)
-     *
-     * @return The interval for broadcasting
-     */
-    public long getAutoBroadcasterInterval() {
-        return getAutoBroadcasterConfig().getLong("interval", 10); // Default is 10 seconds
-    }
-
-    /**
      * Applies a cooldown for a player
      *
      * @param playerId The player's UUID
      */
     public void setCooldown(UUID playerId) {
         broadcastCooldowns.put(playerId, System.currentTimeMillis());
+    }
+
+    /**
+     * Gets the timestamp of when the player last triggered a broadcast cooldown.
+     *
+     * @param playerId The player's UUID
+     * @return The timestamp in milliseconds since epoch of the player's last broadcast,
+     *         or 0 if the player has never triggered a cooldown
+     */
+    public long getCooldown(UUID playerId) {
+        return broadcastCooldowns.getOrDefault(playerId, 0L);
     }
 
     /**
@@ -169,7 +235,7 @@ public final class AwesomeChat extends JavaPlugin {
      * @param defaultValue Default value if not found
      * @return The formatted string
      */
-    private String getFormattedConfigString(String path, String defaultValue) {
+    public String getFormattedConfigString(String path, String defaultValue) {
         return org.bukkit.ChatColor.translateAlternateColorCodes('&', getConfig().getString(path, defaultValue));
     }
 
@@ -232,77 +298,30 @@ public final class AwesomeChat extends JavaPlugin {
         return getConfig();
     }
 
-    public long getCooldown(UUID playerId) {
-        return broadcastCooldowns.getOrDefault(playerId, 0L);
-    }
-
-    public void startAutoBroadcaster() {
-        // Cancel previous task if it exists
-        if (autoBroadcasterTaskId != -1) {
-            Bukkit.getScheduler().cancelTask(autoBroadcasterTaskId);
-        }
-
-        autoBroadcasterTaskId = new BukkitRunnable() {
-            @Override
-            public void run() {
-                List<Map<?, ?>> broadcasts = getAutoBroadcasterBroadcasts();
-                if (!broadcasts.isEmpty()) {
-                    Map<?, ?> currentBroadcast = broadcasts.get(currentAutoBroadcastIndex);
-                    List<String> messages = (List<String>) currentBroadcast.get("message");
-                    String soundName = (String) currentBroadcast.get("sound");
-
-                    // Format the messages
-                    String message = formatColors(String.join("\n", messages));
-                    Bukkit.broadcastMessage(message);
-
-                    // Play sound if valid
-                    if (!soundName.equalsIgnoreCase("none")) {
-                        try {
-                            Sound sound = Sound.valueOf(soundName.toUpperCase());
-                            Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player.getLocation(), sound, 1.0f, 1.0f));
-                        } catch (IllegalArgumentException e) {
-                            getLogger().warning("Invalid sound name in AutoBroadcaster config: " + soundName);
-                        }
-                    }
-
-                    // Move to the next broadcast in the list
-                    currentAutoBroadcastIndex = (currentAutoBroadcastIndex + 1) % broadcasts.size();
-                }
-            }
-        }.runTaskTimer(this, 0L, getAutoBroadcasterInterval() * 20L).getTaskId(); // Interval is in seconds
-        getLogger().info("AutoBroadcaster interval: " + getAutoBroadcasterInterval() + " seconds");
-
-    }
-
-
-
-    // Load AutoBroadcaster.yml file
-    public void loadAutoBroadcasterConfig() {
-        autoBroadcasterFile = new File(getDataFolder(), "AutoBroadcaster.yml");
-
-        if (!autoBroadcasterFile.exists()) {
-            saveResource("AutoBroadcaster.yml", false);
-        }
-
-        autoBroadcasterConfig = YamlConfiguration.loadConfiguration(autoBroadcasterFile);
-    }
-
-    // Save AutoBroadcaster.yml
-    public void saveAutoBroadcasterConfig() {
+    public void reloadFilterModule() {
         try {
-            autoBroadcasterConfig.save(autoBroadcasterFile);
-        } catch (IOException e) {
-            getLogger().log(Level.SEVERE, "Could not save AutoBroadcaster.yml!", e);
+            chatFilterManager = new ChatFilterManager(this);
+            getLogger().info("ChatFilterManager reloaded.");
+        } catch (Exception e) {
+            getLogger().warning("ChatFilterManager failed to reload: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
 
-    /**
-     * Retrieves AutoBroadcaster config
-     *
-     * @return AutoBroadcaster FileConfiguration
-     */
-    public FileConfiguration getAutoBroadcasterConfig() {
-        return autoBroadcasterConfig;
+    public ChatFilterManager getChatFilterManager() {
+        return chatFilterManager;
+    }
+
+    public PrivateMessageManager getPrivateMessageManager() {
+        return privateMessageManager;
+    }
+
+    public SocialSpyManager getSocialSpyManager() {
+        return socialSpyManager;
+    }
+    public AutoBroadcasterManager getAutoBroadcasterManager() {
+        return autoBroadcasterManager;
     }
 }
+

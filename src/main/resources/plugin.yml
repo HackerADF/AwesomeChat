@@ -1,7 +1,7 @@
 name: AwesomeChat
-version: '1.0-BETA'
+version: '1.0.3'
 main: dev.adf.awesomeChat.AwesomeChat
-api-version: '1.21'
+api-version: '1.19'
 prefix: Awesome Chat
 load: STARTUP
 authors: [ ADF ]
@@ -17,6 +17,30 @@ commands:
     description: Broadcast messages in the chat!
     usage: /awesomechat <message>
     permission: awesomechat.broadcast
+    permission-message: "You don't have permission to use this command."
+  msg:
+    description: Send a private message to another player
+    usage: /msg <player> <message>
+    aliases: [ tell, message, whisper, w, privatemessage, pm ]
+    permission: awesomechat.msg
+    permission-message: "You don't have permission to use this command."
+  reply:
+    description: Reply to the last private message
+    usage: /reply <message>
+    aliases: [ r ]
+    permission: awesomechat.msg
+    permission-message: "You don't have permission to use this command."
+  msgtoggle:
+    description: Toggle private messages on or off
+    usage: /msgtoggle [on | off]
+    aliases: [togglepm]
+    permission: awesomechat.msgtoggle
+    permission-message: "You don't have permission to use this command."
+  socialspy:
+    description: Toggle social spy to monitor private messages
+    usage: /socialspy
+    aliases: [sspy]
+    permission: awesomechat.socialspy
     permission-message: "You don't have permission to use this command."
 permissions:
   awesomechat.use:

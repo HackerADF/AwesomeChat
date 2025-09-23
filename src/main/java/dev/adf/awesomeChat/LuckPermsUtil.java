@@ -16,35 +16,45 @@ public class LuckPermsUtil {
         }
     }
 
-    // This method returns the players LuckPerms group (parent)
+    /**
+     * Get the player's primary LuckPerms group.
+     */
     public static String getPlayerGroup(Player player) {
+        if (luckPerms == null) return "default";
+
         User user = luckPerms.getUserManager().getUser(player.getUniqueId());
         if (user != null) {
             return user.getPrimaryGroup();
         }
-        return "default";  // Default group if not found
+        return "default";
     }
 
-    // This method returns the players LuckPerms prefix
+    /**
+     * Get the player's LuckPerms prefix synchronously.
+     */
     public static String getPlayerPrefix(Player player) {
-        if (luckPerms == null) {
-            return "";
-        }
+        if (luckPerms == null) return "";
+
         User user = luckPerms.getUserManager().getUser(player.getUniqueId());
         if (user != null) {
-            return user.getCachedData().getMetaData(QueryOptions.defaultContextualOptions()).getPrefix();
+            QueryOptions options = luckPerms.getContextManager().getStaticQueryOptions();
+            String prefix = user.getCachedData().getMetaData(options).getPrefix();
+            return prefix != null ? prefix : "";
         }
         return "";
     }
 
-    // This method returns the players LuckPerms suffix
+    /**
+     * Get the player's LuckPerms suffix synchronously.
+     */
     public static String getPlayerSuffix(Player player) {
-        if (luckPerms == null) {
-            return "";
-        }
+        if (luckPerms == null) return "";
+
         User user = luckPerms.getUserManager().getUser(player.getUniqueId());
         if (user != null) {
-            return user.getCachedData().getMetaData(QueryOptions.defaultContextualOptions()).getSuffix();
+            QueryOptions options = luckPerms.getContextManager().getStaticQueryOptions();
+            String suffix = user.getCachedData().getMetaData(options).getSuffix();
+            return suffix != null ? suffix : "";
         }
         return "";
     }
