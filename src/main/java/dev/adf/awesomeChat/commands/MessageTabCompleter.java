@@ -15,29 +15,26 @@ public class MessageTabCompleter implements TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> completions = new ArrayList<>();
 
-        // Only players can use this
         if (!(sender instanceof Player)) {
             return completions;
         }
 
-        // First argument -> player names
+        Player player = (Player) sender;
+
         if (args.length == 1) {
             String partial = args[0].toLowerCase();
 
             for (Player online : Bukkit.getOnlinePlayers()) {
+                if (online.equals(player)) continue;
+
                 String name = online.getName();
-
-                // skip self
-                if (online.equals(sender)) continue;
-
-                // filter by whats being typed
                 if (name.toLowerCase().startsWith(partial)) {
                     completions.add(name);
                 }
             }
         }
 
-        // no tabcomplete for following args (the message)
+        // For second argument and beyond -> no completions (it's free text message)
         return completions;
     }
 }

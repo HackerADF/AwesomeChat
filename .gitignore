@@ -1,6 +1,7 @@
 libs/
 build/
 gradle/
+.gradle/
 .idea/
 
 build.gradle

@@ -235,8 +235,9 @@ public class ChatFilterManager {
 
         // Banned words
         for (String bw : bannedWords) {
-            Pattern p = Pattern.compile("\\b" + Pattern.quote(bw) + "\\b", Pattern.CASE_INSENSITIVE);
+            Pattern p = Pattern.compile("(?i)(^|\\W)" + Pattern.quote(bw) + "($|\\W)");
             if (p.matcher(message).find()) {
+                Bukkit.getLogger().info("Profanity matched: word='" + bw + "' in message='" + message + "'");
                 handleBannedWord(player, message, bw, type);
                 return true;
             }
@@ -365,7 +366,6 @@ public class ChatFilterManager {
             if (actionObj == null) {
                 actionObj = rule.punishments.get(String.valueOf(count));
             }
-            plugin.getLogger().info("Action object retrieved: " + actionObj);
             if (actionObj != null) action = String.valueOf(actionObj);
 
             // Fallback
@@ -460,7 +460,6 @@ public class ChatFilterManager {
 
         // Fallback rule if none exists
         if (rule == null) {
-            // Pull punishments from config
             Map<String, Object> punishments = Collections.emptyMap();
             if (plugin.getConfig().isConfigurationSection("chat-filter.punishments")) {
                 punishments = new HashMap<>(plugin.getConfig()

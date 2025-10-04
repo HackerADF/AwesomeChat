@@ -35,6 +35,7 @@ public final class AwesomeChat extends JavaPlugin {
     private ChatFilterManager chatFilterManager;
     private PrivateMessageManager privateMessageManager;
     private SocialSpyManager socialSpyManager;
+    private ConfigManager configManager;
 
     // misc
     private final Map<UUID, Long> broadcastCooldowns = new HashMap<>();
@@ -43,6 +44,7 @@ public final class AwesomeChat extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        configManager = new ConfigManager(this);
         checkHardDependencies();
         registerPluginDependencyChecks();
 

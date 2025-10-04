@@ -2,6 +2,7 @@ package dev.adf.awesomeChat.commands;
 
 import dev.adf.awesomeChat.AwesomeChat;
 import org.bukkit.Bukkit;
+import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -41,7 +42,7 @@ public class MessageCommand implements CommandExecutor {
             player.sendMessage(plugin.getFormattedConfigString("private-messages.errors.cannot-message-yourself", "&cYou cannot message yourself!"));
             return true;
         }
-        // prevent the player from sending messages if they have their messages disabled
+
         if (plugin.getPrivateMessageManager().hasMessagesDisabled(player)) {
             player.sendMessage(plugin.getFormattedConfigString(
                     "private-messages.errors.self-messages-disabled",
@@ -52,7 +53,6 @@ public class MessageCommand implements CommandExecutor {
 
         String message = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length));
 
-        // format the message
         String senderFormat = plugin.getFormattedConfigString(
                         "private-messages.format.sender",
                         "&7[&bYou &7-> &b{receiver}&7] &f{message}"
@@ -77,10 +77,37 @@ public class MessageCommand implements CommandExecutor {
         player.sendMessage(AwesomeChat.formatColors(senderFormat));
         target.sendMessage(AwesomeChat.formatColors(receiverFormat));
 
-        // TODO: Store last messaged players for /reply
+        if (plugin.getConfig().isConfigurationSection("private-messages.sound")) {
+            if (!plugin.getConfig().getString("private-messages.sound.sent").equalsIgnoreCase("NONE")) {
+                String sentSoundName = plugin.getConfig().getString("private-messages.sound.sent.name", "ENTITY_CHICKEN_EGG");
+                float sentVolume = (float) plugin.getConfig().getDouble("private-messages.sound.sent.volume", 100);
+                float sentPitch = (float) plugin.getConfig().getDouble("private-messages.sound.sent.pitch", 2.0);
+
+                Sound sound;
+                try {
+                    sound = Sound.valueOf(sentSoundName.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    sound = Sound.ENTITY_CHICKEN_EGG;
+                }
+                player.playSound(target.getLocation(), sound, sentVolume, sentPitch);
+            }
+            if (!plugin.getConfig().getString("private-messages.sound.received").equalsIgnoreCase("NONE")) {
+                String recSoundName = plugin.getConfig().getString("private-messages.sound.sent.name", "ENTITY_CHICKEN_EGG");
+                float recVolume = (float) plugin.getConfig().getDouble("private-messages.sound.sent.volume", 100);
+                float recPitch = (float) plugin.getConfig().getDouble("private-messages.sound.sent.pitch", 2.0);
+
+                Sound sound;
+                try {
+                    sound = Sound.valueOf(recSoundName.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    sound = Sound.ENTITY_CHICKEN_EGG;
+                }
+                target.playSound(target.getLocation(), sound, recVolume, recPitch);
+            }
+        }
+
         plugin.getPrivateMessageManager().setLastMessaged(player, target);
 
-        // TODO: Hook into /msgtoggle and /socialspy later
         String spyFormat = plugin.getFormattedConfigString(
                 "socialspy.format.spy",
                 "&7[&cSpy&7] &b" + sender.getName() + " &7-> &b" + target.getName() + "&7: &f" + message

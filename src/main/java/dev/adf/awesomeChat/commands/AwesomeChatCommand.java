@@ -26,7 +26,6 @@ public class AwesomeChatCommand implements CommandExecutor {
 
         // Handle "/awesomechat reload"
         if (args[0].equalsIgnoreCase("reload")) {
-            // Check if the player has permission to reload the plugin
             if (!sender.hasPermission("awesomechat.reload")) {
                 sender.sendMessage(plugin.getChatPrefix() + ChatColor.RED + "You do not have permission to reload AwesomeChat.");
                 return true;

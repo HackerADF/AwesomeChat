@@ -3,12 +3,15 @@ package dev.adf.awesomeChat;
 import dev.adf.awesomeChat.managers.ChatFilterManager;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentBuilder;
+import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Sound;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -66,6 +69,11 @@ public class ChatListener implements Listener {
 
         String playerGroup = LuckPermsUtil.getPlayerGroup(player);
         String chatFormat = config.getString("chat-format.global_format", "{prefix} {player}: {message}");
+        if (!config.getBoolean("chat-format.enabled")) {
+            chatFormat = config.getString("<{player}> {message}", "<{player}> {message}");
+        } else {
+            chatFormat = config.getString("chat-format.global_format", "{prefix} {player}: {message}");
+        }
 
         if (config.getBoolean("chat-format.per-group-format.enabled")) {
             String groupFormat = config.getString("chat-format.per-group-format.groups." + playerGroup);
@@ -88,7 +96,7 @@ public class ChatListener implements Listener {
         Component chatComponent;
 
         if (useMiniMessage) {
-            chatComponent = miniMessage.deserialize(convertLegacyToMiniMessage(formattedMessage));
+            chatComponent = miniMessage.deserialize(convertToMiniMessage(formattedMessage));
         } else {
             formattedMessage = formatColors(formattedMessage);
             chatComponent = Component.text(formattedMessage);
@@ -134,7 +142,34 @@ public class ChatListener implements Listener {
             }
         }
         final Component finalChatComponent = chatComponent;
-        event.renderer((source, displayName, message, audience) -> finalChatComponent);
+        if (!config.getBoolean("disable-chat-signing")) {
+            event.renderer((source, displayName, message, audience) -> finalChatComponent);
+        } else {
+            event.setCancelled(true);
+            for (Player target : Bukkit.getOnlinePlayers()) {
+                if (!target.equals(player)) {
+                    target.sendMessage(finalChatComponent);
+                }
+                player.sendMessage(finalChatComponent);
+            }
+        }
+
+        if (config.isConfigurationSection("chat-format.sound")) {
+            String soundName = config.getString("chat-format.sound.name", "ENTITY_CHICKEN_EGG");
+            float volume = (float) config.getDouble("chat-format.sound.volume", 100);
+            float pitch = (float) config.getDouble("chat-format.sound.pitch", 2.0);
+
+            Sound sound;
+            try {
+                sound = Sound.valueOf(soundName.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                sound = Sound.ENTITY_CHICKEN_EGG;
+            }
+
+            for (Player target : Bukkit.getOnlinePlayers()) {
+                target.playSound(target.getLocation(), sound, volume, pitch);
+            }
+        }
     }
 
     public static String formatColors(String message) {
@@ -154,7 +189,7 @@ public class ChatListener implements Listener {
         return ChatColor.translateAlternateColorCodes('&', buffer.toString());
     }
 
-    private String convertLegacyToMiniMessage(String message) {
+    private String convertToMiniMessage(String message) {
         return message
                 .replace("§c", "<red>")
                 .replace("§l", "<bold>")
@@ -177,6 +212,28 @@ public class ChatListener implements Listener {
                 .replace("§k", "<obfuscated>")
                 .replace("§m", "<strikethrough>")
                 .replace("§n", "<underlined>")
-                .replace("§o", "<italic>");
+                .replace("§o", "<italic>")
+                .replace("&c", "<red>")
+                .replace("&l", "<bold>")
+                .replace("&7", "<gray>")
+                .replace("&3", "<blue>")
+                .replace("&e", "<yellow>")
+                .replace("&a", "<green>")
+                .replace("&d", "<light_purple>")
+                .replace("&f", "<white>")
+                .replace("&8", "<dark_gray>")
+                .replace("&9", "<dark_blue>")
+                .replace("&0", "<black>")
+                .replace("&b", "<aqua>")
+                .replace("&6", "<gold>")
+                .replace("&5", "<dark_purple>")
+                .replace("&4", "<dark_red>")
+                .replace("&2", "<dark_green>")
+                .replace("&1", "<dark_aqua>")
+                .replace("&3", "<dark_blue>")
+                .replace("&k", "<obfuscated>")
+                .replace("&m", "<strikethrough>")
+                .replace("&n", "<underlined>")
+                .replace("&o", "<italic>");
     }
 }

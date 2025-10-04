@@ -51,7 +51,8 @@ public class AutoBroadcasterManager {
         if (taskId != -1) {
             Bukkit.getScheduler().cancelTask(taskId);
         }
-
+        // Check if the AutoBroadcaster is enabled
+        if (!autoBroadcasterConfig.getBoolean("enabled")) return;
         taskId = new BukkitRunnable() {
             @Override
             public void run() {

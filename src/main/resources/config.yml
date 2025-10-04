@@ -112,16 +112,24 @@ hoverable-messages:
 
 # Chat format customization
 chat-format:
+  enabled: true
   global_format: "{prefix}&r &e{player}&7: &f{message}"  # Default format for chat
+  # Play a sound when a player chats!
+  # (custom per-group chat sounds soon!)
+  sound:
+    name: "ENTITY_CHICKEN_EGG"
+    volume: 100
+    pitch: 2
 
   # Per-group formats
   per-group-format:
     enabled: true
     groups:
-      owner: "&cOwner&r &6{player}&7: &f{message}"
+      owner: "&cOwner&r &6{player}&7: &f{message}" # Owner format example
       admin: "&6&lAdmin &e{player}&f: &f{message}" # Admin format example
       moderator: "&3&lMod &b{player}&f: &f{message}" # Moderator format example
-      default: "{prefix} &7[&f{player}&7]: &f{message}"
+      default: "{prefix} &7[&f{player}&7]: &f{message}" # Default format example
+
 
 # ================================================================
 #            Private Messaging System (PM) Config                =
@@ -136,6 +144,16 @@ private-messages:
     receiver: "&7[&b{sender} &7-> &bYou&7] &f{message}"
     spy: "&7[&cSpy&7] &b{sender} &7-> &b{receiver}&7: &f{message}"
 
+  sound:
+    sent:
+      name: "ENTITY_VILLAGER_WORK_LIBRARIAN"
+      volume: 100
+      pitch: 1
+    received:
+      name: "ENTITY_ENDER_DRAGON_FLAP"
+      volume: 100
+      pitch: 1
+
   errors:
     use-plugin-prefix: true
 
@@ -145,6 +163,7 @@ private-messages:
     messages-disabled: "&cThat player has private messages disabled!"
     self-messages-disabled: "&cYou have private messages disabled!"
     no-permission: "&cYou do not have permission to do this!"
+
 
 # ================================================================
 #            Configuration for commands are below:               =
@@ -159,6 +178,7 @@ broadcast: # Command Permission: awesomechat.broadcast
   format:
     - "&7[&cBroadcast&7]"
     - "&f%message%"
+
 
 # ================================================================
 #            Chat Filter System (Regex + Offenses)               =
@@ -288,7 +308,7 @@ chat-filter:
   # Custom rules (regex support)
   rules:
     - name: "swear-words"
-      regex: "(?i)(fuck|shit|bitch|asshole|ass|nigg|cum|cunt|gger|fuk|fak|)"
+      regex: "(?i)\b(fuck|shit|bitch|asshole|ass|nigg|cum|cunt|gger|fuk|fak)\b"
       player-message: "&cPlease do not use profanity!"
       staff-message: "&c{player} used profanity in chat: &7{message}"
       punishments:
@@ -325,15 +345,18 @@ chat-filter:
 # ================================================================
 #            Configuration for plugin messages:                  =
 # ================================================================
+
+# This is unused for now, if you have a third-party punishment
+# manager plugin, configure the messages on there!
 messages:
   muted: "&cYou are currently muted and cannot speak!"
+
 
 # ================================================================
 #             Additional settings to configure:                  =
 # ================================================================
 
 # MiniMessage formatting, see "https://docs.advntr.dev/minimessage/index.html" for more details.
-# Please note that enabling this will disable "&" color codes.
 minimessage:
   enabled: false
 
@@ -342,5 +365,12 @@ chat-formatting:
   enabled: true
   format-color-codes-in-messages: false
 
+# This will disable minecraft's new chat validation system introduced in 1.19
+# This should fix most chat-related errors, if enabled, please ensure that
+# "enforce-secure-profile" in your config is set to false.
+# Do not enable if you do not understand what you're doing.
+disable-chat-signing: false
+
+
 # DO NOT TOUCH
-config-version: 1
+config-version: 2
