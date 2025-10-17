@@ -1,6 +1,7 @@
 package dev.adf.awesomeChat.commands;
 
 import dev.adf.awesomeChat.AwesomeChat;
+import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -68,6 +69,35 @@ public class ReplyCommand implements CommandExecutor {
 
         player.sendMessage(AwesomeChat.formatColors(senderFormat));
         target.sendMessage(AwesomeChat.formatColors(receiverFormat));
+
+        if (plugin.getConfig().isConfigurationSection("private-messages.sound")) {
+            if (!plugin.getConfig().getString("private-messages.sound.sent").equalsIgnoreCase("NONE")) {
+                String sentSoundName = plugin.getConfig().getString("private-messages.sound.sent.name", "ENTITY_CHICKEN_EGG");
+                float sentVolume = (float) plugin.getConfig().getDouble("private-messages.sound.sent.volume", 100);
+                float sentPitch = (float) plugin.getConfig().getDouble("private-messages.sound.sent.pitch", 2.0);
+
+                Sound sound;
+                try {
+                    sound = Sound.valueOf(sentSoundName.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    sound = Sound.ENTITY_CHICKEN_EGG;
+                }
+                player.playSound(target.getLocation(), sound, sentVolume, sentPitch);
+            }
+            if (!plugin.getConfig().getString("private-messages.sound.received").equalsIgnoreCase("NONE")) {
+                String recSoundName = plugin.getConfig().getString("private-messages.sound.sent.name", "ENTITY_CHICKEN_EGG");
+                float recVolume = (float) plugin.getConfig().getDouble("private-messages.sound.sent.volume", 100);
+                float recPitch = (float) plugin.getConfig().getDouble("private-messages.sound.sent.pitch", 2.0);
+
+                Sound sound;
+                try {
+                    sound = Sound.valueOf(recSoundName.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    sound = Sound.ENTITY_CHICKEN_EGG;
+                }
+                target.playSound(target.getLocation(), sound, recVolume, recPitch);
+            }
+        }
 
         plugin.getPrivateMessageManager().setLastMessaged(player, target);
 

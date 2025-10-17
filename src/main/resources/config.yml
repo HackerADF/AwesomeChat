@@ -114,6 +114,7 @@ hoverable-messages:
 chat-format:
   enabled: true
   global_format: "{prefix}&r &e{player}&7: &f{message}"  # Default format for chat
+
   # Play a sound when a player chats!
   # (custom per-group chat sounds soon!)
   sound:
@@ -191,16 +192,90 @@ chat-filter:
   filter-commands: true
   announce-actions: true
 
-  # Basic filtering
-  cooldown-ms: 2000
-  similarity-threshold: 0.85
-  spam-limit: 3
-
   # Players with this permission will bypass all filters
   # Permission: awesomechat.filter.bypass
   bypass-permission: true
 
-  # Banned word list (case-insensitive)
+  # ===============================================================
+  # =                     Basic filtering                         =
+  # ===============================================================
+
+  # ======================== Cooldown =============================
+  #    Control how fast a player can send a message or command    =
+  # ===============================================================
+  cooldown:
+    enabled: true
+
+    # 1 second = 1000 ms
+    time-ms: 2000
+
+    # Only filter specific commands (will not affect normal messages)
+    # Leave at "[]" for all commands
+    commands: []
+
+    # Ignore specific commands
+    # Set to "[]" to disable
+    command-whitelist:
+      - skill
+      - AnotherCommand
+
+  # ====================== Spam Limits ============================
+  #    Control how many times a player can send the same          =
+  #          message/command before being blocked                 =
+  # ===============================================================
+  spam:
+    enabled: true
+
+    # Number of times before filtered
+    limit: 3
+
+    # Only filter specific commands (will not affect normal messages)
+    # Leave at "[]" for all commands
+    commands: [ ]
+
+    # Whether to just count the command itself, or
+    # all the args as well
+    # Example:
+    # /msg <player> test
+    # /msg <player> test2
+    # ^^^^^^^^^^^^^^^^^^^
+
+    # When enabled, this option will count these
+    # as two different commands
+    arg-sensitive: false
+
+    # Ignore specific commands
+    # Set to "[]" to disable
+    command-whitelist:
+      - skill
+      - AnotherCommand
+
+
+  # ====================== Spam Limits ============================
+  #    Control how close a message/command can be to a            =
+  #             previous one to be counted as spam                =
+  # ===============================================================
+  similarity:
+    enabled: true
+
+    # How similar two messages must be (0.0 – 1.0) to count as duplicates
+    # A value of 0 means completely different; 1 means identical
+    # Messages above this ratio are treated as repeated or spam
+    threshold: 0.85
+
+    # Only filter specific commands (will not affect normal messages)
+    # Leave at "[]" for all commands
+    commands: []
+
+    # Ignore specific commands
+    # Set to "[]" to disable
+    command-similarity-whitelist:
+      - skill
+      - AnotherCommand
+
+  # ====================== Banned Words ===========================
+  #            Words that will be blocked in chat                 =
+  # ===============================================================
   banned-words:
     - "fuck"
     - "fucking"
@@ -261,16 +336,19 @@ chat-filter:
     - "rapist"
     - "molest"
     - "incest"
-  # Punishment thresholds
-  # If the player's offense number is higher than what's specified below,
-  # It will execute the 'repeat' command below
+
+  # ================ Punishment Thresholds ========================
+  #       Punish players based on filter offenses, if the         =
+  #      player's offense number is higher than the highest       =
+  #     offense listed below, it will execute the "repeat" entry  =
+  # ===============================================================
   punishments:
     3: "warn {player} &cPlease watch your language!"
     5: "mute {player} 1d &cMuted for inappropriate language."
     7: "mute {player} 7d &cMuted for repeated filter violations."
 
     # This will be triggered after the player has reached the max offense above
-    # This will trigger every offense, leave blank to disable
+    # This will trigger every further offense, leave blank to disable
     repeat: "mute {player} 14d &cMuted for repeated filter violations."
 
   # Messages
@@ -286,9 +364,9 @@ chat-filter:
     staff-message: "&c{player} attempted to advertise in chat: &7{message}"
 
     punishments:
-      3: "warn {player} &cPlease watch your language!"
-      5: "mute {player} 1d &cMuted for inappropriate language."
-      7: "ban {player} &cBanned for repeated filter violations."
+      3: "warn {player} Please watch your language!"
+      5: "mute {player} 1d Muted for inappropriate language."
+      7: "ban {player} Banned for repeated filter violations."
       repeat: ""
 
     tlds:
@@ -345,7 +423,6 @@ chat-filter:
 # ================================================================
 #            Configuration for plugin messages:                  =
 # ================================================================
-
 # This is unused for now, if you have a third-party punishment
 # manager plugin, configure the messages on there!
 messages:
@@ -373,4 +450,4 @@ disable-chat-signing: false
 
 
 # DO NOT TOUCH
-config-version: 2
+config-version: 3

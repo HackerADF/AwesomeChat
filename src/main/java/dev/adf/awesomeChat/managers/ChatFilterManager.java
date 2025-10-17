@@ -26,7 +26,7 @@ import dev.adf.awesomeChat.storage.ViolationStorage;
 public class ChatFilterManager {
 
     private final JavaPlugin plugin;
-    private final File dataFile;
+    private File dataFile;
 
     private final ConfigurationSection filterSection;
     private final boolean bypassEnabled;
@@ -40,20 +40,21 @@ public class ChatFilterManager {
     private final Map<String, FilterRule> rules = new LinkedHashMap<>();
     private final Map<UUID, Map<String, Integer>> offensesCache = new HashMap<>();
 
+    private boolean enabled = true;
+
     public ChatFilterManager(JavaPlugin plugin) {
         this.plugin = plugin;
 
         // ensure data folder exists
         if (!plugin.getDataFolder().exists()) plugin.getDataFolder().mkdirs();
 
-        // data file (user requested "data/uuid.json")
-        // Use JSON file for storing offenses
+        // data file
         this.dataFile = new File(plugin.getDataFolder(), "data/uuid.json");
 
-        // Ensure parent folder exists
+        // ensure parent folder exists
         if (!dataFile.getParentFile().exists()) dataFile.getParentFile().mkdirs();
 
-        // Create the file if it doesn't exist
+        // create the file if it does not exist
         if (!dataFile.exists()) {
             try {
                 dataFile.createNewFile();
@@ -69,15 +70,29 @@ public class ChatFilterManager {
         FileConfiguration config = plugin.getConfig();
         ConfigurationSection filterSection = config.getConfigurationSection("chat-filter");
 
+        if (filterSection == null || !filterSection.getBoolean("enabled", true)) {
+            plugin.getLogger().info("Chat filter is disabled in config.yml — ChatFilterManager will not initialize.");
+            this.enabled = false;
+            this.dataFile = null;
+            this.filterSection = null;
+            this.bypassEnabled = false;
+            this.announceActions = false;
+            this.bannedWords = Collections.emptyList();
+            this.antiAdvertisingEnabled = false;
+            this.tlds = Collections.emptyList();
+            this.antiAdPhrases = Collections.emptyList();
+            return;
+        }
+
         if (filterSection == null) {
             plugin.getLogger().warning("chat-filter section missing in config.yml! Using defaults.");
             ChatSettings.COOLDOWN_MS = 2000L;
             ChatSettings.SIMILARITY_THRESHOLD = 0.85;
             ChatSettings.SPAM_LIMIT = 3;
         } else {
-            ChatSettings.COOLDOWN_MS = filterSection.getLong("cooldown-ms", 2000L);
-            ChatSettings.SIMILARITY_THRESHOLD = filterSection.getDouble("similarity-threshold", 0.85);
-            ChatSettings.SPAM_LIMIT = filterSection.getInt("spam-limit", 3);
+            ChatSettings.COOLDOWN_MS = filterSection.getLong("cooldown.time-ms", 2000L);
+            ChatSettings.SIMILARITY_THRESHOLD = filterSection.getDouble("similarity.threshold", 0.85);
+            ChatSettings.SPAM_LIMIT = filterSection.getInt("spam.limit", 3);
         }
 
         Gson gson = new Gson();
@@ -202,38 +217,85 @@ public class ChatFilterManager {
         String normalized = message.toLowerCase();
         long now = System.currentTimeMillis();
 
-        // cooldown check
-        if (lastMessageTime.containsKey(uuid) && now - lastMessageTime.get(uuid) < ChatSettings.COOLDOWN_MS) {
-            if (!type.equals("message")) {
-                return true;
-            }
-            handleViolation(player, message, "cooldown", "too-fast", type);
-            return true;
-        }
-        lastMessageTime.put(uuid, now);
+        FileConfiguration config = plugin.getConfig();
 
-        // 0.5) Spam / similarity check
-        if (lastMessageContent.containsKey(uuid)) {
-            if (!type.equals("message")) {
-                return true;
+        boolean isCommand = type.equalsIgnoreCase("command");
+        String baseCommand = "";
+        if (isCommand && message.startsWith("/")) {
+            String[] parts = message.substring(1).split(" ");
+            baseCommand = parts[0].toLowerCase();
+        }
+
+        // ================= Cooldown Check =================
+        if (config.getBoolean("cooldown.enabled")) {
+            boolean applyCooldown = !isCommand;
+            if (isCommand) {
+                List<String> commands = config.getStringList("cooldown.commands");
+                List<String> whitelist = config.getStringList("cooldown.command-whitelist");
+                boolean listed = commands.isEmpty() || commands.contains(baseCommand);
+                boolean whitelisted = whitelist.contains(baseCommand);
+                applyCooldown = listed && !whitelisted;
             }
-            String prev = lastMessageContent.get(uuid);
-            double sim = similarity(normalized, prev);
-            if (sim >= ChatSettings.SIMILARITY_THRESHOLD) {
-                int count = spamCount.getOrDefault(uuid, 0) + 1;
-                spamCount.put(uuid, count);
-                if (count >= ChatSettings.SPAM_LIMIT) {
-                    handleViolation(player, message, "spam", "similar-message", type);
-                    spamCount.put(uuid, 0);
+
+            if (applyCooldown) {
+                long cooldownTime = config.getLong("cooldown.time-ms");
+                if (lastMessageTime.containsKey(uuid) && now - lastMessageTime.get(uuid) < cooldownTime) {
+                    handleViolation(player, message, "cooldown", "too-fast", type);
                     return true;
                 }
-            } else {
-                spamCount.put(uuid, 0);
+                lastMessageTime.put(uuid, now);
             }
         }
-        lastMessageContent.put(uuid, normalized);
 
-        // Banned words
+        // ================= Spam / Similarity Check =================
+        if (config.getBoolean("spam.enabled") || config.getBoolean("similarity.enabled")) {
+            boolean applyCheck = !isCommand;
+
+            if (isCommand) {
+                List<String> spamCommands = config.getStringList("spam.commands");
+                List<String> similarityCommands = config.getStringList("similarity.commands");
+                List<String> spamWhitelist = config.getStringList("spam.command-whitelist");
+                List<String> similarityWhitelist = config.getStringList("similarity.command-similarity-whitelist");
+
+                boolean spamListed = spamCommands.isEmpty() || spamCommands.contains(baseCommand);
+                boolean simListed = similarityCommands.isEmpty() || similarityCommands.contains(baseCommand);
+                boolean spamWhitelisted = spamWhitelist.contains(baseCommand);
+                boolean similarityWhitelisted = similarityWhitelist.contains(baseCommand);
+
+                boolean isSpamTarget = spamListed && !spamWhitelisted;
+                boolean isSimilarityTarget = simListed && !similarityWhitelisted;
+
+                applyCheck = isSpamTarget || isSimilarityTarget;
+            }
+
+            if (applyCheck) {
+                boolean argSensitive = config.getBoolean("spam.arg-sensitive");
+                String compareValue = argSensitive ? normalized : baseCommand;
+
+                if (lastMessageContent.containsKey(uuid)) {
+                    String prev = lastMessageContent.get(uuid);
+                    double sim = similarity(compareValue, prev);
+                    double threshold = config.getDouble("similarity.threshold");
+                    int limit = config.getInt("spam.limit");
+
+                    if (sim >= threshold) {
+                        int count = spamCount.getOrDefault(uuid, 0) + 1;
+                        spamCount.put(uuid, count);
+
+                        if (count >= limit) {
+                            handleViolation(player, message, "spam", "similar-message", type);
+                            spamCount.put(uuid, 0);
+                            return true;
+                        }
+                    } else {
+                        spamCount.put(uuid, 0);
+                    }
+                }
+                lastMessageContent.put(uuid, compareValue);
+            }
+        }
+
+        // ================= Banned Words =================
         for (String bw : bannedWords) {
             Pattern p = Pattern.compile("(?i)(^|\\W)" + Pattern.quote(bw) + "($|\\W)");
             if (p.matcher(message).find()) {
@@ -243,9 +305,8 @@ public class ChatFilterManager {
             }
         }
 
-        // Anti-advertising
+        // ================= Anti-Advertising =================
         if (antiAdvertisingEnabled) {
-            // Blocked phrases
             for (String phrase : antiAdPhrases) {
                 if (normalized.contains(phrase.toLowerCase())) {
                     handleAdvertising(player, message, phrase, type);
@@ -253,7 +314,6 @@ public class ChatFilterManager {
                 }
             }
 
-            // Explicit TLDs
             for (String tld : tlds) {
                 Pattern p = Pattern.compile("\\b[a-zA-Z0-9-]+\\." + Pattern.quote(tld) + "\\b", Pattern.CASE_INSENSITIVE);
                 if (p.matcher(message).find()) {
@@ -262,7 +322,6 @@ public class ChatFilterManager {
                 }
             }
 
-            // Generic domain fallback
             Pattern domain = Pattern.compile("([a-zA-Z0-9-]+\\.[a-z]{2,})(:[0-9]{1,5})?", Pattern.CASE_INSENSITIVE);
             if (domain.matcher(message).find()) {
                 handleAdvertising(player, message, "domain", type);
@@ -270,7 +329,7 @@ public class ChatFilterManager {
             }
         }
 
-        // regex
+        // ================= Regex Rules =================
         for (FilterRule rule : rules.values()) {
             if (rule.regex == null || rule.regex.isEmpty()) continue;
             try {
