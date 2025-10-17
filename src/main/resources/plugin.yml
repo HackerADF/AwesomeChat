@@ -1,5 +1,5 @@
 name: AwesomeChat
-version: '1.0.4'
+version: '1.0.4-BETA'
 main: dev.adf.awesomeChat.AwesomeChat
 api-version: '1.19'
 prefix: Awesome Chat
