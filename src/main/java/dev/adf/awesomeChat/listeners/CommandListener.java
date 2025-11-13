@@ -1,4 +1,4 @@
-package dev.adf.awesomeChat;
+package dev.adf.awesomeChat.listeners;
 
 import dev.adf.awesomeChat.AwesomeChat;
 import dev.adf.awesomeChat.managers.ChatFilterManager;

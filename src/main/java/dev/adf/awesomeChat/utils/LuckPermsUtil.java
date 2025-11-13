@@ -1,4 +1,4 @@
-package dev.adf.awesomeChat;
+package dev.adf.awesomeChat.utils;
 
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;

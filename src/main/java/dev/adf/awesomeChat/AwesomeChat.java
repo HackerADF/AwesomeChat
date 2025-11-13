@@ -1,13 +1,12 @@
 package dev.adf.awesomeChat;
 
 import dev.adf.awesomeChat.commands.*;
+import dev.adf.awesomeChat.listeners.ChatListener;
+import dev.adf.awesomeChat.listeners.CommandListener;
 import dev.adf.awesomeChat.managers.*;
 
 import org.bukkit.Bukkit;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.Sound;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginEnableEvent;
@@ -15,15 +14,12 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
 
 import net.md_5.bungee.api.ChatColor;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,10 +44,8 @@ public final class AwesomeChat extends JavaPlugin {
         checkHardDependencies();
         registerPluginDependencyChecks();
 
-        // Save default config if it doesn't exist
         saveDefaultConfig();
 
-        // initialize the manager classes safely
         try {
             privateMessageManager = new PrivateMessageManager();
             getLogger().info("PrivateMessageManager loaded.");
@@ -85,11 +79,9 @@ public final class AwesomeChat extends JavaPlugin {
             e.printStackTrace();
         }
 
-        // Register the event listener for chat
         getServer().getPluginManager().registerEvents(new ChatListener(this), this);
         getServer().getPluginManager().registerEvents(new CommandListener(this), this);
 
-        // Register commands
         getCommand("awesomechat").setExecutor(new AwesomeChatCommand(this));
         getCommand("awesomechat").setTabCompleter(new AwesomeChatTabCompleter());
         getCommand("broadcast").setExecutor(new BroadcastCommand(this));
@@ -114,11 +106,9 @@ public final class AwesomeChat extends JavaPlugin {
     }
 
     private void registerPluginDependencyChecks() {
-        // Check immediately for already loaded plugins
         checkPluginDependency("LuckPerms", "Successfully hooked into LuckPerms", "LuckPerms has not yet initialized, waiting to hook...");
         checkPluginDependency("PlaceholderAPI", "Successfully hooked into PlaceholderAPI", "PlaceholerAPI has not yet initialized, waiting to hook...");
 
-        // Listen for plugins that enable after AwesomeChat
         getServer().getPluginManager().registerEvents(new Listener() {
             @EventHandler
             public void onPluginEnable(PluginEnableEvent event) {
@@ -242,7 +232,6 @@ public final class AwesomeChat extends JavaPlugin {
     }
 
     public static String formatColors(String message) {
-        // Convert hex colors (&#RRGGBB) to Bukkit format
         Pattern hexPattern = Pattern.compile("&#([A-Fa-f0-9]{6})");
         Matcher matcher = hexPattern.matcher(message);
         StringBuffer buffer = new StringBuffer();
@@ -254,18 +243,32 @@ public final class AwesomeChat extends JavaPlugin {
         }
         matcher.appendTail(buffer);
 
-        // Convert Bukkit color codes (&a, &b, &l, and so on)
         return ChatColor.translateAlternateColorCodes('&', buffer.toString());
     }
 
     public static String convertToMiniMessageFormat(String message) {
-        // Replace legacy color codes with MiniMessage format
         return message
-                .replace("§c", "<red>")
-                .replace("§l", "<bold>")
+                .replace("§0", "<black>")
+                .replace("§1", "<dark_blue>")
+                .replace("§2", "<dark_green>")
+                .replace("§3", "<dark_aqua>")
+                .replace("§4", "<dark_red>")
+                .replace("§5", "<dark_purple>")
+                .replace("§6", "<gold>")
                 .replace("§7", "<gray>")
-                .replace("§3", "<blue>") // Add all other necessary replacements here
-                ;
+                .replace("§8", "<dark_gray>")
+                .replace("§9", "<blue>")
+                .replace("§a", "<green>")
+                .replace("§b", "<aqua>")
+                .replace("§c", "<red>")
+                .replace("§d", "<light_purple>")
+                .replace("§e", "<yellow>")
+                .replace("§f", "<white>")
+                .replace("§l", "<bold>")
+                .replace("§m", "<strikethrough>")
+                .replace("§n", "<underlined>")
+                .replace("§o", "<italic>")
+                .replace("§r", "<reset>");
     }
 
     /**
@@ -322,6 +325,7 @@ public final class AwesomeChat extends JavaPlugin {
     public SocialSpyManager getSocialSpyManager() {
         return socialSpyManager;
     }
+
     public AutoBroadcasterManager getAutoBroadcasterManager() {
         return autoBroadcasterManager;
     }

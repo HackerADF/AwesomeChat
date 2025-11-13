@@ -11,11 +11,12 @@ commands:
   awesomechat:
     description: Main command for AwesomeChat
     usage: /awesomechat <reload|info>
+    aliases: [ac]
     permission: awesomechat.use
     permission-message: "You don't have permission to use this command."
   broadcast:
     description: Broadcast messages in the chat!
-    usage: /awesomechat <message>
+    usage: /broadcast <message>
     permission: awesomechat.broadcast
     permission-message: "You don't have permission to use this command."
   msg:
