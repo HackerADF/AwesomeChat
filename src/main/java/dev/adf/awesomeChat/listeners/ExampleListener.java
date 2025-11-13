@@ -1,4 +1,4 @@
-package dev.adf.awesomeChat;
+package dev.adf.awesomeChat.listeners;
 
 /* From the API documents
 *
@@ -6,4 +6,5 @@ package dev.adf.awesomeChat;
 *
 */
 public class ExampleListener {
+    //
 }

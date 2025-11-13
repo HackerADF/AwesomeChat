@@ -1,10 +1,10 @@
-package dev.adf.awesomeChat;
+package dev.adf.awesomeChat.listeners;
 
+import dev.adf.awesomeChat.AwesomeChat;
+import dev.adf.awesomeChat.utils.LuckPermsUtil;
 import dev.adf.awesomeChat.managers.ChatFilterManager;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.ComponentBuilder;
-import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.minimessage.MiniMessage;

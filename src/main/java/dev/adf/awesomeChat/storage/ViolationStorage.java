@@ -22,7 +22,6 @@ public class ViolationStorage {
         }
     }
 
-    // Represents a violation record
     public static class ViolationRecord {
         public String ruleName;
         public long timestamp;
@@ -37,13 +36,12 @@ public class ViolationStorage {
         return DATA_FOLDER.resolve(playerId.toString() + ".json");
     }
 
-    /** Ensures the JSON file exists and is a valid empty array if new */
     private static void ensureFileExists(Path file) {
         if (!Files.exists(file)) {
             try {
                 Files.createFile(file);
                 try (Writer writer = Files.newBufferedWriter(file)) {
-                    writer.write("[]"); // initialize empty array
+                    writer.write("[]");
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -69,7 +67,6 @@ public class ViolationStorage {
         } catch (IOException e) {
             e.printStackTrace();
         } catch (com.google.gson.JsonSyntaxException e) {
-            // File corrupted? Reset to empty array
             saveViolations(playerId, new ArrayList<>());
             return new ArrayList<>();
         }

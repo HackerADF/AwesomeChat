@@ -34,10 +34,10 @@ public class PrivateMessageManager {
         UUID id = player.getUniqueId();
         if (disabledMessages.contains(id)) {
             disabledMessages.remove(id);
-            return false; // messages enabled
+            return false;
         } else {
             disabledMessages.add(id);
-            return true; // messages disabled
+            return true;
         }
     }
 
@@ -49,10 +49,10 @@ public class PrivateMessageManager {
         UUID id = player.getUniqueId();
         if (socialSpy.contains(id)) {
             socialSpy.remove(id);
-            return false; // now disabled
+            return false;
         } else {
             socialSpy.add(id);
-            return true; // now enabled
+            return true;
         }
     }
 
