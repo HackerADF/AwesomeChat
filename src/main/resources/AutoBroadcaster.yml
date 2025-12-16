@@ -1,6 +1,6 @@
 # AutoBroadcaster Configuration
 enabled: true
-interval: 30 # Time in seconds between broadcasts
+interval: 60 # Time in seconds between broadcasts
 
 broadcasts:
   - message:

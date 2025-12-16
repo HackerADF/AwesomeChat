@@ -90,9 +90,10 @@ placeholders:
     prefix: "{prefix}" # Default placeholder for the player's prefix
     suffix: "{suffix}" # Default placeholder for the player's suffix
 
-# Enable Bukkit color code support (true/false)
+# Enable Bukkit color code support in chat (true/false)
 color-codes:
   enabled: true  # Allows use of color codes in chat messages
+  permission-only: true # Only parse chats from users who have awesomechat.styling
 
 # Clickable chat messages settings
 clickable-messages:
@@ -197,10 +198,9 @@ chat-filter:
   bypass-permission: true
 
   # ===============================================================
-  # =                     Basic filtering                         =
-  # ===============================================================
-
-  # ======================== Cooldown =============================
+  #                       Basic filtering                         =
+  #                                                               =
+  #                         Cooldown                              =
   #    Control how fast a player can send a message or command    =
   # ===============================================================
   cooldown:
@@ -235,11 +235,11 @@ chat-filter:
 
     # Whether to just count the command itself, or
     # all the args as well
+
     # Example:
     # /msg <player> test
     # /msg <player> test2
     # ^^^^^^^^^^^^^^^^^^^
-
     # When enabled, this option will count these
     # as two different commands
     arg-sensitive: false
@@ -440,7 +440,8 @@ minimessage:
 # Enable/Disable chat formatting
 chat-formatting:
   enabled: true
-  format-color-codes-in-messages: false
+
+
 
 # This will disable minecraft's new chat validation system introduced in 1.19
 # This should fix most chat-related errors, if enabled, please ensure that
