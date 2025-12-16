@@ -26,7 +26,6 @@ public class AutoBroadcasterManager {
         loadConfig();
     }
 
-    // Load AutoBroadcaster.yml
     public void loadConfig() {
         autoBroadcasterFile = new File(plugin.getDataFolder(), "AutoBroadcaster.yml");
 
@@ -37,7 +36,6 @@ public class AutoBroadcasterManager {
         autoBroadcasterConfig = YamlConfiguration.loadConfiguration(autoBroadcasterFile);
     }
 
-    // Save AutoBroadcaster.yml
     public void saveConfig() {
         try {
             autoBroadcasterConfig.save(autoBroadcasterFile);
@@ -47,26 +45,32 @@ public class AutoBroadcasterManager {
     }
 
     public void start() {
-        // Cancel previous task
         if (taskId != -1) {
             Bukkit.getScheduler().cancelTask(taskId);
         }
-        // Check if the AutoBroadcaster is enabled
+
         if (!autoBroadcasterConfig.getBoolean("enabled")) return;
+
         taskId = new BukkitRunnable() {
             @Override
             public void run() {
                 List<Map<?, ?>> broadcasts = getBroadcasts();
-                if (!broadcasts.isEmpty()) {
+                if (broadcasts.isEmpty()) return;
+
+                try {
                     Map<?, ?> current = broadcasts.get(currentIndex);
                     List<String> messages = (List<String>) current.get("message");
+
+                    if (messages == null || messages.isEmpty()) {
+                        currentIndex = (currentIndex + 1) % broadcasts.size();
+                        return;
+                    }
+
                     String soundName = (String) current.get("sound");
 
-                    // Send message
                     String message = AwesomeChat.formatColors(String.join("\n", messages));
                     Bukkit.broadcastMessage(message);
 
-                    // Play sound if valid
                     if (soundName != null && !soundName.equalsIgnoreCase("none")) {
                         try {
                             Sound sound = Sound.valueOf(soundName.toUpperCase());
@@ -78,7 +82,10 @@ public class AutoBroadcasterManager {
                         }
                     }
 
-                    // Move to next broadcast
+                    currentIndex = (currentIndex + 1) % broadcasts.size();
+
+                } catch (Exception e) {
+                    plugin.getLogger().log(Level.WARNING, "Error processing AutoBroadcaster broadcast: " + e.getMessage(), e);
                     currentIndex = (currentIndex + 1) % broadcasts.size();
                 }
             }

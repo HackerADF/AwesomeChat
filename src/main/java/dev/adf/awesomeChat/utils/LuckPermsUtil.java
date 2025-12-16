@@ -58,4 +58,19 @@ public class LuckPermsUtil {
         }
         return "";
     }
+
+    /**
+     * Get the player's meta-key data.
+     */
+    public static String getChatMeta(Player player, String key) {
+        if (luckPerms == null) return null;
+
+        User user = luckPerms.getUserManager().getUser(player.getUniqueId());
+        if (user != null) {
+            QueryOptions options = luckPerms.getContextManager().getStaticQueryOptions();
+            return user.getCachedData().getMetaData(options).getMetaValue(key);
+        }
+        return null;
+    }
+
 }

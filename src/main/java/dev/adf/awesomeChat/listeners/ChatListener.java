@@ -82,44 +82,56 @@ public class ChatListener implements Listener {
             }
         }
 
+        String metaColor = LuckPermsUtil.getChatMeta(player, "chat-color");
+        String metaFormat = LuckPermsUtil.getChatMeta(player, "chat-format");
+        if (metaColor != null) {
+            plainMessage = metaColor + plainMessage;
+        }
+
+        if (metaFormat != null) {
+            plainMessage = metaFormat + plainMessage;
+        }
+
+        boolean useMiniMessage = config.getBoolean("minimessage.enabled");
+        String processedMessage;
+        if (useMiniMessage) {
+            processedMessage = convertToMiniMessage(plainMessage);
+        } else {
+            processedMessage = formatColors(plainMessage);
+        }
+
         String formattedMessage = chatFormat
                 .replace(customChatPlaceholderPrefix, prefix)
                 .replace(customChatPlaceholderUsername, player.getName())
-                .replace(customChatPlaceholderMessage, plainMessage)
+                .replace(customChatPlaceholderMessage, processedMessage)
                 .replace(customChatPlaceholderSuffix, suffix);
 
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             formattedMessage = PlaceholderAPI.setPlaceholders(player, formattedMessage);
         }
 
-        boolean useMiniMessage = config.getBoolean("minimessage.enabled", false);
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            formattedMessage = PlaceholderAPI.setPlaceholders(player, formattedMessage);
+        }
+
         Component chatComponent;
 
         if (useMiniMessage) {
-            chatComponent = miniMessage.deserialize(convertToMiniMessage(formattedMessage));
+            chatComponent = miniMessage.deserialize(formattedMessage);
         } else {
-            formattedMessage = formatColors(formattedMessage);
-            chatComponent = Component.text(formattedMessage);
+            chatComponent = Component.text(formatColors(formattedMessage));
         }
-
-        Bukkit.getConsoleSender().sendMessage(formatColors(formattedMessage));
 
         if (config.getBoolean("clickable-messages.enabled") || config.getBoolean("hoverable-messages.enabled")) {
             if (config.getBoolean("clickable-messages.enabled")) {
                 String clickCommand = config.getString("clickable-messages.command").replace("%player%", player.getName());
                 String actionType = config.getString("clickable-messages.action", "fill").toLowerCase();
 
-                switch (actionType) {
-                    case "execute":
-                        chatComponent = chatComponent.clickEvent(ClickEvent.runCommand(clickCommand));
-                        break;
-                    case "copy":
-                        chatComponent = chatComponent.clickEvent(ClickEvent.copyToClipboard(clickCommand));
-                        break;
-                    default:
-                        chatComponent = chatComponent.clickEvent(ClickEvent.suggestCommand(clickCommand));
-                        break;
-                }
+                chatComponent = switch (actionType) {
+                    case "execute" -> chatComponent.clickEvent(ClickEvent.runCommand(clickCommand));
+                    case "copy" -> chatComponent.clickEvent(ClickEvent.copyToClipboard(clickCommand));
+                    default -> chatComponent.clickEvent(ClickEvent.suggestCommand(clickCommand));
+                };
             }
 
             if (config.getBoolean("hoverable-messages.enabled")) {
@@ -172,68 +184,48 @@ public class ChatListener implements Listener {
         }
     }
 
+    private static final Pattern HEX_PATTERN = Pattern.compile("&x(&[A-Fa-f0-9]){6}");
+
     public static String formatColors(String message) {
         if (message == null) return "";
 
-        Pattern hexPattern = Pattern.compile("&#([A-Fa-f0-9]{6})");
-        Matcher matcher = hexPattern.matcher(message);
-        StringBuffer buffer = new StringBuffer();
+        Matcher matcher = HEX_PATTERN.matcher(message);
+        StringBuffer sb = new StringBuffer();
 
         while (matcher.find()) {
-            String colorCode = matcher.group(1);
-            String replacement = net.md_5.bungee.api.ChatColor.of("#" + colorCode).toString();
-            matcher.appendReplacement(buffer, replacement);
+            String raw = matcher.group();
+            StringBuilder hex = new StringBuilder();
+            String[] chars = raw.split("&");
+            for (int i = 1; i <= 6; i++) {
+                hex.append(chars[i]);
+            }
+            matcher.appendReplacement(sb, net.md_5.bungee.api.ChatColor.of("#" + hex).toString());
         }
-        matcher.appendTail(buffer);
+        matcher.appendTail(sb);
 
-        return ChatColor.translateAlternateColorCodes('&', buffer.toString());
+        return ChatColor.translateAlternateColorCodes('&', sb.toString());
     }
 
-    private String convertToMiniMessage(String message) {
-        return message
-                .replace("§c", "<red>")
-                .replace("§l", "<bold>")
-                .replace("§7", "<gray>")
-                .replace("§3", "<blue>")
-                .replace("§e", "<yellow>")
-                .replace("§a", "<green>")
-                .replace("§d", "<light_purple>")
-                .replace("§f", "<white>")
-                .replace("§8", "<dark_gray>")
-                .replace("§9", "<dark_blue>")
-                .replace("§0", "<black>")
-                .replace("§b", "<aqua>")
-                .replace("§6", "<gold>")
-                .replace("§5", "<dark_purple>")
-                .replace("§4", "<dark_red>")
-                .replace("§2", "<dark_green>")
-                .replace("§1", "<dark_aqua>")
-                .replace("§3", "<dark_blue>")
-                .replace("§k", "<obfuscated>")
-                .replace("§m", "<strikethrough>")
-                .replace("§n", "<underlined>")
-                .replace("§o", "<italic>")
-                .replace("&c", "<red>")
+
+    private static final Pattern LEGACY_RGB = Pattern.compile("&x(&[A-Fa-f0-9]){6}");
+    private String convertToMiniMessage(String msg) {
+        Matcher matcher = LEGACY_RGB.matcher(msg);
+        StringBuffer sb = new StringBuffer();
+
+        while (matcher.find()) {
+            String hex = matcher.group()
+                    .replace("&x", "")
+                    .replace("&", "");
+            matcher.appendReplacement(sb, "<#" + hex + ">");
+        }
+        matcher.appendTail(sb);
+
+        return sb.toString()
                 .replace("&l", "<bold>")
-                .replace("&7", "<gray>")
-                .replace("&3", "<blue>")
-                .replace("&e", "<yellow>")
-                .replace("&a", "<green>")
-                .replace("&d", "<light_purple>")
-                .replace("&f", "<white>")
-                .replace("&8", "<dark_gray>")
-                .replace("&9", "<dark_blue>")
-                .replace("&0", "<black>")
-                .replace("&b", "<aqua>")
-                .replace("&6", "<gold>")
-                .replace("&5", "<dark_purple>")
-                .replace("&4", "<dark_red>")
-                .replace("&2", "<dark_green>")
-                .replace("&1", "<dark_aqua>")
-                .replace("&3", "<dark_blue>")
-                .replace("&k", "<obfuscated>")
-                .replace("&m", "<strikethrough>")
+                .replace("&o", "<italic>")
                 .replace("&n", "<underlined>")
-                .replace("&o", "<italic>");
+                .replace("&m", "<strikethrough>")
+                .replace("&k", "<obfuscated>")
+                .replace("&r", "<reset>");
     }
 }

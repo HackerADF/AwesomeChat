@@ -1,6 +1,7 @@
 package dev.adf.awesomeChat.managers;
 
 import dev.adf.awesomeChat.AwesomeChat;
+import org.bukkit.configuration.file.FileConfiguration;
 
 import java.io.File;
 
@@ -19,22 +20,35 @@ public class ConfigManager {
     }
 
     private void handleConfig() {
-        if (configFile.exists()) {
-            File backup = new File(plugin.getDataFolder(), "config.yml.old");
+        if (!configFile.exists()) {
+            plugin.saveDefaultConfig();
+            plugin.getLogger().info("Generated a new config.yml (no previous file existed).");
+            return;
+        }
 
-            if (backup.exists()) {
-                backup.delete(); // overwrite any old backup
-            }
+        plugin.reloadConfig();
+        FileConfiguration cfg = plugin.getConfig();
 
-            boolean renamed = configFile.renameTo(backup);
-            if (renamed) {
-                plugin.getLogger().warning("Existing config.yml was moved to config.yml.old");
-            } else {
-                plugin.getLogger().severe("Failed to archive old config.yml!");
-            }
+        int version = cfg.getInt("config-version", -1);
+
+        if (version == 3) {
+            plugin.getLogger().info("Config version is up-to-date (3). No regeneration needed.");
+            return;
+        }
+        plugin.getLogger().warning("Config version outdated (" + version + "). Upgrading to version 3...");
+
+        File backup = new File(plugin.getDataFolder(), "config.yml.old");
+        if (backup.exists()) backup.delete();
+
+        boolean success = configFile.renameTo(backup);
+
+        if (success) {
+            plugin.getLogger().warning("Old config.yml has been moved to config.yml.old");
+        } else {
+            plugin.getLogger().severe("Failed to backup old config.yml!");
         }
 
         plugin.saveDefaultConfig();
-        plugin.getLogger().info("A new config.yml has been generated. Please re-apply your settings.");
+        plugin.getLogger().info("A new config.yml has been generated. Please re-apply custom settings.");
     }
 }
