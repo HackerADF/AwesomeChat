@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import dev.adf.awesomeChat.api.events.ChatFilterViolationEvent;
 import dev.adf.awesomeChat.logging.FilterLogger;
 import dev.adf.awesomeChat.storage.ViolationStorage;
 
@@ -36,6 +37,9 @@ public class ChatFilterManager {
     private final boolean antiAdvertisingEnabled;
     private final List<String> tlds;
     private final List<String> antiAdPhrases;
+
+    private final List<Pattern> wildcardBannedPatterns = new ArrayList<>();
+    private final List<String> wildcardBannedRaw = new ArrayList<>();
 
     private final Map<String, FilterRule> rules = new LinkedHashMap<>();
     private final Map<UUID, Map<String, Integer>> offensesCache = new HashMap<>();
@@ -125,9 +129,30 @@ public class ChatFilterManager {
         this.announceActions = filterSection.getBoolean("announce-actions", false);
 
         // banned words
-        this.bannedWords = Optional.ofNullable(filterSection.getStringList("banned-words"))
+        Object bannedObj = filterSection.get("banned-words");
+
+        List<String> listFallback = Collections.emptyList();
+        if (bannedObj instanceof List) {
+            // old format still supported
+            listFallback = filterSection.getStringList("banned-words");
+        }
+
+        this.bannedWords = Optional.ofNullable(listFallback)
                 .orElse(Collections.emptyList())
                 .stream().map(String::toLowerCase).collect(Collectors.toList());
+
+        if (bannedObj instanceof String) {
+            String path = String.valueOf(bannedObj).trim();
+            if (!path.isEmpty()) {
+                File target = new File(plugin.getDataFolder(), path);
+
+                ensureDefaultWildcardFilters(target);
+
+                loadWildcardBannedFromPath(target);
+                plugin.getLogger().info("[ChatFilter] Loaded " + wildcardBannedPatterns.size()
+                        + " wildcard banned patterns from: " + target.getPath());
+            }
+        }
 
         // anti-advertising
         ConfigurationSection anti = filterSection.getConfigurationSection("anti-advertising");
@@ -414,6 +439,13 @@ public class ChatFilterManager {
         ViolationStorage.addViolation(id, rule.name);
         FilterLogger.log(player.getName() + " violated rule " + rule.name + " with message: " + message);
 
+        ChatFilterViolationEvent event = new ChatFilterViolationEvent(player, message, rule.name, count);
+        Bukkit.getPluginManager().callEvent(event);
+
+        if (event.isCancelled()) {
+            return;
+        }
+
         String prefix = plugin.getConfig().getString("chat-filter.prefix", "&8[&cChatFilter&8]&r ");
         String playerMessage = replacePlaceholders(prefix + rule.playerMessage, player, message);
         String staffMessage = replacePlaceholders(prefix + rule.staffMessage, player, message);
@@ -592,5 +624,191 @@ public class ChatFilterManager {
             this.staffMessage = staffMessage != null ? staffMessage : "";
             this.punishments = punishments != null ? punishments : Collections.emptyMap();
         }
+    }
+
+    private void ensureDefaultWildcardFilters(File target) {
+        try {
+            File dir = target.isDirectory() ? target : target.getParentFile();
+            if (dir == null) return;
+
+            if (!dir.exists()) dir.mkdirs();
+
+            File curse = new File(dir, "curse_words.txt");
+            File sexual = new File(dir, "sexual.txt");
+            File slurs = new File(dir, "slurs.txt");
+            File abuse = new File(dir, "abuse_violence.txt");
+
+            if (!curse.exists() && target.isDirectory()) {
+                writeTextFile(curse, String.join("\n",
+                        "# Curse / general profanity",
+                        "fuck*",
+                        "fuk*",
+                        "shit*",
+                        "bullshit",
+                        "bitch*",
+                        "bastard*",
+                        "asshole*",
+                        "dick*",
+                        "cock*",
+                        "twat*",
+                        "prick*",
+                        "dipshit",
+                        "jackass",
+                        "dumbass",
+                        "motherfucker*",
+                        "sonofabitch",
+                        ""
+                ));
+            }
+
+            if (!sexual.exists() && target.isDirectory()) {
+                writeTextFile(sexual, String.join("\n",
+                        "# Sexual / anatomy / explicit",
+                        "pussy*",
+                        "cunt*",
+                        "slut*",
+                        "whore*",
+                        "hoe",
+                        "skank*",
+                        "cum",
+                        "semen",
+                        "penis",
+                        "vagina",
+                        "boobs",
+                        "tits",
+                        "nipples",
+                        "dildo",
+                        "anal",
+                        "sex",
+                        "porn*",
+                        "blowjob",
+                        "handjob",
+                        "boner*",
+                        "jerkoff",
+                        "masturbate*",
+                        "balls",
+                        "nuts",
+                        ""
+                ));
+            }
+
+            if (!slurs.exists() && target.isDirectory()) {
+                writeTextFile(slurs, String.join("\n",
+                        "# Slurs / hate language",
+                        "fag*",
+                        "faggot*",
+                        "retard*",
+                        "nigger*",
+                        "nigga*",
+                        "chink*",
+                        "spic*",
+                        "kike*",
+                        "dyke*",
+                        "tranny*",
+                        "queer",
+                        ""
+                ));
+            }
+
+            if (!abuse.exists() && target.isDirectory()) {
+                writeTextFile(abuse, String.join("\n",
+                        "# Sexual violence / abuse terms",
+                        "rape*",
+                        "rapist*",
+                        "molest*",
+                        "incest",
+                        ""
+                ));
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("[ChatFilter] Failed to ensure default wildcard filters: " + e.getMessage());
+        }
+    }
+
+    private void writeTextFile(File file, String content) throws IOException {
+        if (file.exists()) return; // don't overwrite
+        if (file.getParentFile() != null && !file.getParentFile().exists()) file.getParentFile().mkdirs();
+        try (FileWriter w = new FileWriter(file)) {
+            w.write(content);
+        }
+    }
+
+    private void loadWildcardBannedFromPath(File target) {
+        wildcardBannedPatterns.clear();
+        wildcardBannedRaw.clear();
+
+        if (!target.exists()) {
+            plugin.getLogger().warning("[ChatFilter] Wildcard banned path does not exist: " + target.getPath());
+            return;
+        }
+
+        List<File> files = new ArrayList<>();
+        if (target.isDirectory()) {
+            collectTxtFilesRecursive(target, files);
+        } else {
+            if (target.getName().toLowerCase().endsWith(".txt")) files.add(target);
+        }
+
+        for (File f : files) {
+            try (Scanner sc = new Scanner(f, "UTF-8")) {
+                while (sc.hasNextLine()) {
+                    String line = sc.nextLine().trim();
+                    if (line.isEmpty()) continue;
+                    if (line.startsWith("#")) continue;
+
+                    wildcardBannedRaw.add(line);
+                    wildcardBannedPatterns.add(wildcardToPattern(line));
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("[ChatFilter] Failed reading " + f.getPath() + ": " + e.getMessage());
+            }
+        }
+    }
+
+    private void collectTxtFilesRecursive(File dir, List<File> out) {
+        File[] kids = dir.listFiles();
+        if (kids == null) return;
+
+        for (File f : kids) {
+            if (f.isDirectory()) {
+                collectTxtFilesRecursive(f, out);
+            } else if (f.getName().toLowerCase().endsWith(".txt")) {
+                out.add(f);
+            }
+        }
+    }
+
+    /**
+     * Convert wildcard pattern to a safe regex pattern.
+     */
+    private Pattern wildcardToPattern(String wildcard) {
+        String w = wildcard.trim();
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < w.length(); i++) {
+            char c = w.charAt(i);
+            if (c == '*') {
+                sb.append(".*");
+            } else {
+                if ("\\.^$|?+()[]{}".indexOf(c) >= 0) sb.append("\\");
+                sb.append(c);
+            }
+        }
+
+        return Pattern.compile("^" + sb + "$", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    }
+
+    /**
+     * Tokenize message into "words" in such a way that avoids blocking inside other words unless wildcard requires it.
+     */
+    private List<String> tokenizeWords(String message) {
+        String[] parts = message.split("[\\s\\p{Punct}]+");
+        List<String> out = new ArrayList<>(parts.length);
+        for (String p : parts) {
+            if (p == null) continue;
+            String t = p.trim();
+            if (!t.isEmpty()) out.add(t);
+        }
+        return out;
     }
 }
