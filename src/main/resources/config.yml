@@ -93,7 +93,7 @@ placeholders:
 # Enable Bukkit color code support in chat (true/false)
 color-codes:
   enabled: true  # Allows use of color codes in chat messages
-  permission-only: true # Only parse chats from users who have awesomechat.styling
+  permission-based: true  # Require permissions for each color/format code (awesomechat.styling.*)
 
 # Clickable chat messages settings
 clickable-messages:
@@ -101,27 +101,108 @@ clickable-messages:
   action: "fill"  # Options: "fill" (default), "execute", "copy"
   command: "/msg %player% "  # Default command for the click action
 
-# Hoverable chat messages (true/false)
+# Hoverable chat messages with per-group and component-specific hovers
 hoverable-messages:
   enabled: true
-  text-lines:
-    - "&bPlayer&f: &f%player%"
-    - "&bMoney&f: &f%vault_eco_balance_formatted%"
-    - ""
-    - "&aClick to message this player!"
-    - "&7Click: [/msg %player%]"
+
+  # Global hovers (fallback when per-group is not configured)
+  global:
+    username:
+      - "&bPlayer&f: &f%player%"
+      - "&bGroup&f: &f%luckperms_primary_group_name%"
+      - ""
+      - "&aClick to message!"
+    username-click-action: "/msg %player% "
+    username-click-type: "suggest"  # suggest, execute, or copy
+
+    message:
+      - "&7Message sent at: &f%server_time_HH:mm:ss%"
+      - "&7Click to copy message"
+    message-click-action: "%message%"
+    message-click-type: "copy"
+
+  # Per-group hovers (different hovers per LuckPerms group)
+  per-group:
+    enabled: true
+    groups:
+      owner:
+        username:
+          - "&c&lOWNER &f%player%"
+          - "&7This player owns the server!"
+          - ""
+          - "&aClick to message!"
+        username-click-action: "/msg %player% "
+        username-click-type: "suggest"
+        message:
+          - "&7Owner message"
+
+      admin:
+        username:
+          - "&6&lADMIN &f%player%"
+          - "&7This player is an administrator"
+          - ""
+          - "&aClick to message!"
+        username-click-action: "/msg %player% "
+        username-click-type: "suggest"
+        message:
+          - "&7Admin message"
+
+      moderator:
+        username:
+          - "&3&lMOD &f%player%"
+          - "&7This player is a moderator"
+          - "&7Violations: &c%awesomechat_violations%"
+          - ""
+          - "&aClick to message"
+        username-click-action: "/msg %player% "
+        username-click-type: "suggest"
+        message:
+          - "&7Moderator message"
+
+      default:
+        username:
+          - "&7Player: &f%player%"
+          - "&7Group: &f%luckperms_primary_group_name%"
+          - ""
+          - "&aClick to message!"
+        username-click-action: "/msg %player% "
+        username-click-type: "suggest"
+        message:
+          - "&7Click to copy message"
+        message-click-action: "%message%"
+        message-click-type: "copy"
 
 # Chat format customization
 chat-format:
   enabled: true
   global_format: "{prefix}&r &e{player}&7: &f{message}"  # Default format for chat
 
-  # Play a sound when a player chats!
-  # (custom per-group chat sounds soon!)
+  # Play a sound when a player chats! Now supports per-group sounds!
   sound:
-    name: "ENTITY_CHICKEN_EGG"
-    volume: 100
-    pitch: 2
+    enabled: true
+
+    # Global sound (fallback)
+    global:
+      name: "ENTITY_CHICKEN_EGG"
+      volume: 100
+      pitch: 2
+
+    # Per-group sounds (different sounds per LuckPerms group)
+    per-group:
+      enabled: true
+      groups:
+        owner:
+          name: "ENTITY_ENDER_DRAGON_GROWL"
+          volume: 100
+          pitch: 1.5
+        admin:
+          name: "ENTITY_WITHER_SPAWN"
+          volume: 80
+          pitch: 2
+        moderator:
+          name: "BLOCK_NOTE_BLOCK_PLING"
+          volume: 100
+          pitch: 1.8
 
   # Per-group formats
   per-group-format:
@@ -138,6 +219,9 @@ chat-format:
 # ================================================================
 private-messages:
   enabled: true
+
+  # Allows users with the "awesomechat.socialspy" permission
+  # to use /socialspy, to see other players messages
   socialspy:
     enabled: true
 
@@ -146,6 +230,7 @@ private-messages:
     receiver: "&7[&b{sender} &7-> &bYou&7] &f{message}"
     spy: "&7[&cSpy&7] &b{sender} &7-> &b{receiver}&7: &f{message}"
 
+  # To disable, set volume to 0
   sound:
     sent:
       name: "ENTITY_VILLAGER_WORK_LIBRARIAN"
@@ -170,7 +255,6 @@ private-messages:
 # ================================================================
 #            Configuration for commands are below:               =
 # ================================================================
-
 # Command /broadcast
 broadcast: # Command Permission: awesomechat.broadcast
   enabled: true
@@ -180,7 +264,6 @@ broadcast: # Command Permission: awesomechat.broadcast
   format:
     - "&7[&cBroadcast&7]"
     - "&f%message%"
-
 
 # ================================================================
 #            Chat Filter System (Regex + Offenses)               =
@@ -276,66 +359,9 @@ chat-filter:
   # ====================== Banned Words ===========================
   #            Words that will be blocked in chat                 =
   # ===============================================================
-  banned-words:
-    - "fuck"
-    - "fucking"
-    - "fucked"
-    - "shit"
-    - "bullshit"
-    - "bitch"
-    - "bastard"
-    - "asshole"
-    - "dick"
-    - "cock"
-    - "pussy"
-    - "cunt"
-    - "slut"
-    - "whore"
-    - "fag"
-    - "faggot"
-    - "retard"
-    - "retarded"
-    - "nigger"
-    - "nigga"
-    - "chink"
-    - "spic"
-    - "kike"
-    - "dyke"
-    - "tranny"
-    - "queer"
-    - "hoe"
-    - "skank"
-    - "cum"
-    - "semen"
-    - "penis"
-    - "vagina"
-    - "boobs"
-    - "tits"
-    - "nipples"
-    - "dildo"
-    - "anal"
-    - "sex"
-    - "porn"
-    - "porno"
-    - "blowjob"
-    - "handjob"
-    - "fucktard"
-    - "dipshit"
-    - "jackass"
-    - "dumbass"
-    - "motherfucker"
-    - "sonofabitch"
-    - "twat"
-    - "prick"
-    - "balls"
-    - "nuts"
-    - "boner"
-    - "jerkoff"
-    - "masturbate"
-    - "rape"
-    - "rapist"
-    - "molest"
-    - "incest"
+  banned-words: filter/   # directory
+  # or: banned-words: filter/curse_words.txt  # single file
+
 
   # ================ Punishment Thresholds ========================
   #       Punish players based on filter offenses, if the         =
@@ -352,8 +378,8 @@ chat-filter:
     repeat: "mute {player} 14d &cMuted for repeated filter violations."
 
   # Messages
-  player-message: "&cPlease do not use profanity!"
-  staff-message: "&c{player} used profanity in chat: &7{message}"
+  player-message: "&cYou cannot send this message."
+  staff-message: "&c{player} triggered chat filter: &7{message}"
 
   # Global anti-advertising settings
   anti-advertising:
@@ -434,6 +460,8 @@ messages:
 # ================================================================
 
 # MiniMessage formatting, see "https://docs.advntr.dev/minimessage/index.html" for more details.
+# Players need awesomechat.format.minimessage permission to use MiniMessage
+# Advanced tags like <click>, <insertion>, <hover> require awesomechat.format.minimessage.advanced
 minimessage:
   enabled: false
 
@@ -450,5 +478,23 @@ chat-formatting:
 disable-chat-signing: false
 
 
+# ================================================================
+#                     AwesomeChat Public API                    =
+# ================================================================
+# The AwesomeChat API allows other plugins to hook into AwesomeChat
+# and access player data, violations, and moderation features.
+#
+# Permissions:
+#  - awesomechat.moderator: Basic moderator access
+#  - awesomechat.moderator.punish: Can punish players
+#  - awesomechat.moderator.view: Can view violation history
+#
+# For developers: See the API documentation at
+# https://github.com/your-repo/AwesomeChat/wiki/API
+api:
+  enabled: true
+  moderator-permission: "awesomechat.moderator"
+
+
 # DO NOT TOUCH
-config-version: 3
+config-version: 6
