@@ -32,6 +32,9 @@ public final class AwesomeChat extends JavaPlugin {
     private PrivateMessageManager privateMessageManager;
     private SocialSpyManager socialSpyManager;
     private ConfigManager configManager;
+    private SoundManager soundManager;
+    private HoverManager hoverManager;
+    private dev.adf.awesomeChat.api.AwesomeChatAPIImpl api;
 
     // misc
     private final Map<UUID, Long> broadcastCooldowns = new HashMap<>();
@@ -76,6 +79,30 @@ public final class AwesomeChat extends JavaPlugin {
             getLogger().info("AutoBroadcasterManager loaded.");
         } catch (Exception e) {
             getLogger().warning("AutoBroadcasterManager failed to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
+            soundManager = new SoundManager(this);
+            getLogger().info("SoundManager loaded.");
+        } catch (Exception e) {
+            getLogger().warning("SoundManager failed to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
+            hoverManager = new HoverManager(this);
+            getLogger().info("HoverManager loaded.");
+        } catch (Exception e) {
+            getLogger().warning("HoverManager failed to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
+            api = new dev.adf.awesomeChat.api.AwesomeChatAPIImpl(this);
+            getLogger().info("AwesomeChatAPI v" + api.getAPIVersion() + " loaded.");
+        } catch (Exception e) {
+            getLogger().warning("AwesomeChatAPI failed to initialize: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -328,6 +355,18 @@ public final class AwesomeChat extends JavaPlugin {
 
     public AutoBroadcasterManager getAutoBroadcasterManager() {
         return autoBroadcasterManager;
+    }
+
+    public SoundManager getSoundManager() {
+        return soundManager;
+    }
+
+    public HoverManager getHoverManager() {
+        return hoverManager;
+    }
+
+    public dev.adf.awesomeChat.api.AwesomeChatAPI getAPI() {
+        return api;
     }
 }
 
