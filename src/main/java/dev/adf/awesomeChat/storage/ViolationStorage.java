@@ -30,6 +30,14 @@ public class ViolationStorage {
             this.ruleName = ruleName;
             this.timestamp = timestamp;
         }
+
+        public String getRuleName() {
+            return ruleName;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
     }
 
     private static Path getFile(UUID playerId) {
@@ -71,6 +79,10 @@ public class ViolationStorage {
             return new ArrayList<>();
         }
         return new ArrayList<>();
+    }
+
+    public static void clearViolations(UUID playerId) {
+        saveViolations(playerId, new ArrayList<>());
     }
 
     private static void saveViolations(UUID playerId, List<ViolationRecord> violations) {
