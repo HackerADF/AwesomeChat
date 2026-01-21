@@ -31,8 +31,8 @@ public class ConfigManager {
 
         int version = cfg.getInt("config-version", -1);
 
-        if (version == 3) {
-            plugin.getLogger().info("Config version is up-to-date (3). No regeneration needed.");
+        if (version == 5) {
+            plugin.getLogger().info("Config version is up-to-date (5). No regeneration needed.");
             return;
         }
         plugin.getLogger().warning("Config version outdated (" + version + "). Upgrading to version 3...");
