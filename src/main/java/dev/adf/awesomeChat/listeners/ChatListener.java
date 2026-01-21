@@ -92,12 +92,22 @@ public class ChatListener implements Listener {
             plainMessage = metaFormat + plainMessage;
         }
 
-        boolean useMiniMessage = config.getBoolean("minimessage.enabled");
+        boolean globalMiniMessage = config.getBoolean("minimessage.enabled");
+        boolean playerCanUseMiniMessage = player.hasPermission("awesomechat.format.minimessage");
+        boolean useMiniMessage = globalMiniMessage && playerCanUseMiniMessage;
+        boolean permissionBasedFormatting = config.getBoolean("color-codes.permission-based", false);
+
         String processedMessage;
         if (useMiniMessage) {
-            processedMessage = convertToMiniMessage(plainMessage);
+            String filtered = permissionBasedFormatting
+                ? dev.adf.awesomeChat.utils.ChatFormatPermissionUtil.filterMiniMessageByPermission(player, plainMessage)
+                : plainMessage;
+            processedMessage = convertToMiniMessage(filtered);
         } else {
-            processedMessage = formatColors(plainMessage);
+            String filtered = permissionBasedFormatting
+                ? dev.adf.awesomeChat.utils.ChatFormatPermissionUtil.filterByPermission(player, plainMessage)
+                : plainMessage;
+            processedMessage = formatColors(filtered);
         }
 
         String formattedMessage = chatFormat
@@ -114,45 +124,16 @@ public class ChatListener implements Listener {
             formattedMessage = PlaceholderAPI.setPlaceholders(player, formattedMessage);
         }
 
-        Component chatComponent;
-
-        if (useMiniMessage) {
-            chatComponent = miniMessage.deserialize(formattedMessage);
-        } else {
-            chatComponent = Component.text(formatColors(formattedMessage));
-        }
-
-        if (config.getBoolean("clickable-messages.enabled") || config.getBoolean("hoverable-messages.enabled")) {
-            if (config.getBoolean("clickable-messages.enabled")) {
-                String clickCommand = config.getString("clickable-messages.command").replace("%player%", player.getName());
-                String actionType = config.getString("clickable-messages.action", "fill").toLowerCase();
-
-                chatComponent = switch (actionType) {
-                    case "execute" -> chatComponent.clickEvent(ClickEvent.runCommand(clickCommand));
-                    case "copy" -> chatComponent.clickEvent(ClickEvent.copyToClipboard(clickCommand));
-                    default -> chatComponent.clickEvent(ClickEvent.suggestCommand(clickCommand));
-                };
-            }
-
-            if (config.getBoolean("hoverable-messages.enabled")) {
-                List<String> hoverLines = config.getStringList("hoverable-messages.text-lines");
-                Component hoverText = Component.empty();
-
-                for (int i = 0; i < hoverLines.size(); i++) {
-                    String coloredLine = formatColors(hoverLines.get(i).replace("%player%", player.getName()));
-
-                    if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-                        coloredLine = PlaceholderAPI.setPlaceholders(player, coloredLine);
-                    }
-
-                    hoverText = hoverText.append(Component.text(coloredLine));
-                    if (i < hoverLines.size() - 1) {
-                        hoverText = hoverText.append(Component.newline());
-                    }
-                }
-                chatComponent = chatComponent.hoverEvent(HoverEvent.showText(hoverText));
-            }
-        }
+        Component chatComponent = buildChatComponent(
+            player,
+            playerGroup,
+            chatFormat,
+            prefix,
+            suffix,
+            player.getName(),
+            processedMessage,
+            useMiniMessage
+        );
         final Component finalChatComponent = chatComponent;
         if (!config.getBoolean("disable-chat-signing")) {
             event.renderer((source, displayName, message, audience) -> finalChatComponent);
@@ -166,21 +147,8 @@ public class ChatListener implements Listener {
             }
         }
 
-        if (config.isConfigurationSection("chat-format.sound")) {
-            String soundName = config.getString("chat-format.sound.name", "ENTITY_CHICKEN_EGG");
-            float volume = (float) config.getDouble("chat-format.sound.volume", 100);
-            float pitch = (float) config.getDouble("chat-format.sound.pitch", 2.0);
-
-            Sound sound;
-            try {
-                sound = Sound.valueOf(soundName.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                sound = Sound.ENTITY_CHICKEN_EGG;
-            }
-
-            for (Player target : Bukkit.getOnlinePlayers()) {
-                target.playSound(target.getLocation(), sound, volume, pitch);
-            }
+        if (config.getBoolean("chat-format.sound.enabled", true)) {
+            plugin.getSoundManager().playChatSound(player);
         }
     }
 
@@ -228,4 +196,134 @@ public class ChatListener implements Listener {
                 .replace("&k", "<obfuscated>")
                 .replace("&r", "<reset>");
     }
+
+    private Component buildChatComponent(
+            Player player,
+            String playerGroup,
+            String chatFormat,
+            String prefix,
+            String suffix,
+            String playerName,
+            String processedMessage,
+            boolean useMiniMessage
+    ) {
+        FileConfiguration config = plugin.getPluginConfig();
+        boolean hoverEnabled = config.getBoolean("hoverable-messages.enabled");
+        boolean clickEnabled = config.getBoolean("clickable-messages.enabled");
+
+        Component usernameComponent = Component.text(playerName);
+        Component messageComponent;
+
+        if (useMiniMessage) {
+            messageComponent = miniMessage.deserialize(processedMessage);
+        } else {
+            messageComponent = Component.text(processedMessage);
+        }
+
+        if (hoverEnabled) {
+            Component usernameHover = plugin.getHoverManager().getUsernameHover(player);
+            if (usernameHover != null && !usernameHover.equals(Component.empty())) {
+                usernameComponent = usernameComponent.hoverEvent(HoverEvent.showText(usernameHover));
+            }
+
+            String usernameClickAction = plugin.getHoverManager().getClickAction(playerGroup, "username");
+            String usernameClickType = plugin.getHoverManager().getClickType(playerGroup, "username");
+            if (usernameClickAction != null) {
+                usernameClickAction = usernameClickAction.replace("%player%", playerName);
+                usernameComponent = applyClickEvent(usernameComponent, usernameClickAction, usernameClickType);
+            }
+
+            Component messageHover = plugin.getHoverManager().getMessageHover(player);
+            if (messageHover != null && !messageHover.equals(Component.empty())) {
+                messageComponent = messageComponent.hoverEvent(HoverEvent.showText(messageHover));
+            }
+
+            String messageClickAction = plugin.getHoverManager().getClickAction(playerGroup, "message");
+            String messageClickType = plugin.getHoverManager().getClickType(playerGroup, "message");
+            if (messageClickAction != null) {
+                messageClickAction = messageClickAction
+                        .replace("%player%", playerName)
+                        .replace("%message%", PlainTextComponentSerializer.plainText().serialize(messageComponent));
+                messageComponent = applyClickEvent(messageComponent, messageClickAction, messageClickType);
+            }
+        } else if (clickEnabled) {
+            String clickCommand = config.getString("clickable-messages.command", "/msg %player% ").replace("%player%", playerName);
+            String actionType = config.getString("clickable-messages.action", "suggest").toLowerCase();
+            usernameComponent = applyClickEvent(usernameComponent, clickCommand, actionType);
+        }
+
+        String formattedFormat = chatFormat
+                .replace(config.getString("placeholders.chat.prefix", "{prefix}"), prefix)
+                .replace(config.getString("placeholders.chat.suffix", "{suffix}"), suffix);
+
+        if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            formattedFormat = PlaceholderAPI.setPlaceholders(player, formattedFormat);
+        }
+
+        return buildComponentFromFormat(formattedFormat, usernameComponent, messageComponent, config);
+    }
+
+    private Component applyClickEvent(Component component, String clickAction, String clickType) {
+        return switch (clickType.toLowerCase()) {
+            case "execute" -> component.clickEvent(ClickEvent.runCommand(clickAction));
+            case "copy" -> component.clickEvent(ClickEvent.copyToClipboard(clickAction));
+            default -> component.clickEvent(ClickEvent.suggestCommand(clickAction));
+        };
+    }
+
+    private Component buildComponentFromFormat(String format, Component usernameComponent, Component messageComponent, FileConfiguration config) {
+        String usernamePlaceholder = config.getString("placeholders.chat.username", "{player}");
+        String messagePlaceholder = config.getString("placeholders.chat.message", "{message}");
+
+        int usernameIndex = format.indexOf(usernamePlaceholder);
+        int messageIndex = format.indexOf(messagePlaceholder);
+
+        if (usernameIndex == -1 && messageIndex == -1) {
+            return Component.text(formatColors(format));
+        }
+
+        Component result = Component.empty();
+        int lastIndex = 0;
+
+        if (usernameIndex != -1 && (messageIndex == -1 || usernameIndex < messageIndex)) {
+            if (usernameIndex > 0) {
+                result = result.append(Component.text(formatColors(format.substring(0, usernameIndex))));
+            }
+            result = result.append(usernameComponent);
+            lastIndex = usernameIndex + usernamePlaceholder.length();
+
+            if (messageIndex != -1) {
+                if (messageIndex > lastIndex) {
+                    result = result.append(Component.text(formatColors(format.substring(lastIndex, messageIndex))));
+                }
+                result = result.append(messageComponent);
+                lastIndex = messageIndex + messagePlaceholder.length();
+            }
+        } else if (messageIndex != -1) {
+            if (messageIndex > 0) {
+                result = result.append(Component.text(formatColors(format.substring(0, messageIndex))));
+            }
+            result = result.append(messageComponent);
+            lastIndex = messageIndex + messagePlaceholder.length();
+
+            if (usernameIndex != -1 && usernameIndex > messageIndex) {
+                if (usernameIndex > lastIndex) {
+                    result = result.append(Component.text(formatColors(format.substring(lastIndex, usernameIndex))));
+                }
+                result = result.append(usernameComponent);
+                lastIndex = usernameIndex + usernamePlaceholder.length();
+            }
+        }
+
+        if (lastIndex < format.length()) {
+            result = result.append(Component.text(formatColors(format.substring(lastIndex))));
+        }
+
+        return result;
+    }
 }
+/* TODO:
+- Config manager
+- Hex support
+- Minimessage Migrations
+ */
