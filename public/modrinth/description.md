@@ -40,6 +40,9 @@ Built-in multi-layer filter pipeline:
 ### Player Ignore
 `/ignore <player>` hides their chat messages and blocks their PMs. Persists across restarts. Staff bypass available.
 
+### Mentions
+Tag players with `@name`, groups with `@(role)`, or everyone with `@everyone`/`@here`. Each mention type has its own highlight color, notification sound, and action bar alert. Fully permission-gated.
+
 ### Emoji Shortcuts
 Type `:heart:`, `:star:`, `:fire:` and more in chat to insert unicode symbols. 20 built-in shortcuts, fully configurable, and permission-gated via `awesomechat.emoji`.
 

@@ -56,6 +56,15 @@ A powerful, fully-featured chat management plugin for Paper/Spigot servers (1.19
 - **Staff bypass** - Players with `awesomechat.ignore.bypass` can't be ignored
 - **List view** - `/ignore list` shows all currently ignored players
 
+### Mentions
+- **`@player`** - Mention a specific player by name
+- **`@(role)`** - Mention all players in a LuckPerms group (e.g., `@(admin)`)
+- **`@everyone` / `@here`** - Mention all online players
+- **Per-type sounds** - Different notification sounds for each mention type
+- **Action bar alerts** - Configurable action bar message for mentioned players
+- **Highlight colors** - Mentions are color-highlighted in chat
+- **Permission-gated** - Each mention type has its own permission
+
 ### Emoji Shortcuts
 - **`:shortcode:` replacement** - Type `:heart:`, `:star:`, `:fire:` etc. in chat
 - **20 built-in emojis** - Common symbols included out of the box
@@ -141,6 +150,10 @@ A powerful, fully-featured chat management plugin for Paper/Spigot servers (1.19
 | `awesomechat.filter.bypass` | OP | Bypass chat filter |
 | `awesomechat.filter.notify` | OP | Receive filter alerts |
 | `awesomechat.moderator` | OP | API moderator access |
+| `awesomechat.mention.player` | true | Mention players with @name |
+| `awesomechat.mention.role` | OP | Mention groups with @(role) |
+| `awesomechat.mention.everyone` | OP | Use @everyone |
+| `awesomechat.mention.here` | OP | Use @here |
 | `awesomechat.emoji` | true | Use emoji shortcuts |
 | `awesomechat.format.minimessage` | OP | Use MiniMessage tags |
 | `awesomechat.styling.*` | - | Per-code formatting permissions |
@@ -160,6 +173,7 @@ All settings are in `config.yml`. Key sections:
 - **`mutechat`** - Mute chat messages and configuration
 - **`join-leave`** - Join/leave messages, first join, MOTD, sounds
 - **`emoji`** - Emoji shortcut definitions
+- **`mentions`** - Mention types, highlight colors, sounds, action bar
 
 Auto-broadcaster messages are configured separately in `AutoBroadcaster.yml`.
 
