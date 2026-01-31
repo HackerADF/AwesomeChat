@@ -41,6 +41,16 @@ public class ReplyCommand implements CommandExecutor {
             return true;
         }
 
+        // Check if sender is ignored by target
+        if (plugin.getIgnoreManager() != null && plugin.getIgnoreManager().isIgnoring(target, player)
+                && !player.hasPermission("awesomechat.ignore.bypass")) {
+            player.sendMessage(plugin.getFormattedConfigString(
+                    "private-messages.errors.messages-disabled",
+                    "&cThat player has private messages disabled!"
+            ));
+            return true;
+        }
+
         // Check if they have PMs disabled
         if (plugin.getPrivateMessageManager().hasMessagesDisabled(target)) {
             player.sendMessage(plugin.getFormattedConfigString(

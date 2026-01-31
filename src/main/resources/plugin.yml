@@ -49,6 +49,12 @@ commands:
     aliases: [ch, chatchannel]
     permission: awesomechat.channel
     permission-message: "You don't have permission to use this command."
+  ignore:
+    description: Ignore a player to hide their chat and PMs
+    usage: /ignore <player|list>
+    aliases: [block]
+    permission: awesomechat.ignore
+    permission-message: "You don't have permission to use this command."
 permissions:
   awesomechat.use:
     description: Allows use of the /awesomechat command
@@ -71,3 +77,9 @@ permissions:
   awesomechat.channel.vip:
     description: Access to the VIP chat channel
     default: false
+  awesomechat.ignore:
+    description: Allows use of the /ignore command
+    default: true
+  awesomechat.ignore.bypass:
+    description: Messages from this player cannot be ignored
+    default: op

@@ -35,6 +35,7 @@ public final class AwesomeChat extends JavaPlugin {
     private SoundManager soundManager;
     private HoverManager hoverManager;
     private ChannelManager channelManager;
+    private IgnoreManager ignoreManager;
     private dev.adf.awesomeChat.api.AwesomeChatAPIImpl api;
 
     // misc
@@ -108,6 +109,14 @@ public final class AwesomeChat extends JavaPlugin {
         }
 
         try {
+            ignoreManager = new IgnoreManager(this);
+            getLogger().info("IgnoreManager loaded.");
+        } catch (Exception e) {
+            getLogger().warning("IgnoreManager failed to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
             api = new dev.adf.awesomeChat.api.AwesomeChatAPIImpl(this);
             getLogger().info("AwesomeChatAPI v" + api.getAPIVersion() + " loaded.");
         } catch (Exception e) {
@@ -130,6 +139,8 @@ public final class AwesomeChat extends JavaPlugin {
         getCommand("socialspy").setTabCompleter(new SocialSpyTabCompleter());
         getCommand("channel").setExecutor(new ChannelCommand(this));
         getCommand("channel").setTabCompleter(new ChannelTabCompleter(this));
+        getCommand("ignore").setExecutor(new IgnoreCommand(this));
+        getCommand("ignore").setTabCompleter(new IgnoreTabCompleter());
 
         getLogger().info("Attempting to hook into PlaceholderAPI...");
         getLogger().info("AwesomeChat has been enabled!");
@@ -378,6 +389,10 @@ public final class AwesomeChat extends JavaPlugin {
 
     public ChannelManager getChannelManager() {
         return channelManager;
+    }
+
+    public IgnoreManager getIgnoreManager() {
+        return ignoreManager;
     }
 
     public dev.adf.awesomeChat.api.AwesomeChatAPI getAPI() {

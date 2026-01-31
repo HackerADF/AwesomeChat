@@ -4,6 +4,7 @@ import dev.adf.awesomeChat.AwesomeChat;
 import dev.adf.awesomeChat.utils.LuckPermsUtil;
 import dev.adf.awesomeChat.managers.ChatFilterManager;
 import dev.adf.awesomeChat.managers.ChannelManager;
+import dev.adf.awesomeChat.managers.IgnoreManager;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -148,16 +149,27 @@ public class ChatListener implements Listener {
             useMiniMessage
         );
         final Component finalChatComponent = chatComponent;
+        IgnoreManager ignoreManager = plugin.getIgnoreManager();
         if (!config.getBoolean("disable-chat-signing")) {
-            event.renderer((source, displayName, message, audience) -> finalChatComponent);
+            event.renderer((source, displayName, message, audience) -> {
+                if (audience instanceof Player viewer && ignoreManager != null) {
+                    if (ignoreManager.isIgnoring(viewer, source)) {
+                        return Component.empty();
+                    }
+                }
+                return finalChatComponent;
+            });
         } else {
             event.setCancelled(true);
             for (Player target : Bukkit.getOnlinePlayers()) {
+                if (ignoreManager != null && ignoreManager.isIgnoring(target, player)) {
+                    continue;
+                }
                 if (!target.equals(player)) {
                     target.sendMessage(finalChatComponent);
                 }
-                player.sendMessage(finalChatComponent);
             }
+            player.sendMessage(finalChatComponent);
         }
 
         if (config.getBoolean("chat-format.sound.enabled", true)) {

@@ -43,6 +43,15 @@ public class MessageCommand implements CommandExecutor {
             return true;
         }
 
+        if (plugin.getIgnoreManager() != null && plugin.getIgnoreManager().isIgnoring(target, player)
+                && !player.hasPermission("awesomechat.ignore.bypass")) {
+            player.sendMessage(plugin.getFormattedConfigString(
+                    "private-messages.errors.messages-disabled",
+                    "&cThat player has private messages disabled!"
+            ));
+            return true;
+        }
+
         if (plugin.getPrivateMessageManager().hasMessagesDisabled(player)) {
             player.sendMessage(plugin.getFormattedConfigString(
                     "private-messages.errors.self-messages-disabled",
