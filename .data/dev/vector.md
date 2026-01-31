@@ -261,7 +261,7 @@ getSocialSpyManager() -> SocialSpyManager
 - [x] Chat channels (staff, admin, vip + custom owner-defined channels)
 - [x] Ignore player system (/ignore with JSON persistence + PM integration)
 - [ ] Staff chat
-- [ ] Chat clear command
+- [x] Chat clear command (/clearchat self/all with bypass and announcement)
 - [ ] Mention/ping system
 - [ ] Chat radius/local chat
 - [ ] Tab list formatting
@@ -301,6 +301,14 @@ getSocialSpyManager() -> SocialSpyManager
 - Files: ChannelManager.java, ChannelCommand.java, ChannelTabCompleter.java
 - Modified: AwesomeChat.java, ChatListener.java, config.yml, plugin.yml
 
+### FEATURE:CHAT_CLEAR_COMMAND
+- Status: COMPLETE
+- Files: ClearChatCommand.java, ClearChatTabCompleter.java
+- Modified: AwesomeChat.java, plugin.yml, config.yml
+- Commands: /clearchat [self|all], aliases: /cc /chatclear
+- Permissions: awesomechat.clearchat (base), awesomechat.clearchat.all (global clear), awesomechat.clearchat.bypass (exempt from clear)
+- Config: line-count, show-announcement, announcement message, console logging
+
 ### FEATURE:IGNORE_PLAYER_SYSTEM
 - Status: COMPLETE
 - Files: IgnoreManager.java, IgnoreCommand.java, IgnoreTabCompleter.java
@@ -327,3 +335,4 @@ getSocialSpyManager() -> SocialSpyManager
 | 2026-01-30 | Mention system design  | User wants @player, @(LP role), @everyone/@here (permission-gated), per-mention-type configurable sounds |
 | 2026-01-30 | Chat channels impl     | Built ChannelManager, ChannelCommand, ChannelTabCompleter. 3 default channels (staff/admin/vip). Toggle mode + one-off send. Per-channel: prefix, format, permission, sound. Integrated with ChatListener routing + reload command. BUILD SUCCESSFUL. |
 | 2026-01-30 | Ignore system impl     | Built IgnoreManager (JSON persistence), IgnoreCommand, IgnoreTabCompleter. Integrated with ChatListener (hide msgs), MessageCommand, ReplyCommand (block PMs). Staff bypass permission. BUILD SUCCESSFUL. |
+| 2026-01-30 | Clearchat impl         | Built ClearChatCommand + ClearChatTabCompleter. self/all modes, bypass perm, configurable lines/announcement/logging. BUILD SUCCESSFUL. |
