@@ -45,6 +45,11 @@ public class AwesomeChatCommand implements CommandExecutor {
             // Reload filter manager
             plugin.reloadFilterModule();
 
+            // Reload channel manager
+            if (plugin.getChannelManager() != null) {
+                plugin.getChannelManager().loadChannels();
+            }
+
             sender.sendMessage(plugin.getChatPrefix() + ChatColor.GREEN + "AwesomeChat config reloaded and AutoBroadcaster restarted!");
             return true;
         }

@@ -215,6 +215,64 @@ chat-format:
 
 
 # ================================================================
+#            Chat Channels System                                =
+# ================================================================
+# Create custom chat channels for different groups.
+# Players join channels with /ch join <channel> or toggle with /ch <channel>
+# Messages in a channel are only visible to players with the channel's permission.
+#
+# Quick usage:
+#   /ch list                    - See available channels
+#   /ch join staff              - Toggle into staff chat
+#   /ch leave                   - Return to global chat
+#   /ch send staff Hello!       - One-off message to staff channel
+#   /ch staff Hello!            - Shorthand for above
+#
+# Permission: awesomechat.channel (base), plus each channel's permission
+channels:
+  staff:
+    display-name: "Staff"
+    prefix: "&8[&c&lSTAFF&8]&r "
+    permission: "awesomechat.channel.staff"
+    format: "{prefix}{player}&7: &f{message}"
+    sound: "BLOCK_NOTE_BLOCK_PLING"
+    volume: 0.5
+    pitch: 1.5
+    auto-join: false
+
+  admin:
+    display-name: "Admin"
+    prefix: "&8[&4&lADMIN&8]&r "
+    permission: "awesomechat.channel.admin"
+    format: "{prefix}{player}&7: &f{message}"
+    sound: "BLOCK_NOTE_BLOCK_BELL"
+    volume: 0.5
+    pitch: 1.0
+    auto-join: false
+
+  vip:
+    display-name: "VIP"
+    prefix: "&8[&6&lVIP&8]&r "
+    permission: "awesomechat.channel.vip"
+    format: "{prefix}{player}&7: &e{message}"
+    sound: "none"
+    volume: 1.0
+    pitch: 1.0
+    auto-join: false
+
+  # Example: open channel anyone can join (empty permission = open)
+  # general:
+  #   display-name: "General"
+  #   prefix: "&8[&aGeneral&8]&r "
+  #   permission: ""
+  #   format: "{prefix}{player}&7: &f{message}"
+  #   sound: "none"
+  #   volume: 1.0
+  #   pitch: 1.0
+  #   auto-join: false
+
+
+# ================================================================
 #            Private Messaging System (PM) Config                =
 # ================================================================
 private-messages:

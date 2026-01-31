@@ -3,6 +3,7 @@ package dev.adf.awesomeChat.listeners;
 import dev.adf.awesomeChat.AwesomeChat;
 import dev.adf.awesomeChat.utils.LuckPermsUtil;
 import dev.adf.awesomeChat.managers.ChatFilterManager;
+import dev.adf.awesomeChat.managers.ChannelManager;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -44,6 +45,18 @@ public class ChatListener implements Listener {
             boolean blocked = filter.checkAndHandle(player, plainMessage, "message");
             if (blocked) {
                 event.setCancelled(true);
+                return;
+            }
+        }
+
+        // Route to channel if player has an active channel
+        ChannelManager channelManager = plugin.getChannelManager();
+        if (channelManager != null && channelManager.hasActiveChannel(player)) {
+            String activeChannel = channelManager.getActiveChannel(player);
+            ChannelManager.ChatChannel channel = channelManager.getChannel(activeChannel);
+            if (channel != null && channelManager.hasAccess(player, channel)) {
+                event.setCancelled(true);
+                channelManager.sendToChannel(player, activeChannel, plainMessage);
                 return;
             }
         }

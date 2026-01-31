@@ -34,6 +34,7 @@ public final class AwesomeChat extends JavaPlugin {
     private ConfigManager configManager;
     private SoundManager soundManager;
     private HoverManager hoverManager;
+    private ChannelManager channelManager;
     private dev.adf.awesomeChat.api.AwesomeChatAPIImpl api;
 
     // misc
@@ -99,6 +100,14 @@ public final class AwesomeChat extends JavaPlugin {
         }
 
         try {
+            channelManager = new ChannelManager(this);
+            getLogger().info("ChannelManager loaded. " + channelManager.getAllChannels().size() + " channels registered.");
+        } catch (Exception e) {
+            getLogger().warning("ChannelManager failed to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
             api = new dev.adf.awesomeChat.api.AwesomeChatAPIImpl(this);
             getLogger().info("AwesomeChatAPI v" + api.getAPIVersion() + " loaded.");
         } catch (Exception e) {
@@ -119,6 +128,8 @@ public final class AwesomeChat extends JavaPlugin {
         getCommand("msgtoggle").setTabCompleter(new MsgToggleTabCompleter());
         getCommand("socialspy").setExecutor(new SocialSpyCommand(this));
         getCommand("socialspy").setTabCompleter(new SocialSpyTabCompleter());
+        getCommand("channel").setExecutor(new ChannelCommand(this));
+        getCommand("channel").setTabCompleter(new ChannelTabCompleter(this));
 
         getLogger().info("Attempting to hook into PlaceholderAPI...");
         getLogger().info("AwesomeChat has been enabled!");
@@ -363,6 +374,10 @@ public final class AwesomeChat extends JavaPlugin {
 
     public HoverManager getHoverManager() {
         return hoverManager;
+    }
+
+    public ChannelManager getChannelManager() {
+        return channelManager;
     }
 
     public dev.adf.awesomeChat.api.AwesomeChatAPI getAPI() {

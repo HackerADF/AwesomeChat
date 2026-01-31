@@ -43,6 +43,12 @@ commands:
     aliases: [sspy]
     permission: awesomechat.socialspy
     permission-message: "You don't have permission to use this command."
+  channel:
+    description: Chat channels - join, leave, toggle, or send messages
+    usage: /channel <list|join|leave|send> [channel] [message]
+    aliases: [ch, chatchannel]
+    permission: awesomechat.channel
+    permission-message: "You don't have permission to use this command."
 permissions:
   awesomechat.use:
     description: Allows use of the /awesomechat command
@@ -53,3 +59,15 @@ permissions:
   awesomechat.broadcast:
     description: Allows the player to broadcast messages in chat
     default: op
+  awesomechat.channel:
+    description: Allows use of the /channel command
+    default: true
+  awesomechat.channel.staff:
+    description: Access to the staff chat channel
+    default: op
+  awesomechat.channel.admin:
+    description: Access to the admin chat channel
+    default: op
+  awesomechat.channel.vip:
+    description: Access to the VIP chat channel
+    default: false
