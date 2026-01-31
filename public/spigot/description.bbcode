@@ -1,0 +1,133 @@
+[CENTER]
+[SIZE=7][B][COLOR=#00BFFF]AwesomeChat[/COLOR][/B][/SIZE]
+[SIZE=4]The all-in-one chat management plugin for Paper servers.[/SIZE]
+
+[IMG]https://img.shields.io/badge/Paper-1.19%2B-blue[/IMG] [IMG]https://img.shields.io/badge/Java-21%2B-orange[/IMG]
+[/CENTER]
+
+[HR][/HR]
+
+[SIZE=5][B][COLOR=#FFD700]Why AwesomeChat?[/COLOR][/B][/SIZE]
+
+Most servers need 3-5 separate plugins to handle chat formatting, filtering, private messaging, and moderation. AwesomeChat replaces them all with one lightweight, well-integrated solution.
+
+[LIST]
+[*][B]Zero bloat[/B] - Every feature is toggleable
+[*][B]Deep LuckPerms integration[/B] - Per-group everything
+[*][B]Adventure API native[/B] - Full MiniMessage and hex color support
+[*][B]Actively maintained[/B] for 1.19+
+[/LIST]
+
+[HR][/HR]
+
+[SIZE=5][B][COLOR=#FFD700]Features[/COLOR][/B][/SIZE]
+
+[SIZE=4][B][COLOR=#00BFFF]Chat Formatting[/COLOR][/B][/SIZE]
+[LIST]
+[*]Per-group chat formats via LuckPerms
+[*]Automatic prefix/suffix integration
+[*]PlaceholderAPI support
+[*]Hex color support ([ICODE]&#RRGGBB[/ICODE])
+[*]MiniMessage formatting (toggleable)
+[*]Permission-based color/style gating
+[/LIST]
+
+[SIZE=4][B][COLOR=#00BFFF]Chat Channels[/COLOR][/B][/SIZE]
+[LIST]
+[*]Create unlimited custom channels (staff, admin, VIP, etc.)
+[*]Per-channel permission, prefix, format, and sound
+[*]Toggle mode or one-off messaging
+[*][ICODE]/ch join staff[/ICODE] or [ICODE]/ch staff Hello![/ICODE]
+[/LIST]
+
+[SIZE=4][B][COLOR=#00BFFF]Chat Filter Engine[/COLOR][/B][/SIZE]
+[LIST]
+[*][B]Cooldown[/B] - Rate limit messages
+[*][B]Spam detection[/B] - Jaro-Winkler similarity algorithm
+[*][B]Banned words[/B] - Wildcard patterns from .txt files
+[*][B]Anti-advertising[/B] - TLD blocking, phrase matching, domain regex
+[*][B]Custom regex rules[/B] - Named rules with your own patterns
+[*][B]Graduated punishments[/B] - warn -> mute -> ban per offense count
+[*][B]Command filtering[/B] - Filters apply to commands too
+[*][B]Violation logging[/B] - File-based logs + per-player records
+[/LIST]
+
+[SIZE=4][B][COLOR=#00BFFF]Private Messaging[/COLOR][/B][/SIZE]
+[LIST]
+[*][ICODE]/msg[/ICODE], [ICODE]/reply[/ICODE], [ICODE]/whisper[/ICODE], and more
+[*]Custom formats and sounds
+[*]Message toggle ([ICODE]/msgtoggle[/ICODE])
+[*]Social spy for staff
+[/LIST]
+
+[SIZE=4][B][COLOR=#00BFFF]Player Ignore[/COLOR][/B][/SIZE]
+[LIST]
+[*][ICODE]/ignore <player>[/ICODE] - Hides their chat and blocks PMs
+[*]Persistent across restarts
+[*]Staff bypass permission
+[/LIST]
+
+[SIZE=4][B][COLOR=#00BFFF]Interactive Messages[/COLOR][/B][/SIZE]
+[LIST]
+[*]Hover text on usernames and messages
+[*]Click events (suggest, execute, copy)
+[*]Per-group configuration
+[*]PlaceholderAPI in hover tooltips
+[/LIST]
+
+[SIZE=4][B][COLOR=#00BFFF]Moderation Tools[/COLOR][/B][/SIZE]
+[LIST]
+[*][ICODE]/clearchat[/ICODE] - Clear chat (self or global)
+[*][ICODE]/mutechat[/ICODE] - Toggle server-wide chat mute
+[*][ICODE]/broadcast[/ICODE] - Formatted announcements with sounds
+[*]Auto-broadcaster with scheduled rotating messages
+[/LIST]
+
+[SIZE=4][B][COLOR=#00BFFF]Sound System[/COLOR][/B][/SIZE]
+[LIST]
+[*]Per-group chat sounds
+[*]Broadcast, PM, and channel sounds
+[*]Configurable sound name, volume, and pitch
+[/LIST]
+
+[SIZE=4][B][COLOR=#00BFFF]Developer API[/COLOR][/B][/SIZE]
+[LIST]
+[*]Public [ICODE]AwesomeChatAPI[/ICODE] interface
+[*]Access player data, violations, and filter checks
+[*]Custom [ICODE]ChatFilterViolationEvent[/ICODE]
+[/LIST]
+
+[HR][/HR]
+
+[SIZE=5][B][COLOR=#FFD700]Requirements[/COLOR][/B][/SIZE]
+
+[LIST]
+[*][B]Server:[/B] Paper 1.19+
+[*][B]Java:[/B] 21+
+[*][B]Required:[/B] [URL='https://luckperms.net']LuckPerms[/URL]
+[*][B]Optional:[/B] [URL='https://www.spigotmc.org/resources/placeholderapi.6245/']PlaceholderAPI[/URL]
+[/LIST]
+
+[HR][/HR]
+
+[SIZE=5][B][COLOR=#FFD700]Commands[/COLOR][/B][/SIZE]
+
+[CODE]
+/awesomechat (/ac)       - Plugin info and reload
+/broadcast               - Send announcements
+/msg (/tell, /w, /pm)    - Private message
+/reply (/r)              - Reply to last PM
+/msgtoggle               - Toggle PMs on/off
+/socialspy (/sspy)       - Monitor private messages
+/channel (/ch)           - Chat channel management
+/ignore (/block)         - Ignore a player
+/clearchat (/cc)         - Clear chat
+/mutechat (/mc)          - Toggle chat mute
+[/CODE]
+
+[HR][/HR]
+
+[SIZE=5][B][COLOR=#FFD700]Support[/COLOR][/B][/SIZE]
+
+[URL='https://discord.gg/Z4gtF25jpC'][B]Join our Discord[/B][/URL]
+Discord: [ICODE]adf.dev[/ICODE]
