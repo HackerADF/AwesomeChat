@@ -61,6 +61,12 @@ commands:
     aliases: [cc, chatclear]
     permission: awesomechat.clearchat
     permission-message: "You don't have permission to use this command."
+  mutechat:
+    description: Toggle global chat mute
+    usage: /mutechat
+    aliases: [chatmute, mc]
+    permission: awesomechat.mutechat
+    permission-message: "You don't have permission to use this command."
 permissions:
   awesomechat.use:
     description: Allows use of the /awesomechat command
@@ -97,4 +103,10 @@ permissions:
     default: op
   awesomechat.clearchat.bypass:
     description: Chat will not be cleared when someone uses /clearchat all
+    default: op
+  awesomechat.mutechat:
+    description: Allows toggling global chat mute
+    default: op
+  awesomechat.mutechat.bypass:
+    description: Allows chatting even when chat is muted
     default: op

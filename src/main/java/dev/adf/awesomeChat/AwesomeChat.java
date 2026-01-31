@@ -39,6 +39,7 @@ public final class AwesomeChat extends JavaPlugin {
     private dev.adf.awesomeChat.api.AwesomeChatAPIImpl api;
 
     // misc
+    private boolean chatMuted = false;
     private final Map<UUID, Long> broadcastCooldowns = new HashMap<>();
     private File autoBroadcasterFile;
     private FileConfiguration autoBroadcasterConfig;
@@ -143,6 +144,7 @@ public final class AwesomeChat extends JavaPlugin {
         getCommand("ignore").setTabCompleter(new IgnoreTabCompleter());
         getCommand("clearchat").setExecutor(new ClearChatCommand(this));
         getCommand("clearchat").setTabCompleter(new ClearChatTabCompleter());
+        getCommand("mutechat").setExecutor(new MuteChatCommand(this));
 
         getLogger().info("Attempting to hook into PlaceholderAPI...");
         getLogger().info("AwesomeChat has been enabled!");
@@ -395,6 +397,15 @@ public final class AwesomeChat extends JavaPlugin {
 
     public IgnoreManager getIgnoreManager() {
         return ignoreManager;
+    }
+
+    public boolean isChatMuted() {
+        return chatMuted;
+    }
+
+    public boolean toggleChatMuted() {
+        chatMuted = !chatMuted;
+        return chatMuted;
     }
 
     public dev.adf.awesomeChat.api.AwesomeChatAPI getAPI() {

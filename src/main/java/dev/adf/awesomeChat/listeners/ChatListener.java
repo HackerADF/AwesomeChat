@@ -40,6 +40,14 @@ public class ChatListener implements Listener {
         if (!config.getBoolean("chat-formatting.enabled")) return;
         String plainMessage = PlainTextComponentSerializer.plainText().serialize(event.message());
 
+        // check if chat is muted
+        if (plugin.isChatMuted() && !player.hasPermission("awesomechat.mutechat.bypass")) {
+            String mutedMsg = plugin.getFormattedConfigString("mutechat.player-message", "&cChat is currently muted.");
+            player.sendMessage(mutedMsg);
+            event.setCancelled(true);
+            return;
+        }
+
         // check the content first before filtering
         ChatFilterManager filter = plugin.getChatFilterManager();
         if (filter != null) {
