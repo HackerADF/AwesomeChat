@@ -606,6 +606,35 @@ chat-formatting:
 
 
 
+# ================================================================
+#            Emoji / Symbol Shortcuts                            =
+# ================================================================
+# Players type :shortcut: and it gets replaced with a symbol.
+# Permission: awesomechat.emoji
+emoji:
+  enabled: false
+  shortcuts:
+    heart: "\u2764"
+    star: "\u2B50"
+    skull: "\u2620"
+    check: "\u2714"
+    cross: "\u2716"
+    fire: "\uD83D\uDD25"
+    smile: "\u263A"
+    sad: "\u2639"
+    arrow: "\u27A4"
+    music: "\u266B"
+    diamond: "\u2666"
+    crown: "\u2654"
+    sword: "\u2694"
+    shield: "\uD83D\uDEE1"
+    wave: "\uD83D\uDC4B"
+    thumbsup: "\uD83D\uDC4D"
+    thumbsdown: "\uD83D\uDC4E"
+    eyes: "\uD83D\uDC40"
+    warning: "\u26A0"
+    sparkle: "\u2728"
+
 # This will disable minecraft's new chat validation system introduced in 1.19
 # This should fix most chat-related errors, if enabled, please ensure that
 # "enforce-secure-profile" in your config is set to false.

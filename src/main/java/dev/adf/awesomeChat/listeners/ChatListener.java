@@ -61,6 +61,20 @@ public class ChatListener implements Listener {
             }
         }
 
+        // Emoji replacement
+        if (config.getBoolean("emoji.enabled", false) && player.hasPermission("awesomechat.emoji")) {
+            org.bukkit.configuration.ConfigurationSection emojiSection = config.getConfigurationSection("emoji.shortcuts");
+            if (emojiSection != null) {
+                for (String key : emojiSection.getKeys(false)) {
+                    String shortcut = ":" + key + ":";
+                    String symbol = emojiSection.getString(key, "");
+                    if (!symbol.isEmpty()) {
+                        plainMessage = plainMessage.replace(shortcut, symbol);
+                    }
+                }
+            }
+        }
+
         // Route to channel if player has an active channel
         ChannelManager channelManager = plugin.getChannelManager();
         if (channelManager != null && channelManager.hasActiveChannel(player)) {
