@@ -110,3 +110,15 @@ permissions:
   awesomechat.mutechat.bypass:
     description: Allows chatting even when chat is muted
     default: op
+  awesomechat.mention.player:
+    description: Can mention individual players with @player
+    default: true
+  awesomechat.mention.role:
+    description: Can mention LuckPerms groups with @(role)
+    default: op
+  awesomechat.mention.everyone:
+    description: Can use @everyone to mention all players
+    default: op
+  awesomechat.mention.here:
+    description: Can use @here to mention all players
+    default: op

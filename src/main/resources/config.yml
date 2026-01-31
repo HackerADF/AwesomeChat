@@ -635,6 +635,54 @@ emoji:
     warning: "\u26A0"
     sparkle: "\u2728"
 
+# ================================================================
+#            Mention / Ping System                               =
+# ================================================================
+# Highlight @mentions in chat and notify mentioned players.
+# Types: @player, @(role), @everyone, @here
+mentions:
+  enabled: false
+  player:
+    enabled: true
+    highlight-color: "&e"
+    sound:
+      name: ENTITY_EXPERIENCE_ORB_PICKUP
+      volume: 1.0
+      pitch: 1.0
+    actionbar:
+      enabled: true
+      message: "&e%sender% mentioned you!"
+  role:
+    enabled: true
+    highlight-color: "&b"
+    sound:
+      name: ENTITY_EXPERIENCE_ORB_PICKUP
+      volume: 1.0
+      pitch: 1.2
+    actionbar:
+      enabled: true
+      message: "&b%sender% mentioned your role!"
+  everyone:
+    enabled: true
+    highlight-color: "&c"
+    sound:
+      name: BLOCK_NOTE_BLOCK_PLING
+      volume: 1.0
+      pitch: 1.0
+    actionbar:
+      enabled: true
+      message: "&c%sender% mentioned @everyone!"
+  here:
+    enabled: true
+    highlight-color: "&c"
+    sound:
+      name: BLOCK_NOTE_BLOCK_PLING
+      volume: 1.0
+      pitch: 0.8
+    actionbar:
+      enabled: true
+      message: "&c%sender% mentioned @here!"
+
 # This will disable minecraft's new chat validation system introduced in 1.19
 # This should fix most chat-related errors, if enabled, please ensure that
 # "enforce-secure-profile" in your config is set to false.

@@ -37,6 +37,7 @@ public final class AwesomeChat extends JavaPlugin {
     private HoverManager hoverManager;
     private ChannelManager channelManager;
     private IgnoreManager ignoreManager;
+    private MentionManager mentionManager;
     private dev.adf.awesomeChat.api.AwesomeChatAPIImpl api;
 
     // misc
@@ -115,6 +116,14 @@ public final class AwesomeChat extends JavaPlugin {
             getLogger().info("IgnoreManager loaded.");
         } catch (Exception e) {
             getLogger().warning("IgnoreManager failed to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
+            mentionManager = new MentionManager(this);
+            getLogger().info("MentionManager loaded.");
+        } catch (Exception e) {
+            getLogger().warning("MentionManager failed to initialize: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -399,6 +408,10 @@ public final class AwesomeChat extends JavaPlugin {
 
     public IgnoreManager getIgnoreManager() {
         return ignoreManager;
+    }
+
+    public MentionManager getMentionManager() {
+        return mentionManager;
     }
 
     public boolean isChatMuted() {

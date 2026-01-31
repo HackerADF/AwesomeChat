@@ -5,6 +5,7 @@ import dev.adf.awesomeChat.utils.LuckPermsUtil;
 import dev.adf.awesomeChat.managers.ChatFilterManager;
 import dev.adf.awesomeChat.managers.ChannelManager;
 import dev.adf.awesomeChat.managers.IgnoreManager;
+import dev.adf.awesomeChat.managers.MentionManager;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -136,6 +137,14 @@ public class ChatListener implements Listener {
         boolean useMiniMessage = globalMiniMessage && playerCanUseMiniMessage;
         boolean permissionBasedFormatting = config.getBoolean("color-codes.permission-based", false);
 
+        // Mention processing (before formatting so highlight codes get processed)
+        MentionManager mentionManager = plugin.getMentionManager();
+        MentionManager.MentionResult mentionResult = null;
+        if (mentionManager != null) {
+            mentionResult = mentionManager.processMentions(player, plainMessage, useMiniMessage);
+            plainMessage = mentionResult.processedMessage;
+        }
+
         String processedMessage;
         if (useMiniMessage) {
             String filtered = permissionBasedFormatting
@@ -199,6 +208,11 @@ public class ChatListener implements Listener {
 
         if (config.getBoolean("chat-format.sound.enabled", true)) {
             plugin.getSoundManager().playChatSound(player);
+        }
+
+        // Send mention notifications (sounds + action bar)
+        if (mentionResult != null && !mentionResult.mentionedPlayers.isEmpty() && mentionManager != null) {
+            mentionManager.sendNotifications(player, mentionResult);
         }
     }
 
