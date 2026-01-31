@@ -48,13 +48,16 @@ public class ChatListener implements Listener {
             return;
         }
 
-        // check the content first before filtering
+        // check the content first before filtering (supports block + censor modes)
         ChatFilterManager filter = plugin.getChatFilterManager();
         if (filter != null) {
-            boolean blocked = filter.checkAndHandle(player, plainMessage, "message");
-            if (blocked) {
+            ChatFilterManager.FilterResult result = filter.checkAndCensor(player, plainMessage, "message");
+            if (result.blocked) {
                 event.setCancelled(true);
                 return;
+            }
+            if (result.censored) {
+                plainMessage = result.censoredMessage;
             }
         }
 

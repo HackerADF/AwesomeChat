@@ -235,6 +235,115 @@ public class ChatFilterManager {
         public static int SPAM_LIMIT;
     }
 
+    public static class FilterResult {
+        public final boolean blocked;
+        public final boolean censored;
+        public final String censoredMessage;
+
+        private FilterResult(boolean blocked, boolean censored, String censoredMessage) {
+            this.blocked = blocked;
+            this.censored = censored;
+            this.censoredMessage = censoredMessage;
+        }
+
+        public static FilterResult pass() { return new FilterResult(false, false, null); }
+        public static FilterResult block() { return new FilterResult(true, false, null); }
+        public static FilterResult censor(String msg) { return new FilterResult(false, true, msg); }
+    }
+
+    public FilterResult checkAndCensor(Player player, String message, String type) {
+        if (bypassEnabled && player.hasPermission("awesomechat.filter.bypass")) return FilterResult.pass();
+
+        FileConfiguration config = plugin.getConfig();
+        String filterMode = config.getString("chat-filter.filter-mode", "block");
+        boolean censorMode = filterMode.equalsIgnoreCase("censor");
+        String censorChar = config.getString("chat-filter.censor-char", "*");
+
+        if (!censorMode) {
+            boolean blocked = checkAndHandle(player, message, type);
+            return blocked ? FilterResult.block() : FilterResult.pass();
+        }
+
+        // In censor mode, replace matched words instead of blocking
+        String censored = message;
+        boolean anyCensored = false;
+
+        // Banned words censor
+        for (String bw : bannedWords) {
+            Pattern p = Pattern.compile("(?i)(^|\\W)(" + Pattern.quote(bw) + ")($|\\W)");
+            Matcher m = p.matcher(censored);
+            if (m.find()) {
+                String replacement = censorChar.repeat(bw.length());
+                censored = censored.replaceAll("(?i)" + Pattern.quote(bw), replacement);
+                anyCensored = true;
+            }
+        }
+
+        // Wildcard patterns censor
+        for (int i = 0; i < wildcardBannedPatterns.size(); i++) {
+            Pattern pat = wildcardBannedPatterns.get(i);
+            String raw = wildcardBannedRaw.get(i);
+            String[] words = censored.split("\\s+");
+            StringBuilder sb = new StringBuilder();
+            for (int w = 0; w < words.length; w++) {
+                if (w > 0) sb.append(" ");
+                if (pat.matcher(words[w]).matches()) {
+                    sb.append(censorChar.repeat(words[w].length()));
+                    anyCensored = true;
+                } else {
+                    sb.append(words[w]);
+                }
+            }
+            censored = sb.toString();
+        }
+
+        // Regex rules censor
+        for (FilterRule rule : rules.values()) {
+            if (rule.regex == null || rule.regex.isEmpty()) continue;
+            try {
+                Pattern p = Pattern.compile(rule.regex, Pattern.CASE_INSENSITIVE);
+                Matcher m = p.matcher(censored);
+                if (m.find()) {
+                    censored = m.replaceAll(matchResult ->
+                            censorChar.repeat(matchResult.group().length()));
+                    anyCensored = true;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // Still apply cooldown/spam as blocking (not censorable)
+        UUID uuid = player.getUniqueId();
+        long now = System.currentTimeMillis();
+        boolean isCommand = type.equalsIgnoreCase("command");
+        String baseCommand = "";
+        if (isCommand && message.startsWith("/")) {
+            baseCommand = message.substring(1).split(" ")[0].toLowerCase();
+        }
+
+        if (config.getBoolean("cooldown.enabled")) {
+            boolean applyCooldown = !isCommand;
+            if (isCommand) {
+                List<String> commands = config.getStringList("cooldown.commands");
+                List<String> whitelist = config.getStringList("cooldown.command-whitelist");
+                applyCooldown = (commands.isEmpty() || commands.contains(baseCommand)) && !whitelist.contains(baseCommand);
+            }
+            if (applyCooldown) {
+                long cooldownTime = config.getLong("cooldown.time-ms");
+                if (lastMessageTime.containsKey(uuid) && now - lastMessageTime.get(uuid) < cooldownTime) {
+                    handleViolation(player, message, "cooldown", "too-fast", type);
+                    return FilterResult.block();
+                }
+                lastMessageTime.put(uuid, now);
+            }
+        }
+
+        if (anyCensored) {
+            return FilterResult.censor(censored);
+        }
+
+        return FilterResult.pass();
+    }
+
     public boolean checkAndHandle(Player player, String message, String type) {
         if (bypassEnabled && player.hasPermission("awesomechat.filter.bypass")) return false;
 

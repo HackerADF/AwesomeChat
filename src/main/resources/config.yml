@@ -402,6 +402,12 @@ chat-filter:
 
   enabled: true
 
+  # Filter mode: "block" cancels the message entirely, "censor" replaces matched words
+  # In censor mode, banned words and regex matches are replaced with the censor-char
+  # Cooldown and spam checks always block regardless of mode
+  filter-mode: "block"     # Options: "block" or "censor"
+  censor-char: "*"         # Character used to replace censored words (e.g., "****")
+
   filter-commands: true
   announce-actions: true
 
