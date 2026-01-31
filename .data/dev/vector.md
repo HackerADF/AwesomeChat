@@ -259,7 +259,7 @@ getSocialSpyManager() -> SocialSpyManager
 - [ ] bstats metrics (dependency declared, not integrated)
 - [ ] PlaceholderAPI expansion registration (commented out)
 - [x] Chat channels (staff, admin, vip + custom owner-defined channels)
-- [ ] Ignore player system
+- [x] Ignore player system (/ignore with JSON persistence + PM integration)
 - [ ] Staff chat
 - [ ] Chat clear command
 - [ ] Mention/ping system
@@ -301,6 +301,14 @@ getSocialSpyManager() -> SocialSpyManager
 - Files: ChannelManager.java, ChannelCommand.java, ChannelTabCompleter.java
 - Modified: AwesomeChat.java, ChatListener.java, config.yml, plugin.yml
 
+### FEATURE:IGNORE_PLAYER_SYSTEM
+- Status: COMPLETE
+- Files: IgnoreManager.java, IgnoreCommand.java, IgnoreTabCompleter.java
+- Modified: AwesomeChat.java, ChatListener.java, MessageCommand.java, ReplyCommand.java, plugin.yml
+- Commands: /ignore <player> (toggle), /ignore list
+- Persistence: JSON per-player in data/ignores/<uuid>.json
+- Integration: hides chat messages, blocks PMs (msg + reply), staff bypass via awesomechat.ignore.bypass
+
 ### FEATURE:MENTION_PING_SYSTEM
 - Status: APPROVED (modified)
 - Priority: TBD
@@ -318,3 +326,4 @@ getSocialSpyManager() -> SocialSpyManager
 | 2026-01-30 | Initial codebase scan  | Full project indexed. 28 Java source files, 3 YAML configs, 4 filter txt files. Core architecture: manager pattern with event-driven chat processing. Paper-native using Adventure API. |
 | 2026-01-30 | Mention system design  | User wants @player, @(LP role), @everyone/@here (permission-gated), per-mention-type configurable sounds |
 | 2026-01-30 | Chat channels impl     | Built ChannelManager, ChannelCommand, ChannelTabCompleter. 3 default channels (staff/admin/vip). Toggle mode + one-off send. Per-channel: prefix, format, permission, sound. Integrated with ChatListener routing + reload command. BUILD SUCCESSFUL. |
+| 2026-01-30 | Ignore system impl     | Built IgnoreManager (JSON persistence), IgnoreCommand, IgnoreTabCompleter. Integrated with ChatListener (hide msgs), MessageCommand, ReplyCommand (block PMs). Staff bypass permission. BUILD SUCCESSFUL. |
