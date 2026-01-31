@@ -215,6 +215,61 @@ chat-format:
 
 
 # ================================================================
+#            Join / Leave / MOTD Messages                        =
+# ================================================================
+# Customizable join, leave, and first-join messages.
+# Supports per-group formatting, PlaceholderAPI, sounds, and vanish.
+join-leave:
+  enabled: false  # Set to true to enable custom join/leave messages
+
+  join-message: "&8[&a+&8] &7{player}"
+  leave-message: "&8[&c-&8] &7{player}"
+
+  # Hide join/leave for vanished players (EssentialsX)
+  hide-vanished: true
+
+  # First join message
+  first-join:
+    enabled: true
+    message: "&e&lWelcome &b{player} &e&lto the server for the first time!"
+
+  # Per-group messages (uses LuckPerms groups)
+  per-group:
+    enabled: false
+    groups:
+      owner:
+        join: "&8[&a+&8] &c&lOwner &f{player} &7has joined"
+        leave: "&8[&c-&8] &c&lOwner &f{player} &7has left"
+      admin:
+        join: "&8[&a+&8] &6Admin &f{player} &7has joined"
+        leave: "&8[&c-&8] &6Admin &f{player} &7has left"
+      default:
+        join: "&8[&a+&8] &7{player}"
+        leave: "&8[&c-&8] &7{player}"
+
+  # Sounds
+  join-sound:
+    name: "none"  # Set to a Sound enum name to enable
+    volume: 1.0
+    pitch: 1.0
+  leave-sound:
+    name: "none"
+    volume: 1.0
+    pitch: 1.0
+
+  # Message of the day shown to joining players
+  motd:
+    enabled: false
+    lines:
+      - ""
+      - "&8&l&m[                                                 ]"
+      - "&7  Welcome to &b&lYour Server&7!"
+      - "&7  Type &e/help &7to get started."
+      - "&8&l&m[                                                 ]"
+      - ""
+
+
+# ================================================================
 #            Chat Channels System                                =
 # ================================================================
 # Create custom chat channels for different groups.

@@ -3,6 +3,7 @@ package dev.adf.awesomeChat;
 import dev.adf.awesomeChat.commands.*;
 import dev.adf.awesomeChat.listeners.ChatListener;
 import dev.adf.awesomeChat.listeners.CommandListener;
+import dev.adf.awesomeChat.listeners.JoinLeaveListener;
 import dev.adf.awesomeChat.managers.*;
 
 import org.bukkit.Bukkit;
@@ -127,6 +128,7 @@ public final class AwesomeChat extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new ChatListener(this), this);
         getServer().getPluginManager().registerEvents(new CommandListener(this), this);
+        getServer().getPluginManager().registerEvents(new JoinLeaveListener(this), this);
 
         getCommand("awesomechat").setExecutor(new AwesomeChatCommand(this));
         getCommand("awesomechat").setTabCompleter(new AwesomeChatTabCompleter());
