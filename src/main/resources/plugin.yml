@@ -55,6 +55,12 @@ commands:
     aliases: [block]
     permission: awesomechat.ignore
     permission-message: "You don't have permission to use this command."
+  clearchat:
+    description: Clear the chat for yourself or all players
+    usage: /clearchat [self|all]
+    aliases: [cc, chatclear]
+    permission: awesomechat.clearchat
+    permission-message: "You don't have permission to use this command."
 permissions:
   awesomechat.use:
     description: Allows use of the /awesomechat command
@@ -82,4 +88,13 @@ permissions:
     default: true
   awesomechat.ignore.bypass:
     description: Messages from this player cannot be ignored
+    default: op
+  awesomechat.clearchat:
+    description: Allows use of /clearchat (self mode)
+    default: true
+  awesomechat.clearchat.all:
+    description: Allows clearing chat for all players
+    default: op
+  awesomechat.clearchat.bypass:
+    description: Chat will not be cleared when someone uses /clearchat all
     default: op

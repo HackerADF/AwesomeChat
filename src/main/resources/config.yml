@@ -313,6 +313,14 @@ private-messages:
 # ================================================================
 #            Configuration for commands are below:               =
 # ================================================================
+
+# Command /clearchat
+clearchat:
+  line-count: 100                 # Number of blank lines to send
+  show-announcement: true         # Show "Chat cleared by X" after clear
+  announcement: "&7Chat has been cleared by &b{player}&7."
+  log: true                       # Log who cleared chat to console
+
 # Command /broadcast
 broadcast: # Command Permission: awesomechat.broadcast
   enabled: true

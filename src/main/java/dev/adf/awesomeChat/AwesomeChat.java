@@ -141,6 +141,8 @@ public final class AwesomeChat extends JavaPlugin {
         getCommand("channel").setTabCompleter(new ChannelTabCompleter(this));
         getCommand("ignore").setExecutor(new IgnoreCommand(this));
         getCommand("ignore").setTabCompleter(new IgnoreTabCompleter());
+        getCommand("clearchat").setExecutor(new ClearChatCommand(this));
+        getCommand("clearchat").setTabCompleter(new ClearChatTabCompleter());
 
         getLogger().info("Attempting to hook into PlaceholderAPI...");
         getLogger().info("AwesomeChat has been enabled!");
