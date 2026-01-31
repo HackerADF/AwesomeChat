@@ -36,6 +36,7 @@ A powerful, fully-featured chat management plugin for Paper/Spigot servers (1.19
 - **Anti-advertising** - TLD blocking, phrase blocking, domain regex
 - **Custom regex rules** - Named rules with configurable patterns
 - **Graduated punishments** - Escalating actions (warn, mute, ban) per offense count
+- **Censor mode** - Replace bad words with asterisks instead of blocking (configurable)
 - **Command filtering** - Apply filters to commands, not just chat
 - **Bypass permission** - Staff can bypass all filters
 - **Violation logging** - File-based logs + per-player JSON violation records
@@ -54,6 +55,20 @@ A powerful, fully-featured chat management plugin for Paper/Spigot servers (1.19
 - **PM integration** - Ignored players can't send you private messages
 - **Staff bypass** - Players with `awesomechat.ignore.bypass` can't be ignored
 - **List view** - `/ignore list` shows all currently ignored players
+
+### Emoji Shortcuts
+- **`:shortcode:` replacement** - Type `:heart:`, `:star:`, `:fire:` etc. in chat
+- **20 built-in emojis** - Common symbols included out of the box
+- **Fully configurable** - Add, remove, or change shortcuts in `config.yml`
+- **Permission-gated** - Requires `awesomechat.emoji`
+
+### Join/Leave Messages
+- **Per-group messages** - Different join/leave messages per LuckPerms group
+- **First join** - Special message for new players
+- **MOTD** - Send welcome lines to players on join
+- **Sounds** - Configurable join/leave sounds
+- **PlaceholderAPI support** - Dynamic placeholders in join/leave messages
+- **Vanish support** - Hides messages for vanished players (EssentialsX)
 
 ### Interactive Messages
 - **Hover text** - Per-group and global hover tooltips on usernames and messages
@@ -126,6 +141,7 @@ A powerful, fully-featured chat management plugin for Paper/Spigot servers (1.19
 | `awesomechat.filter.bypass` | OP | Bypass chat filter |
 | `awesomechat.filter.notify` | OP | Receive filter alerts |
 | `awesomechat.moderator` | OP | API moderator access |
+| `awesomechat.emoji` | true | Use emoji shortcuts |
 | `awesomechat.format.minimessage` | OP | Use MiniMessage tags |
 | `awesomechat.styling.*` | - | Per-code formatting permissions |
 
@@ -141,6 +157,9 @@ All settings are in `config.yml`. Key sections:
 - **`clickable-messages`** - Click action configuration
 - **`broadcast`** - Broadcast format and sound
 - **`clearchat`** - Chat clear settings
+- **`mutechat`** - Mute chat messages and configuration
+- **`join-leave`** - Join/leave messages, first join, MOTD, sounds
+- **`emoji`** - Emoji shortcut definitions
 
 Auto-broadcaster messages are configured separately in `AutoBroadcaster.yml`.
 

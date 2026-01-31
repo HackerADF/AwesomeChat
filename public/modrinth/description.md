@@ -27,6 +27,7 @@ Create unlimited custom chat channels (staff, admin, VIP, or anything you want).
 Built-in multi-layer filter pipeline:
 - **Cooldown** -- Rate limit messages
 - **Spam detection** -- Jaro-Winkler similarity algorithm catches repeated messages
+- **Censor mode** -- Replace bad words with asterisks instead of blocking
 - **Banned words** -- Wildcard patterns loaded from `.txt` files
 - **Anti-advertising** -- TLD blocking, phrase matching, domain regex
 - **Custom regex rules** -- Create named rules with your own patterns
@@ -38,6 +39,12 @@ Built-in multi-layer filter pipeline:
 
 ### Player Ignore
 `/ignore <player>` hides their chat messages and blocks their PMs. Persists across restarts. Staff bypass available.
+
+### Emoji Shortcuts
+Type `:heart:`, `:star:`, `:fire:` and more in chat to insert unicode symbols. 20 built-in shortcuts, fully configurable, and permission-gated via `awesomechat.emoji`.
+
+### Join/Leave Messages
+Per-group join/leave messages with first-join support, MOTD lines, sounds, PlaceholderAPI placeholders, and EssentialsX vanish integration. Fully toggleable.
 
 ### Interactive Messages
 Hover text and click events on chat messages. Per-group and per-component (username vs message) configuration. Supports suggest command, run command, and copy to clipboard.
