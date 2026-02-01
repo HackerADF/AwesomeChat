@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'dev.adf'
-version = '1.0.6-DEV'
+version = '1.0.7-DEV'
 
 repositories {
     mavenCentral()
