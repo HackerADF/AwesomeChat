@@ -38,6 +38,7 @@ public final class AwesomeChat extends JavaPlugin {
     private ChannelManager channelManager;
     private IgnoreManager ignoreManager;
     private MentionManager mentionManager;
+    private ItemDisplayManager itemDisplayManager;
     private dev.adf.awesomeChat.api.AwesomeChatAPIImpl api;
 
     // misc
@@ -128,6 +129,14 @@ public final class AwesomeChat extends JavaPlugin {
         }
 
         try {
+            itemDisplayManager = new ItemDisplayManager(this);
+            getLogger().info("ItemDisplayManager loaded.");
+        } catch (Exception e) {
+            getLogger().warning("ItemDisplayManager failed to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
             api = new dev.adf.awesomeChat.api.AwesomeChatAPIImpl(this);
             getLogger().info("AwesomeChatAPI v" + api.getAPIVersion() + " loaded.");
         } catch (Exception e) {
@@ -138,6 +147,7 @@ public final class AwesomeChat extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new ChatListener(this), this);
         getServer().getPluginManager().registerEvents(new CommandListener(this), this);
         getServer().getPluginManager().registerEvents(new JoinLeaveListener(this), this);
+        getServer().getPluginManager().registerEvents(new dev.adf.awesomeChat.listeners.ItemDisplayListener(this), this);
 
         getCommand("awesomechat").setExecutor(new AwesomeChatCommand(this));
         getCommand("awesomechat").setTabCompleter(new AwesomeChatTabCompleter());
@@ -412,6 +422,10 @@ public final class AwesomeChat extends JavaPlugin {
 
     public MentionManager getMentionManager() {
         return mentionManager;
+    }
+
+    public ItemDisplayManager getItemDisplayManager() {
+        return itemDisplayManager;
     }
 
     public boolean isChatMuted() {

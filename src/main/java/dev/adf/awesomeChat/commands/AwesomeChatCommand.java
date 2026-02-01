@@ -24,6 +24,23 @@ public class AwesomeChatCommand implements CommandExecutor {
             return true;
         }
 
+        // Handle internal "_view" subcommand (snapshot viewer from item display clicks)
+        if (args[0].equalsIgnoreCase("_view")) {
+            if (!(sender instanceof org.bukkit.entity.Player player)) {
+                return true;
+            }
+            if (args.length < 2) return true;
+            try {
+                java.util.UUID snapshotId = java.util.UUID.fromString(args[1]);
+                dev.adf.awesomeChat.managers.ItemDisplayManager manager = plugin.getItemDisplayManager();
+                if (manager != null) {
+                    manager.openSnapshot(player, snapshotId);
+                }
+            } catch (IllegalArgumentException ignored) {
+            }
+            return true;
+        }
+
         // Handle "/awesomechat reload"
         if (args[0].equalsIgnoreCase("reload")) {
             if (!sender.hasPermission("awesomechat.reload")) {

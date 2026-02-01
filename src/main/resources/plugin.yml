@@ -122,3 +122,15 @@ permissions:
   awesomechat.mention.here:
     description: Can use @here to mention all players
     default: op
+  awesomechat.display.item:
+    description: Allows showing held items in chat with [item] or [hand]
+    default: true
+  awesomechat.display.inventory:
+    description: Allows showing inventory snapshots in chat with [inventory] or [inv]
+    default: true
+  awesomechat.display.enderchest:
+    description: Allows showing ender chest in chat with [enderchest] or [echest]
+    default: op
+  awesomechat.display.command:
+    description: Allows showing clickable commands in chat with [/command]
+    default: true

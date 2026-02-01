@@ -6,6 +6,7 @@ import dev.adf.awesomeChat.managers.ChatFilterManager;
 import dev.adf.awesomeChat.managers.ChannelManager;
 import dev.adf.awesomeChat.managers.IgnoreManager;
 import dev.adf.awesomeChat.managers.MentionManager;
+import dev.adf.awesomeChat.managers.ItemDisplayManager;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -145,6 +146,27 @@ public class ChatListener implements Listener {
             plainMessage = mentionResult.processedMessage;
         }
 
+        // Item display processing (before color formatting so triggers are detected in plain text)
+        ItemDisplayManager displayManager = plugin.getItemDisplayManager();
+        Component itemDisplayComponent = null;
+        if (displayManager != null && displayManager.hasTriggers(plainMessage)) {
+            final boolean mm = useMiniMessage;
+            final boolean pb = permissionBasedFormatting;
+            itemDisplayComponent = displayManager.buildRichMessageComponent(player, plainMessage, text -> {
+                if (mm) {
+                    String filtered = pb
+                        ? dev.adf.awesomeChat.utils.ChatFormatPermissionUtil.filterMiniMessageByPermission(player, text)
+                        : text;
+                    return miniMessage.deserialize(convertToMiniMessage(filtered));
+                } else {
+                    String filtered = pb
+                        ? dev.adf.awesomeChat.utils.ChatFormatPermissionUtil.filterByPermission(player, text)
+                        : text;
+                    return Component.text(formatColors(filtered));
+                }
+            });
+        }
+
         String processedMessage;
         if (useMiniMessage) {
             String filtered = permissionBasedFormatting
@@ -180,7 +202,8 @@ public class ChatListener implements Listener {
             suffix,
             player.getName(),
             processedMessage,
-            useMiniMessage
+            useMiniMessage,
+            itemDisplayComponent
         );
         final Component finalChatComponent = chatComponent;
         IgnoreManager ignoreManager = plugin.getIgnoreManager();
@@ -269,7 +292,8 @@ public class ChatListener implements Listener {
             String suffix,
             String playerName,
             String processedMessage,
-            boolean useMiniMessage
+            boolean useMiniMessage,
+            Component richMessage
     ) {
         FileConfiguration config = plugin.getPluginConfig();
         boolean hoverEnabled = config.getBoolean("hoverable-messages.enabled");
@@ -278,7 +302,10 @@ public class ChatListener implements Listener {
         Component usernameComponent = Component.text(playerName);
         Component messageComponent;
 
-        if (useMiniMessage) {
+        // Use rich message component (from item display) if available, otherwise build normally
+        if (richMessage != null) {
+            messageComponent = richMessage;
+        } else if (useMiniMessage) {
             messageComponent = miniMessage.deserialize(processedMessage);
         } else {
             messageComponent = Component.text(processedMessage);
@@ -297,18 +324,21 @@ public class ChatListener implements Listener {
                 usernameComponent = applyClickEvent(usernameComponent, usernameClickAction, usernameClickType);
             }
 
-            Component messageHover = plugin.getHoverManager().getMessageHover(player);
-            if (messageHover != null && !messageHover.equals(Component.empty())) {
-                messageComponent = messageComponent.hoverEvent(HoverEvent.showText(messageHover));
-            }
+            // Only apply message hover/click when not using rich message (item display has its own events)
+            if (richMessage == null) {
+                Component messageHover = plugin.getHoverManager().getMessageHover(player);
+                if (messageHover != null && !messageHover.equals(Component.empty())) {
+                    messageComponent = messageComponent.hoverEvent(HoverEvent.showText(messageHover));
+                }
 
-            String messageClickAction = plugin.getHoverManager().getClickAction(playerGroup, "message");
-            String messageClickType = plugin.getHoverManager().getClickType(playerGroup, "message");
-            if (messageClickAction != null) {
-                messageClickAction = messageClickAction
-                        .replace("%player%", playerName)
-                        .replace("%message%", PlainTextComponentSerializer.plainText().serialize(messageComponent));
-                messageComponent = applyClickEvent(messageComponent, messageClickAction, messageClickType);
+                String messageClickAction = plugin.getHoverManager().getClickAction(playerGroup, "message");
+                String messageClickType = plugin.getHoverManager().getClickType(playerGroup, "message");
+                if (messageClickAction != null) {
+                    messageClickAction = messageClickAction
+                            .replace("%player%", playerName)
+                            .replace("%message%", PlainTextComponentSerializer.plainText().serialize(messageComponent));
+                    messageComponent = applyClickEvent(messageComponent, messageClickAction, messageClickType);
+                }
             }
         } else if (clickEnabled) {
             String clickCommand = config.getString("clickable-messages.command", "/msg %player% ").replace("%player%", playerName);

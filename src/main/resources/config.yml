@@ -683,6 +683,30 @@ mentions:
       enabled: true
       message: "&c%sender% mentioned @here!"
 
+# ================================================================
+#            Item Display System                                  =
+# ================================================================
+# Players type [item], [inventory], [enderchest], or [/command] in chat
+# to display interactive items. Other players can hover to see item
+# tooltips or click to view inventory snapshots.
+#
+# Triggers:
+#   [item] or [hand]         - Show held item with hover tooltip
+#   [inventory] or [inv]     - Clickable link to view player's inventory
+#   [enderchest] or [echest] - Clickable link to view ender chest
+#   [/command]               - Clickable command suggestion
+#
+# Permissions:
+#   awesomechat.display.item       - Use [item]/[hand]
+#   awesomechat.display.inventory  - Use [inventory]/[inv]
+#   awesomechat.display.enderchest - Use [enderchest]/[echest]/[ec]
+#   awesomechat.display.command    - Use [/command]
+item-display:
+  enabled: false
+  snapshot-ttl-seconds: 300       # How long inventory snapshots remain viewable
+  expired-message: "&cThis inventory snapshot has expired."
+
+
 # This will disable minecraft's new chat validation system introduced in 1.19
 # This should fix most chat-related errors, if enabled, please ensure that
 # "enforce-secure-profile" in your config is set to false.
