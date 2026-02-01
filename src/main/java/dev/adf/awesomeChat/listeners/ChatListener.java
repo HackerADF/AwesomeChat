@@ -14,6 +14,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -32,6 +33,11 @@ public class ChatListener implements Listener {
 
     private final AwesomeChat plugin;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
+    private static final LegacyComponentSerializer LEGACY_SERIALIZER =
+        LegacyComponentSerializer.builder()
+            .hexColors()
+            .character('\u00a7')
+            .build();
 
     public ChatListener(AwesomeChat plugin) {
         this.plugin = plugin;
@@ -179,7 +185,7 @@ public class ChatListener implements Listener {
                     String filtered = pb
                         ? dev.adf.awesomeChat.utils.ChatFormatPermissionUtil.filterByPermission(player, text)
                         : text;
-                    return Component.text(formatColors(filtered));
+                    return deserializeLegacy(formatColors(filtered));
                 }
             });
         }
@@ -304,6 +310,10 @@ public class ChatListener implements Listener {
         return ChatColor.translateAlternateColorCodes('&', sb.toString());
     }
 
+    public static Component deserializeLegacy(String formattedMessage) {
+        return LEGACY_SERIALIZER.deserialize(formattedMessage != null ? formattedMessage : "");
+    }
+
 
     private static final Pattern LEGACY_RGB = Pattern.compile("&x(&[A-Fa-f0-9]){6}");
     private String convertToMiniMessage(String msg) {
@@ -376,7 +386,7 @@ public class ChatListener implements Listener {
         } else if (useMiniMessage) {
             messageComponent = miniMessage.deserialize(processedMessage);
         } else {
-            messageComponent = Component.text(processedMessage);
+            messageComponent = deserializeLegacy(processedMessage);
         }
 
         if (hoverEnabled) {
@@ -441,7 +451,7 @@ public class ChatListener implements Listener {
         int messageIndex = format.indexOf(messagePlaceholder);
 
         if (usernameIndex == -1 && messageIndex == -1) {
-            return Component.text(formatColors(format));
+            return deserializeLegacy(formatColors(format));
         }
 
         Component result = Component.empty();
@@ -449,28 +459,28 @@ public class ChatListener implements Listener {
 
         if (usernameIndex != -1 && (messageIndex == -1 || usernameIndex < messageIndex)) {
             if (usernameIndex > 0) {
-                result = result.append(Component.text(formatColors(format.substring(0, usernameIndex))));
+                result = result.append(deserializeLegacy(formatColors(format.substring(0, usernameIndex))));
             }
             result = result.append(usernameComponent);
             lastIndex = usernameIndex + usernamePlaceholder.length();
 
             if (messageIndex != -1) {
                 if (messageIndex > lastIndex) {
-                    result = result.append(Component.text(formatColors(format.substring(lastIndex, messageIndex))));
+                    result = result.append(deserializeLegacy(formatColors(format.substring(lastIndex, messageIndex))));
                 }
                 result = result.append(messageComponent);
                 lastIndex = messageIndex + messagePlaceholder.length();
             }
         } else if (messageIndex != -1) {
             if (messageIndex > 0) {
-                result = result.append(Component.text(formatColors(format.substring(0, messageIndex))));
+                result = result.append(deserializeLegacy(formatColors(format.substring(0, messageIndex))));
             }
             result = result.append(messageComponent);
             lastIndex = messageIndex + messagePlaceholder.length();
 
             if (usernameIndex != -1 && usernameIndex > messageIndex) {
                 if (usernameIndex > lastIndex) {
-                    result = result.append(Component.text(formatColors(format.substring(lastIndex, usernameIndex))));
+                    result = result.append(deserializeLegacy(formatColors(format.substring(lastIndex, usernameIndex))));
                 }
                 result = result.append(usernameComponent);
                 lastIndex = usernameIndex + usernamePlaceholder.length();
@@ -478,7 +488,7 @@ public class ChatListener implements Listener {
         }
 
         if (lastIndex < format.length()) {
-            result = result.append(Component.text(formatColors(format.substring(lastIndex))));
+            result = result.append(deserializeLegacy(formatColors(format.substring(lastIndex))));
         }
 
         return result;
