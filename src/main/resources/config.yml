@@ -591,22 +591,6 @@ messages:
 
 
 # ================================================================
-#             Additional settings to configure:                  =
-# ================================================================
-
-# MiniMessage formatting, see "https://docs.advntr.dev/minimessage/index.html" for more details.
-# Players need awesomechat.format.minimessage permission to use MiniMessage
-# Advanced tags like <click>, <insertion>, <hover> require awesomechat.format.minimessage.advanced
-minimessage:
-  enabled: false
-
-# Enable/Disable chat formatting
-chat-formatting:
-  enabled: true
-
-
-
-# ================================================================
 #            Emoji / Symbol Shortcuts                            =
 # ================================================================
 # Players type :shortcut: and it gets replaced with a symbol.
@@ -778,6 +762,21 @@ disable-chat-signing: false
 api:
   enabled: true
   moderator-permission: "awesomechat.moderator"
+
+
+# ================================================================
+#             Additional settings to configure:                  =
+# ================================================================
+
+# MiniMessage formatting, see "https://docs.advntr.dev/minimessage/index.html" for more details.
+# Players need awesomechat.format.minimessage permission to use MiniMessage
+# Advanced tags like <click>, <insertion>, <hover> require awesomechat.format.minimessage.advanced
+minimessage:
+  enabled: false
+
+# Enable/Disable chat formatting
+chat-formatting:
+  enabled: true
 
 
 # DO NOT TOUCH
