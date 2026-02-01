@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import java.util.List;
 
 import static dev.adf.awesomeChat.listeners.ChatListener.formatColors;
+import static dev.adf.awesomeChat.listeners.ChatListener.deserializeLegacy;
 
 public class HoverManager {
 
@@ -126,7 +127,7 @@ public class HoverManager {
                 coloredLine = PlaceholderAPI.setPlaceholders(player, coloredLine);
             }
 
-            hoverText = hoverText.append(Component.text(coloredLine));
+            hoverText = hoverText.append(deserializeLegacy(coloredLine));
             if (i < hoverLines.size() - 1) {
                 hoverText = hoverText.append(Component.newline());
             }
