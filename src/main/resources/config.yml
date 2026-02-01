@@ -684,6 +684,29 @@ mentions:
       message: "&c%sender% mentioned @here!"
 
 # ================================================================
+#            Chat Radius / Local Chat                             =
+# ================================================================
+# When enabled, players can only see chat from players within a
+# configurable block distance. Shout prefix (default: !) sends
+# messages server-wide. Per-group radii let staff have global range.
+#
+# Set a group's radius to -1 for unlimited/global range.
+chat-radius:
+  enabled: false
+  default-radius: 100             # blocks (distance to hear chat)
+  cross-world: false              # whether chat crosses worlds
+  shout-prefix: "!"               # prefix for server-wide messages
+  shout-format: "&c[SHOUT] &r"   # prepended to shout messages
+  per-group:
+    enabled: false
+    groups:
+      owner: -1                   # -1 = unlimited range
+      admin: -1
+      moderator: 500
+      default: 100
+
+
+# ================================================================
 #            Item Display System                                  =
 # ================================================================
 # Players type [item], [inventory], [enderchest], or [/command] in chat

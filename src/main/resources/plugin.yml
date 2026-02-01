@@ -122,6 +122,9 @@ permissions:
   awesomechat.mention.here:
     description: Can use @here to mention all players
     default: op
+  awesomechat.chat.shout:
+    description: Allows using the shout prefix to send server-wide messages when chat radius is active
+    default: true
   awesomechat.display.item:
     description: Allows showing held items in chat with [item] or [hand]
     default: true

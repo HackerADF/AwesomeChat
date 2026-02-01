@@ -7,6 +7,7 @@ import dev.adf.awesomeChat.managers.ChannelManager;
 import dev.adf.awesomeChat.managers.IgnoreManager;
 import dev.adf.awesomeChat.managers.MentionManager;
 import dev.adf.awesomeChat.managers.ItemDisplayManager;
+import dev.adf.awesomeChat.managers.ChatRadiusManager;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -77,6 +78,16 @@ public class ChatListener implements Listener {
             }
         }
 
+        // Chat radius: detect shout and strip prefix
+        ChatRadiusManager radiusManager = plugin.getChatRadiusManager();
+        boolean isShout = false;
+        if (radiusManager != null && radiusManager.isEnabled()) {
+            if (radiusManager.isShout(plainMessage) && player.hasPermission("awesomechat.chat.shout")) {
+                isShout = true;
+                plainMessage = radiusManager.stripShout(plainMessage);
+            }
+        }
+
         // Route to channel if player has an active channel
         ChannelManager channelManager = plugin.getChannelManager();
         if (channelManager != null && channelManager.hasActiveChannel(player)) {
@@ -121,6 +132,11 @@ public class ChatListener implements Listener {
             if (groupFormat != null) {
                 chatFormat = groupFormat;
             }
+        }
+
+        // Prepend shout format tag if this is a shout message
+        if (isShout && radiusManager != null) {
+            chatFormat = radiusManager.getShoutFormat() + chatFormat;
         }
 
         String metaColor = LuckPermsUtil.getChatMeta(player, "chat-color");
@@ -206,11 +222,16 @@ public class ChatListener implements Listener {
             itemDisplayComponent
         );
         final Component finalChatComponent = chatComponent;
+        final boolean radiusEnabled = radiusManager != null && radiusManager.isEnabled();
+        final boolean finalIsShout = isShout;
         IgnoreManager ignoreManager = plugin.getIgnoreManager();
         if (!config.getBoolean("disable-chat-signing")) {
             event.renderer((source, displayName, message, audience) -> {
-                if (audience instanceof Player viewer && ignoreManager != null) {
-                    if (ignoreManager.isIgnoring(viewer, source)) {
+                if (audience instanceof Player viewer) {
+                    if (ignoreManager != null && ignoreManager.isIgnoring(viewer, source)) {
+                        return Component.empty();
+                    }
+                    if (radiusEnabled && !finalIsShout && !radiusManager.isInRange(source, viewer)) {
                         return Component.empty();
                     }
                 }
@@ -220,6 +241,9 @@ public class ChatListener implements Listener {
             event.setCancelled(true);
             for (Player target : Bukkit.getOnlinePlayers()) {
                 if (ignoreManager != null && ignoreManager.isIgnoring(target, player)) {
+                    continue;
+                }
+                if (radiusEnabled && !finalIsShout && !radiusManager.isInRange(player, target)) {
                     continue;
                 }
                 if (!target.equals(player)) {

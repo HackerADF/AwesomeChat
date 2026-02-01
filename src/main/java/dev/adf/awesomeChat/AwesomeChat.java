@@ -39,6 +39,7 @@ public final class AwesomeChat extends JavaPlugin {
     private IgnoreManager ignoreManager;
     private MentionManager mentionManager;
     private ItemDisplayManager itemDisplayManager;
+    private ChatRadiusManager chatRadiusManager;
     private dev.adf.awesomeChat.api.AwesomeChatAPIImpl api;
 
     // misc
@@ -133,6 +134,14 @@ public final class AwesomeChat extends JavaPlugin {
             getLogger().info("ItemDisplayManager loaded.");
         } catch (Exception e) {
             getLogger().warning("ItemDisplayManager failed to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
+            chatRadiusManager = new ChatRadiusManager(this);
+            getLogger().info("ChatRadiusManager loaded.");
+        } catch (Exception e) {
+            getLogger().warning("ChatRadiusManager failed to initialize: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -426,6 +435,10 @@ public final class AwesomeChat extends JavaPlugin {
 
     public ItemDisplayManager getItemDisplayManager() {
         return itemDisplayManager;
+    }
+
+    public ChatRadiusManager getChatRadiusManager() {
+        return chatRadiusManager;
     }
 
     public boolean isChatMuted() {
