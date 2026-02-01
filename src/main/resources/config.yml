@@ -730,6 +730,31 @@ item-display:
   expired-message: "&cThis inventory snapshot has expired."
 
 
+# ================================================================
+#            Chat Logging to Database                             =
+# ================================================================
+# Log all chat messages to SQLite or MySQL for staff review.
+# Use /chatlogs <player> [time:duration] [after:duration] [before:duration]
+#
+# Duration format: 30s, 5m, 12h, 1d, 2w
+# Permissions: awesomechat.chatlogs
+chat-logging:
+  enabled: false
+  storage-type: "sqlite"          # "sqlite" or "mysql"
+  sqlite:
+    file: "chat-logs.db"
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "awesomechat"
+    username: "root"
+    password: ""
+  page-size: 10                   # Messages per page in /chatlogs
+  log-format: "&7{timestamp} &8- &f{player}&7: &f{message}"
+  log-filtered: true              # Also log messages that were filtered/censored
+  log-commands: false             # Log filtered commands (not yet implemented)
+
+
 # This will disable minecraft's new chat validation system introduced in 1.19
 # This should fix most chat-related errors, if enabled, please ensure that
 # "enforce-secure-profile" in your config is set to false.

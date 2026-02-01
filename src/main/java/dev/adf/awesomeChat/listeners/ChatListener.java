@@ -8,6 +8,7 @@ import dev.adf.awesomeChat.managers.IgnoreManager;
 import dev.adf.awesomeChat.managers.MentionManager;
 import dev.adf.awesomeChat.managers.ItemDisplayManager;
 import dev.adf.awesomeChat.managers.ChatRadiusManager;
+import dev.adf.awesomeChat.managers.ChatLogManager;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -260,6 +261,14 @@ public class ChatListener implements Listener {
         // Send mention notifications (sounds + action bar)
         if (mentionResult != null && !mentionResult.mentionedPlayers.isEmpty() && mentionManager != null) {
             mentionManager.sendNotifications(player, mentionResult);
+        }
+
+        // Log message to database
+        ChatLogManager chatLogManager = plugin.getChatLogManager();
+        if (chatLogManager != null) {
+            ChannelManager chMgr = plugin.getChannelManager();
+            String channel = (chMgr != null && chMgr.hasActiveChannel(player)) ? chMgr.getActiveChannel(player) : null;
+            chatLogManager.logMessage(player.getUniqueId(), player.getName(), plainMessage, channel, false);
         }
     }
 

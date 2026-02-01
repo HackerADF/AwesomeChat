@@ -67,6 +67,12 @@ commands:
     aliases: [chatmute, mc]
     permission: awesomechat.mutechat
     permission-message: "You don't have permission to use this command."
+  chatlogs:
+    description: Search chat log history
+    usage: /chatlogs <player> [time:duration] [after:duration] [before:duration]
+    aliases: [cl, chatlog]
+    permission: awesomechat.chatlogs
+    permission-message: "You don't have permission to use this command."
 permissions:
   awesomechat.use:
     description: Allows use of the /awesomechat command
@@ -121,6 +127,9 @@ permissions:
     default: op
   awesomechat.mention.here:
     description: Can use @here to mention all players
+    default: op
+  awesomechat.chatlogs:
+    description: Allows viewing chat log history
     default: op
   awesomechat.chat.shout:
     description: Allows using the shout prefix to send server-wide messages when chat radius is active

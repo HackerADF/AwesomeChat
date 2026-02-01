@@ -40,6 +40,7 @@ public final class AwesomeChat extends JavaPlugin {
     private MentionManager mentionManager;
     private ItemDisplayManager itemDisplayManager;
     private ChatRadiusManager chatRadiusManager;
+    private ChatLogManager chatLogManager;
     private dev.adf.awesomeChat.api.AwesomeChatAPIImpl api;
 
     // misc
@@ -146,6 +147,16 @@ public final class AwesomeChat extends JavaPlugin {
         }
 
         try {
+            if (getPluginConfig().getBoolean("chat-logging.enabled", false)) {
+                chatLogManager = new ChatLogManager(this);
+                getLogger().info("ChatLogManager loaded (" + getPluginConfig().getString("chat-logging.storage-type", "sqlite") + ").");
+            }
+        } catch (Exception e) {
+            getLogger().warning("ChatLogManager failed to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
             api = new dev.adf.awesomeChat.api.AwesomeChatAPIImpl(this);
             getLogger().info("AwesomeChatAPI v" + api.getAPIVersion() + " loaded.");
         } catch (Exception e) {
@@ -175,6 +186,8 @@ public final class AwesomeChat extends JavaPlugin {
         getCommand("clearchat").setExecutor(new ClearChatCommand(this));
         getCommand("clearchat").setTabCompleter(new ClearChatTabCompleter());
         getCommand("mutechat").setExecutor(new MuteChatCommand(this));
+        getCommand("chatlogs").setExecutor(new ChatLogCommand(this));
+        getCommand("chatlogs").setTabCompleter(new ChatLogTabCompleter(this));
 
         getLogger().info("Attempting to hook into PlaceholderAPI...");
         getLogger().info("AwesomeChat has been enabled!");
@@ -185,6 +198,9 @@ public final class AwesomeChat extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (chatLogManager != null) {
+            chatLogManager.close();
+        }
         getLogger().info("AwesomeChat has been disabled!");
     }
 
@@ -439,6 +455,10 @@ public final class AwesomeChat extends JavaPlugin {
 
     public ChatRadiusManager getChatRadiusManager() {
         return chatRadiusManager;
+    }
+
+    public ChatLogManager getChatLogManager() {
+        return chatLogManager;
     }
 
     public boolean isChatMuted() {
