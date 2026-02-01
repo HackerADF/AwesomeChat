@@ -273,13 +273,23 @@ public class ChatListener implements Listener {
     }
 
     private static final Pattern HEX_PATTERN = Pattern.compile("&x(&[A-Fa-f0-9]){6}");
+    private static final Pattern SHORTHAND_HEX = Pattern.compile("&#([A-Fa-f0-9]{6})");
 
     public static String formatColors(String message) {
         if (message == null) return "";
 
+        // Handle shorthand &#RRGGBB format
+        Matcher shortMatcher = SHORTHAND_HEX.matcher(message);
+        StringBuffer shortSb = new StringBuffer();
+        while (shortMatcher.find()) {
+            shortMatcher.appendReplacement(shortSb, net.md_5.bungee.api.ChatColor.of("#" + shortMatcher.group(1)).toString());
+        }
+        shortMatcher.appendTail(shortSb);
+        message = shortSb.toString();
+
+        // Handle expanded &x&R&R&G&G&B&B format
         Matcher matcher = HEX_PATTERN.matcher(message);
         StringBuffer sb = new StringBuffer();
-
         while (matcher.find()) {
             String raw = matcher.group();
             StringBuilder hex = new StringBuilder();
@@ -297,9 +307,18 @@ public class ChatListener implements Listener {
 
     private static final Pattern LEGACY_RGB = Pattern.compile("&x(&[A-Fa-f0-9]){6}");
     private String convertToMiniMessage(String msg) {
+        // Handle shorthand &#RRGGBB -> <#RRGGBB>
+        Matcher shortMatcher = SHORTHAND_HEX.matcher(msg);
+        StringBuffer shortSb = new StringBuffer();
+        while (shortMatcher.find()) {
+            shortMatcher.appendReplacement(shortSb, "<#" + shortMatcher.group(1) + ">");
+        }
+        shortMatcher.appendTail(shortSb);
+        msg = shortSb.toString();
+
+        // Handle expanded &x format -> <#RRGGBB>
         Matcher matcher = LEGACY_RGB.matcher(msg);
         StringBuffer sb = new StringBuffer();
-
         while (matcher.find()) {
             String hex = matcher.group()
                     .replace("&x", "")
@@ -309,6 +328,22 @@ public class ChatListener implements Listener {
         matcher.appendTail(sb);
 
         return sb.toString()
+                .replace("&0", "<black>")
+                .replace("&1", "<dark_blue>")
+                .replace("&2", "<dark_green>")
+                .replace("&3", "<dark_aqua>")
+                .replace("&4", "<dark_red>")
+                .replace("&5", "<dark_purple>")
+                .replace("&6", "<gold>")
+                .replace("&7", "<gray>")
+                .replace("&8", "<dark_gray>")
+                .replace("&9", "<blue>")
+                .replace("&a", "<green>")
+                .replace("&b", "<aqua>")
+                .replace("&c", "<red>")
+                .replace("&d", "<light_purple>")
+                .replace("&e", "<yellow>")
+                .replace("&f", "<white>")
                 .replace("&l", "<bold>")
                 .replace("&o", "<italic>")
                 .replace("&n", "<underlined>")
