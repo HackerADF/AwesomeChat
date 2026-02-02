@@ -1,116 +1,170 @@
-# AwesomeChat
+<div align="center">
 
-The all-in-one chat management plugin for Paper servers. Format chat, filter messages, manage private messaging, create chat channels, and more -- all from a single, highly configurable plugin.
+<h1 style="color:#00BFFF;">AwesomeChat</h1>
 
----
+<h3>The all-in-one chat management plugin for Paper servers.</h3>
 
-## Why AwesomeChat?
+<img src="https://img.shields.io/badge/Paper-1.19--1.21.11%2B-blue" />
+<img src="https://img.shields.io/badge/Java-21%2B-orange?logo=openjdk&logoColor=white" />
+<br>
+<img src="https://img.shields.io/github/stars/HackerADF/AwesomeChat?style=flat&logo=github" />
+<img src="https://img.shields.io/github/issues/HackerADF/AwesomeChat?logo=github" />
+<img src="https://img.shields.io/github/license/HackerADF/AwesomeChat" />
 
-Most servers need 3-5 separate plugins to handle chat formatting, filtering, private messaging, and moderation. AwesomeChat replaces them all with one lightweight, well-integrated solution.
+</div>
 
-- Zero bloat. Every feature is toggleable.
-- Deep LuckPerms integration. Per-group everything.
-- Adventure API native. Full MiniMessage and hex color support.
-- Actively maintained for 1.19+.
+<hr>
 
----
+<h2 style="color:#FFD700;">Why AwesomeChat?</h2>
 
-## Features at a Glance
+Most servers need 3–5 separate plugins to handle chat formatting, filtering, private messaging, and moderation.  
+<strong>AwesomeChat</strong> replaces them all with one lightweight, well-integrated solution.
 
-### Chat Formatting
-Fully customizable chat layout with per-group formats, LuckPerms prefix/suffix, PlaceholderAPI support, hex colors (`&#RRGGBB`), and MiniMessage formatting. Permission-based color/style gating lets you control exactly which formatting each rank can use.
+<ul>
+<li><strong>Zero bloat</strong> – Every feature is toggleable</li>
+<li><strong>Deep LuckPerms integration</strong> – Per-group everything</li>
+<li><strong>Adventure API native</strong> – Full MiniMessage and hex color support</li>
+<li><strong>Actively maintained</strong> for 1.19+</li>
+</ul>
 
-### Chat Channels
-Create unlimited custom chat channels (staff, admin, VIP, or anything you want). Each channel has its own permission, prefix, format, and sound. Players toggle into channels with `/ch join <channel>` or send one-off messages with `/ch <channel> <message>`.
+<hr>
 
-### Chat Filter Engine
-Built-in multi-layer filter pipeline:
-- **Cooldown** -- Rate limit messages
-- **Spam detection** -- Jaro-Winkler similarity algorithm catches repeated messages
-- **Censor mode** -- Replace bad words with asterisks instead of blocking
-- **Banned words** -- Wildcard patterns loaded from `.txt` files
-- **Anti-advertising** -- TLD blocking, phrase matching, domain regex
-- **Custom regex rules** -- Create named rules with your own patterns
-- **Graduated punishments** -- Escalating actions per offense (warn -> mute -> ban)
-- **Command filtering** -- Filters apply to commands too, not just chat
+<h2 style="color:#FFD700;">Features</h2>
 
-### Private Messaging
-`/msg`, `/reply`, `/whisper`, and more. Custom formats, sounds for sent/received, message toggle, and social spy for staff monitoring.
+<h3 style="color:#00BFFF;">Chat Formatting</h3>
+<ul>
+<li>Per-group chat formats via LuckPerms</li>
+<li>Automatic prefix / suffix integration</li>
+<li>PlaceholderAPI support</li>
+<li>Hex color support (<code>&#RRGGBB</code>)</li>
+<li>MiniMessage formatting (toggleable)</li>
+<li>Permission-based color &amp; style gating</li>
+</ul>
 
-### Player Ignore
-`/ignore <player>` hides their chat messages and blocks their PMs. Persists across restarts. Staff bypass available.
+<h3 style="color:#00BFFF;">Chat Channels</h3>
+<ul>
+<li>Create unlimited custom channels (staff, admin, VIP, etc.)</li>
+<li>Per-channel permission, prefix, format, and sound</li>
+<li>Toggle mode or one-off messaging</li>
+<li><code>/ch join staff</code> or <code>/ch staff Hello!</code></li>
+</ul>
 
-### Mentions
-Tag players with `@name`, groups with `@(role)`, or everyone with `@everyone`/`@here`. Each mention type has its own highlight color, notification sound, and action bar alert. Fully permission-gated.
+<h3 style="color:#00BFFF;">Chat Filter Engine</h3>
+<ul>
+<li><strong>Cooldown</strong> – Rate-limit messages</li>
+<li><strong>Spam detection</strong> – Jaro-Winkler similarity algorithm</li>
+<li><strong>Censor mode</strong> – Replace bad words instead of blocking</li>
+<li><strong>Banned words</strong> – Wildcard patterns from <code>.txt</code> files</li>
+<li><strong>Anti-advertising</strong> – TLD blocking, phrase matching, regex</li>
+<li><strong>Custom regex rules</strong> – Named rules with custom patterns</li>
+<li><strong>Graduated punishments</strong> – Warn → mute → ban</li>
+<li><strong>Command filtering</strong> – Filters apply to commands</li>
+<li><strong>Violation logging</strong> – File + per-player records</li>
+</ul>
 
-### Emoji Shortcuts
-Type `:heart:`, `:star:`, `:fire:` and more in chat to insert unicode symbols. 20 built-in shortcuts, fully configurable, and permission-gated via `awesomechat.emoji`.
+<h3 style="color:#00BFFF;">Private Messaging</h3>
+<ul>
+<li><code>/msg</code>, <code>/reply</code>, <code>/whisper</code>, and more</li>
+<li>Custom formats and sounds</li>
+<li>Message toggle (<code>/msgtoggle</code>)</li>
+<li>Social spy for staff</li>
+</ul>
 
-### Join/Leave Messages
-Per-group join/leave messages with first-join support, MOTD lines, sounds, PlaceholderAPI placeholders, and EssentialsX vanish integration. Fully toggleable.
+<h3 style="color:#00BFFF;">Player Ignore</h3>
+<ul>
+<li><code>/ignore &lt;player&gt;</code> – Hide chat &amp; block PMs</li>
+<li>Persistent across restarts</li>
+<li>Staff bypass permission</li>
+</ul>
 
-### Item Display
-Type `[item]`, `[inventory]`, `[enderchest]`, or `[/command]` in chat to display interactive items. Other players can hover to see item tooltips or click to view read-only inventory snapshots. Snapshots expire after a configurable TTL. Permission-gated per trigger type.
+<h3 style="color:#00BFFF;">Mentions</h3>
+<ul>
+<li><code>@player</code></li>
+<li><code>@(role)</code></li>
+<li><code>@everyone</code> / <code>@here</code></li>
+<li>Per-type sounds, colors, and action-bar alerts</li>
+<li>Permission-gated per mention type</li>
+</ul>
 
-### Chat Radius / Local Chat
-Distance-based chat so players only see messages from nearby players. Per-group radii via LuckPerms (staff can have unlimited range). Shout prefix (`!`) bypasses the radius for server-wide messages. Cross-world toggle available.
+<h3 style="color:#00BFFF;">Emoji Shortcuts</h3>
+<ul>
+<li><code>:heart:</code>, <code>:star:</code>, <code>:fire:</code>, etc.</li>
+<li>20 built-in Unicode emojis</li>
+<li>Fully configurable via <code>config.yml</code></li>
+<li>Permission-gated (<code>awesomechat.emoji</code>)</li>
+</ul>
 
-### Chat Logging
-Log all chat messages to SQLite or MySQL. Staff can search with `/chatlogs <player>` using time filters (`time:5m`, `after:1d`, `before:2h`). Clickable pagination, filtered message highlighting, and fully async writes for zero performance impact.
+<h3 style="color:#00BFFF;">Join / Leave Messages</h3>
+<ul>
+<li>Per-group join &amp; leave messages</li>
+<li>First-join messages</li>
+<li>MOTD on join</li>
+<li>Configurable sounds</li>
+<li>PlaceholderAPI support</li>
+<li>EssentialsX vanish integration</li>
+</ul>
 
-### Interactive Messages
-Hover text and click events on chat messages. Per-group and per-component (username vs message) configuration. Supports suggest command, run command, and copy to clipboard.
+<h3 style="color:#00BFFF;">Item Display</h3>
+<ul>
+<li><code>[item]</code>, <code>[inventory]</code>, <code>[enderchest]</code>, <code>[/command]</code></li>
+<li>Hover tooltips &amp; inventory snapshots</li>
+<li>Read-only GUI with expiry</li>
+<li>Permission-gated triggers</li>
+</ul>
 
-### Moderation Tools
-- `/clearchat` -- Clear chat (self or global, with staff bypass)
-- `/mutechat` -- Toggle server-wide chat mute
-- `/broadcast` -- Formatted announcements with sounds and cooldowns
-- Auto-broadcaster -- Scheduled rotating messages
+<h3 style="color:#00BFFF;">Chat Radius / Local Chat</h3>
+<ul>
+<li>Distance-based chat</li>
+<li>Per-group radii via LuckPerms</li>
+<li>Shout prefix (<code>!</code>)</li>
+<li>Optional cross-world support</li>
+</ul>
 
-### Sound System
-Per-group chat sounds via LuckPerms groups. Separate sounds for chat messages, broadcasts, PMs, and channels. All configurable with custom sound name, volume, and pitch.
+<h3 style="color:#00BFFF;">Chat Logging</h3>
+<ul>
+<li>SQLite or MySQL storage</li>
+<li><code>/chatlogs &lt;player&gt;</code></li>
+<li>Clickable pagination</li>
+<li>Fully async</li>
+</ul>
 
-### Developer API
-Public `AwesomeChatAPI` interface for other plugins to access player data, violations, filter checks, and moderation features. Custom `ChatFilterViolationEvent` for hooking into the filter pipeline.
+<h3 style="color:#00BFFF;">Developer API</h3>
+<ul>
+<li><code>AwesomeChatAPI</code></li>
+<li><code>ChatFilterViolationEvent</code></li>
+</ul>
 
----
+<hr>
 
-## Requirements
+<h2 style="color:#FFD700;">Requirements</h2>
+<ul>
+<li><strong>Server:</strong> Paper 1.19 – 1.21.11+</li>
+<li><strong>Java:</strong> 21+</li>
+<li><strong>Required:</strong> <a href="https://luckperms.net">LuckPerms</a></li>
+<li><strong>Optional:</strong> <a href="https://www.spigotmc.org/resources/placeholderapi.6245/">PlaceholderAPI</a></li>
+</ul>
 
-| | |
-|---|---|
-| **Server** | Paper 1.19+ |
-| **Java** | 21+ |
-| **Required** | [LuckPerms](https://luckperms.net) |
-| **Optional** | [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/) |
+<hr>
 
----
+<h2 style="color:#FFD700;">Commands</h2>
 
-## Commands
+<pre>
+/awesomechat (/ac)
+/broadcast
+/msg (/tell, /w, /pm)
+/reply (/r)
+/msgtoggle
+/socialspy (/sspy)
+/channel (/ch)
+/ignore (/block)
+/clearchat (/cc)
+/mutechat (/mc)
+/chatlogs (/cl)
+</pre>
 
-| Command | Description |
-|---------|-------------|
-| `/awesomechat` (`/ac`) | Plugin info and reload |
-| `/broadcast` | Send announcements |
-| `/msg` (`/tell`, `/w`, `/pm`) | Private message |
-| `/reply` (`/r`) | Reply to last PM |
-| `/msgtoggle` | Toggle PMs on/off |
-| `/socialspy` (`/sspy`) | Monitor private messages |
-| `/channel` (`/ch`) | Chat channel management |
-| `/ignore` (`/block`) | Ignore a player |
-| `/clearchat` (`/cc`) | Clear chat |
-| `/mutechat` (`/mc`) | Toggle chat mute |
-| `/chatlogs` (`/cl`) | Search chat logs |
+<hr>
 
----
+<h2 style="color:#FFD700;">Support</h2>
 
-## Configuration
-
-Everything is configurable in `config.yml`. Every feature can be enabled or disabled independently. Auto-broadcaster has its own `AutoBroadcaster.yml`.
-
----
-
-## Support
-
-- Discord: [Join Server](https://discord.gg/Z4gtF25jpC)
-- Discord: `adf.dev`
+<a href="https://discord.gg/Z4gtF25jpC"><strong>Join our Discord</strong></a><br>
+Discord: <code>adf.dev</code>
