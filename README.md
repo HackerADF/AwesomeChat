@@ -79,6 +79,29 @@ A powerful, fully-featured chat management plugin for Paper/Spigot servers (1.19
 - **PlaceholderAPI support** - Dynamic placeholders in join/leave messages
 - **Vanish support** - Hides messages for vanished players (EssentialsX)
 
+### Item Display
+- **`[item]` / `[hand]`** - Show your held item in chat with native hover tooltip
+- **`[inventory]` / `[inv]`** - Clickable link to view a snapshot of your inventory
+- **`[enderchest]` / `[echest]`** - Clickable link to view your ender chest
+- **`[/command]`** - Clickable command suggestion in chat
+- **Snapshot system** - Inventory snapshots with configurable TTL expiry
+- **Read-only GUIs** - Viewers see a locked display, no item theft
+- **Permission-gated** - Separate permissions for each trigger type
+
+### Chat Radius / Local Chat
+- **Distance-based chat** - Players only see messages from nearby players
+- **Per-group radii** - Staff can have unlimited range, default players limited
+- **Shout prefix** - `!` prefix sends messages server-wide (configurable)
+- **Cross-world toggle** - Control whether chat crosses world boundaries
+- **Fully toggleable** - Disabled by default, enable when ready
+
+### Chat Logging
+- **Database storage** - Log all chat messages to SQLite or MySQL
+- **`/chatlogs` search** - Search by player with time filters (`time:`, `after:`, `before:`)
+- **Clickable pagination** - Browse results with clickable page navigation
+- **Filtered message tracking** - Censored/blocked messages flagged in logs
+- **Async writes** - Zero performance impact on the main thread
+
 ### Interactive Messages
 - **Hover text** - Per-group and global hover tooltips on usernames and messages
 - **Click events** - Suggest command, run command, or copy to clipboard on click
@@ -126,6 +149,7 @@ A powerful, fully-featured chat management plugin for Paper/Spigot servers (1.19
 | `/ignore` | `/block` | `awesomechat.ignore` | Ignore a player |
 | `/clearchat` | `/cc` | `awesomechat.clearchat` | Clear chat |
 | `/mutechat` | `/chatmute`, `/mc` | `awesomechat.mutechat` | Toggle chat mute |
+| `/chatlogs` | `/cl`, `/chatlog` | `awesomechat.chatlogs` | Search chat logs |
 
 ## Permissions
 
@@ -155,6 +179,12 @@ A powerful, fully-featured chat management plugin for Paper/Spigot servers (1.19
 | `awesomechat.mention.everyone` | OP | Use @everyone |
 | `awesomechat.mention.here` | OP | Use @here |
 | `awesomechat.emoji` | true | Use emoji shortcuts |
+| `awesomechat.chat.shout` | true | Shout in chat radius mode |
+| `awesomechat.chatlogs` | OP | Search chat logs |
+| `awesomechat.display.item` | true | Use `[item]`/`[hand]` in chat |
+| `awesomechat.display.inventory` | true | Use `[inventory]`/`[inv]` in chat |
+| `awesomechat.display.enderchest` | OP | Use `[enderchest]`/`[echest]` in chat |
+| `awesomechat.display.command` | true | Use `[/command]` in chat |
 | `awesomechat.format.minimessage` | OP | Use MiniMessage tags |
 | `awesomechat.styling.*` | - | Per-code formatting permissions |
 
@@ -174,6 +204,9 @@ All settings are in `config.yml`. Key sections:
 - **`join-leave`** - Join/leave messages, first join, MOTD, sounds
 - **`emoji`** - Emoji shortcut definitions
 - **`mentions`** - Mention types, highlight colors, sounds, action bar
+- **`item-display`** - Item display triggers and snapshot TTL
+- **`chat-radius`** - Local chat distance, shout prefix, per-group radii
+- **`chat-logging`** - Database storage (SQLite/MySQL), search settings
 
 Auto-broadcaster messages are configured separately in `AutoBroadcaster.yml`.
 
