@@ -2,7 +2,6 @@ package dev.adf.awesomeChat.managers;
 
 import dev.adf.awesomeChat.AwesomeChat;
 import dev.adf.awesomeChat.storage.ViolationStorage;
-import dev.adf.awesomeChat.utils.LuckPermsUtil;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -22,8 +21,7 @@ public class HoverManager {
         this.plugin = plugin;
     }
 
-    public Component getUsernameHover(Player player) {
-        String group = LuckPermsUtil.getPlayerGroup(player);
+    public Component getUsernameHover(Player player, String group) {
         List<String> hoverLines = getHoverLines(group, "username");
 
         if (hoverLines == null || hoverLines.isEmpty()) {
@@ -33,8 +31,7 @@ public class HoverManager {
         return buildHoverComponent(player, hoverLines);
     }
 
-    public Component getMessageHover(Player player) {
-        String group = LuckPermsUtil.getPlayerGroup(player);
+    public Component getMessageHover(Player player, String group) {
         List<String> hoverLines = getHoverLines(group, "message");
 
         if (hoverLines == null || hoverLines.isEmpty()) {
