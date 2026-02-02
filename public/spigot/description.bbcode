@@ -1,35 +1,37 @@
 [CENTER]
 [SIZE=7][B][COLOR=#00BFFF]AwesomeChat[/COLOR][/B][/SIZE]
+
 [SIZE=4]The all-in-one chat management plugin for Paper servers.[/SIZE]
 
-[IMG]https://img.shields.io/badge/Paper-1.19%2B-blue[/IMG] [IMG]https://img.shields.io/badge/Java-21%2B-orange[/IMG]
+[IMG]https://img.shields.io/badge/Paper-1.19--1.21.11%2B-blue[/IMG] [IMG]https://img.shields.io/badge/Java-21%2B-orange?logo=openjdk&logoColor=white[/IMG]
+
+[IMG]https://img.shields.io/github/stars/HackerADF/AwesomeChat?style=flat&logo=github[/IMG] [IMG]https://img.shields.io/github/issues/HackerADF/AwesomeChat?logo=github[/IMG] [IMG]https://img.shields.io/github/license/HackerADF/AwesomeChat[/IMG]
 [/CENTER]
 
-[HR][/HR]
 
 [SIZE=5][B][COLOR=#FFD700]Why AwesomeChat?[/COLOR][/B][/SIZE]
 
-Most servers need 3-5 separate plugins to handle chat formatting, filtering, private messaging, and moderation. AwesomeChat replaces them all with one lightweight, well-integrated solution.
+Most servers need 3–5 separate plugins to handle chat formatting, filtering, private messaging, and moderation.
+[B]AwesomeChat[/B] replaces them all with one lightweight, well-integrated solution.
 
 [LIST]
-[*][B]Zero bloat[/B] - Every feature is toggleable
-[*][B]Deep LuckPerms integration[/B] - Per-group everything
-[*][B]Adventure API native[/B] - Full MiniMessage and hex color support
+[*][B]Zero bloat[/B] – Every feature is toggleable
+[*][B]Deep LuckPerms integration[/B] – Per-group everything
+[*][B]Adventure API native[/B] – Full MiniMessage and hex color support
 [*][B]Actively maintained[/B] for 1.19+
 [/LIST]
 
-[HR][/HR]
 
 [SIZE=5][B][COLOR=#FFD700]Features[/COLOR][/B][/SIZE]
 
 [SIZE=4][B][COLOR=#00BFFF]Chat Formatting[/COLOR][/B][/SIZE]
 [LIST]
 [*]Per-group chat formats via LuckPerms
-[*]Automatic prefix/suffix integration
+[*]Automatic prefix / suffix integration
 [*]PlaceholderAPI support
 [*]Hex color support ([ICODE]&#RRGGBB[/ICODE])
 [*]MiniMessage formatting (toggleable)
-[*]Permission-based color/style gating
+[*]Permission-based color & style gating
 [/LIST]
 
 [SIZE=4][B][COLOR=#00BFFF]Chat Channels[/COLOR][/B][/SIZE]
@@ -42,15 +44,15 @@ Most servers need 3-5 separate plugins to handle chat formatting, filtering, pri
 
 [SIZE=4][B][COLOR=#00BFFF]Chat Filter Engine[/COLOR][/B][/SIZE]
 [LIST]
-[*][B]Cooldown[/B] - Rate limit messages
-[*][B]Spam detection[/B] - Jaro-Winkler similarity algorithm
-[*][B]Censor mode[/B] - Replace bad words with asterisks instead of blocking
-[*][B]Banned words[/B] - Wildcard patterns from .txt files
-[*][B]Anti-advertising[/B] - TLD blocking, phrase matching, domain regex
-[*][B]Custom regex rules[/B] - Named rules with your own patterns
-[*][B]Graduated punishments[/B] - warn -> mute -> ban per offense count
-[*][B]Command filtering[/B] - Filters apply to commands too
-[*][B]Violation logging[/B] - File-based logs + per-player records
+[*][B]Cooldown[/B] – Rate-limit messages
+[*][B]Spam detection[/B] – Jaro-Winkler similarity algorithm
+[*][B]Censor mode[/B] – Replace bad words instead of blocking
+[*][B]Banned words[/B] – Wildcard patterns from [ICODE].txt[/ICODE] files
+[*][B]Anti-advertising[/B] – TLD blocking, phrase matching, regex
+[*][B]Custom regex rules[/B] – Named rules with custom patterns
+[*][B]Graduated punishments[/B] – Warn → mute → ban
+[*][B]Command filtering[/B] – Filters apply to commands
+[*][B]Violation logging[/B] – File + per-player records
 [/LIST]
 
 [SIZE=4][B][COLOR=#00BFFF]Private Messaging[/COLOR][/B][/SIZE]
@@ -63,33 +65,33 @@ Most servers need 3-5 separate plugins to handle chat formatting, filtering, pri
 
 [SIZE=4][B][COLOR=#00BFFF]Player Ignore[/COLOR][/B][/SIZE]
 [LIST]
-[*][ICODE]/ignore <player>[/ICODE] - Hides their chat and blocks PMs
+[*][ICODE]/ignore <player>[/ICODE] – Hide chat & block PMs
 [*]Persistent across restarts
 [*]Staff bypass permission
 [/LIST]
 
 [SIZE=4][B][COLOR=#00BFFF]Mentions[/COLOR][/B][/SIZE]
 [LIST]
-[*][ICODE]@player[/ICODE] - Mention a specific player
-[*][ICODE]@(role)[/ICODE] - Mention all players in a LuckPerms group
-[*][ICODE]@everyone[/ICODE] / [ICODE]@here[/ICODE] - Mention all online players
-[*]Per-type sounds, highlight colors, and action bar alerts
+[*][ICODE][USER=85605]@Player[/USER][/ICODE]
+[*][ICODE]@(role)[/ICODE]
+[*][ICODE][USER=2410880]@everyone[/USER][/ICODE] / [ICODE][USER=1820222]@here[/USER][/ICODE]
+[*]Per-type sounds, colors, and action-bar alerts
 [*]Permission-gated per mention type
 [/LIST]
 
 [SIZE=4][B][COLOR=#00BFFF]Emoji Shortcuts[/COLOR][/B][/SIZE]
 [LIST]
-[*]Type [ICODE]:heart:[/ICODE], [ICODE]:star:[/ICODE], [ICODE]:fire:[/ICODE] etc. in chat
-[*]20 built-in unicode emoji shortcuts
-[*]Fully configurable in [ICODE]config.yml[/ICODE]
+[*][ICODE]:heart:[/ICODE], [ICODE]:star:[/ICODE], [ICODE]:fire:[/ICODE], etc.
+[*]20 built-in Unicode emojis
+[*]Fully configurable via [ICODE]config.yml[/ICODE]
 [*]Permission-gated ([ICODE]awesomechat.emoji[/ICODE])
 [/LIST]
 
-[SIZE=4][B][COLOR=#00BFFF]Join/Leave Messages[/COLOR][/B][/SIZE]
+[SIZE=4][B][COLOR=#00BFFF]Join / Leave Messages[/COLOR][/B][/SIZE]
 [LIST]
-[*]Per-group join/leave messages via LuckPerms
-[*]First-join messages for new players
-[*]MOTD lines on join
+[*]Per-group join & leave messages
+[*]First-join messages
+[*]MOTD on join
 [*]Configurable sounds
 [*]PlaceholderAPI support
 [*]EssentialsX vanish integration
@@ -97,88 +99,72 @@ Most servers need 3-5 separate plugins to handle chat formatting, filtering, pri
 
 [SIZE=4][B][COLOR=#00BFFF]Item Display[/COLOR][/B][/SIZE]
 [LIST]
-[*]Type [ICODE][item][/ICODE], [ICODE][inventory][/ICODE], [ICODE][enderchest][/ICODE], or [ICODE][/command][/ICODE] in chat
-[*]Hover to see item tooltips, click to view inventory snapshots
-[*]Read-only GUI display with configurable snapshot expiry
-[*]Permission-gated per trigger type
+[*][ICODE][item][/ICODE], [ICODE][inventory][/ICODE], [ICODE][enderchest][/ICODE], [ICODE][/command][/ICODE]
+[*]Hover tooltips & inventory snapshots
+[*]Read-only GUI with expiry
+[*]Permission-gated triggers
 [/LIST]
 
 [SIZE=4][B][COLOR=#00BFFF]Chat Radius / Local Chat[/COLOR][/B][/SIZE]
 [LIST]
-[*]Distance-based chat - only see messages from nearby players
-[*]Per-group radii via LuckPerms (staff can have unlimited range)
-[*]Shout prefix ([ICODE]![/ICODE]) for server-wide messages
-[*]Cross-world toggle
+[*]Distance-based chat
+[*]Per-group radii via LuckPerms
+[*]Shout prefix ([ICODE]![/ICODE])
+[*]Optional cross-world support
 [/LIST]
 
 [SIZE=4][B][COLOR=#00BFFF]Chat Logging[/COLOR][/B][/SIZE]
 [LIST]
-[*]Log all messages to SQLite or MySQL
-[*][ICODE]/chatlogs <player>[/ICODE] with time filters
-[*]Clickable pagination and filtered message highlighting
-[*]Fully async writes for zero performance impact
+[*]SQLite or MySQL storage
+[*][ICODE]/chatlogs <player>[/ICODE]
+[*]Clickable pagination
+[*]Fully async
 [/LIST]
 
-[SIZE=4][B][COLOR=#00BFFF]Interactive Messages[/COLOR][/B][/SIZE]
+[SIZE=4][B][COLOR=#00BFFF]Chat Color[/COLOR][/B][/SIZE]
 [LIST]
-[*]Hover text on usernames and messages
-[*]Click events (suggest, execute, copy)
-[*]Per-group configuration
-[*]PlaceholderAPI in hover tooltips
-[/LIST]
-
-[SIZE=4][B][COLOR=#00BFFF]Moderation Tools[/COLOR][/B][/SIZE]
-[LIST]
-[*][ICODE]/clearchat[/ICODE] - Clear chat (self or global)
-[*][ICODE]/mutechat[/ICODE] - Toggle server-wide chat mute
-[*][ICODE]/broadcast[/ICODE] - Formatted announcements with sounds
-[*]Auto-broadcaster with scheduled rotating messages
-[/LIST]
-
-[SIZE=4][B][COLOR=#00BFFF]Sound System[/COLOR][/B][/SIZE]
-[LIST]
-[*]Per-group chat sounds
-[*]Broadcast, PM, and channel sounds
-[*]Configurable sound name, volume, and pitch
+[*][ICODE]/chatcolor[/ICODE] — GUI picker with 16 standard colors, gradient presets, and custom gradients
+[*]8 dual-color and 5 triple-color gradient presets (Sunset, Ocean, Royal, Ice, Aurora, etc.)
+[*]Custom gradients with up to 4 hex color stops
+[*]Style toggles (bold, italic, underline, strikethrough, obfuscated)
+[*]Persistent per-player storage — survives restarts
+[*]LuckPerms [ICODE]chat-color[/ICODE] meta takes priority
+[*]Manual [ICODE]&[/ICODE] color codes still work and override
 [/LIST]
 
 [SIZE=4][B][COLOR=#00BFFF]Developer API[/COLOR][/B][/SIZE]
 [LIST]
-[*]Public [ICODE]AwesomeChatAPI[/ICODE] interface
-[*]Access player data, violations, and filter checks
-[*]Custom [ICODE]ChatFilterViolationEvent[/ICODE]
+[*][ICODE]AwesomeChatAPI[/ICODE]
+[*][ICODE]ChatFilterViolationEvent[/ICODE]
 [/LIST]
 
-[HR][/HR]
 
 [SIZE=5][B][COLOR=#FFD700]Requirements[/COLOR][/B][/SIZE]
-
 [LIST]
-[*][B]Server:[/B] Paper 1.19+
+[*][B]Server:[/B] Paper 1.19 – 1.21.11+
 [*][B]Java:[/B] 21+
 [*][B]Required:[/B] [URL='https://luckperms.net']LuckPerms[/URL]
 [*][B]Optional:[/B] [URL='https://www.spigotmc.org/resources/placeholderapi.6245/']PlaceholderAPI[/URL]
 [/LIST]
 
-[HR][/HR]
 
 [SIZE=5][B][COLOR=#FFD700]Commands[/COLOR][/B][/SIZE]
 
 [CODE]
-/awesomechat (/ac)       - Plugin info and reload
-/broadcast               - Send announcements
-/msg (/tell, /w, /pm)    - Private message
-/reply (/r)              - Reply to last PM
-/msgtoggle               - Toggle PMs on/off
-/socialspy (/sspy)       - Monitor private messages
-/channel (/ch)           - Chat channel management
-/ignore (/block)         - Ignore a player
-/clearchat (/cc)         - Clear chat
-/mutechat (/mc)          - Toggle chat mute
-/chatlogs (/cl)          - Search chat logs
+/awesomechat (/ac)
+/broadcast
+/msg (/tell, /w, /pm)
+/reply (/r)
+/msgtoggle
+/socialspy (/sspy)
+/channel (/ch)
+/ignore (/block)
+/clearchat (/cc)
+/mutechat (/mc)
+/chatlogs (/cl)
+/chatcolor (/chatcolour, /ccolor)
 [/CODE]
 
-[HR][/HR]
 
 [SIZE=5][B][COLOR=#FFD700]Support[/COLOR][/B][/SIZE]
 
