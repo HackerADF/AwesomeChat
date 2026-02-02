@@ -1,5 +1,5 @@
 name: AwesomeChat
-version: '1.0.7-DE'
+version: '1.0.8'
 main: dev.adf.awesomeChat.AwesomeChat
 api-version: '1.19'
 prefix: Awesome Chat
@@ -72,6 +72,12 @@ commands:
     usage: /chatlogs <player> [time:duration] [after:duration] [before:duration]
     aliases: [cl, chatlog]
     permission: awesomechat.chatlogs
+    permission-message: "You don't have permission to use this command."
+  chatcolor:
+    description: Open the chat color picker GUI
+    usage: /chatcolor [reset]
+    aliases: [chatcolour, ccolor]
+    permission: awesomechat.command.chatcolor
     permission-message: "You don't have permission to use this command."
 permissions:
   awesomechat.use:
@@ -146,3 +152,12 @@ permissions:
   awesomechat.display.command:
     description: Allows showing clickable commands in chat with [/command]
     default: true
+  awesomechat.command.chatcolor:
+    description: Allows use of the /chatcolor command
+    default: true
+  awesomechat.chatcolor.gradient:
+    description: Allows using gradient preset colors
+    default: true
+  awesomechat.chatcolor.custom:
+    description: Allows creating custom gradient colors
+    default: op

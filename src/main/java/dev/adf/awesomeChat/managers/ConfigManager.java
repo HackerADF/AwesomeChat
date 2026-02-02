@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class ConfigManager {
 
-    private static final int CURRENT_VERSION = 6;
+    private static final int CURRENT_VERSION = 7;
 
     private final AwesomeChat plugin;
     private final File configFile;
@@ -56,6 +56,7 @@ public class ConfigManager {
         if (version < 4) migrateToV4(config);
         if (version < 5) migrateToV5(config);
         if (version < 6) migrateToV6(config);
+        if (version < 7) migrateToV7(config);
 
         config.set("config-version", CURRENT_VERSION);
 
@@ -366,6 +367,18 @@ public class ConfigManager {
             config.set("api.enabled", true);
             config.set("api.moderator-permission", "awesomechat.moderator");
             plugin.getLogger().info("    Added API section.");
+        }
+    }
+
+    // =========================================================================
+    //  v6 -> v7: Chat color picker
+    // =========================================================================
+    private void migrateToV7(FileConfiguration config) {
+        plugin.getLogger().info("  Running v6 -> v7 migration...");
+
+        if (!config.contains("chatcolor")) {
+            config.set("chatcolor.enabled", true);
+            plugin.getLogger().info("    Added chatcolor section.");
         }
     }
 

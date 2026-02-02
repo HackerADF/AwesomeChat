@@ -41,6 +41,8 @@ public final class AwesomeChat extends JavaPlugin {
     private ItemDisplayManager itemDisplayManager;
     private ChatRadiusManager chatRadiusManager;
     private ChatLogManager chatLogManager;
+    private ChatColorManager chatColorManager;
+    private dev.adf.awesomeChat.gui.ChatColorGUI chatColorGUI;
     private dev.adf.awesomeChat.api.AwesomeChatAPIImpl api;
 
     // misc
@@ -157,6 +159,17 @@ public final class AwesomeChat extends JavaPlugin {
         }
 
         try {
+            if (getPluginConfig().getBoolean("chatcolor.enabled", true)) {
+                chatColorManager = new ChatColorManager(this);
+                chatColorGUI = new dev.adf.awesomeChat.gui.ChatColorGUI(this);
+                getLogger().info("ChatColorManager loaded.");
+            }
+        } catch (Exception e) {
+            getLogger().warning("ChatColorManager failed to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
             api = new dev.adf.awesomeChat.api.AwesomeChatAPIImpl(this);
             getLogger().info("AwesomeChatAPI v" + api.getAPIVersion() + " loaded.");
         } catch (Exception e) {
@@ -168,6 +181,9 @@ public final class AwesomeChat extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new CommandListener(this), this);
         getServer().getPluginManager().registerEvents(new JoinLeaveListener(this), this);
         getServer().getPluginManager().registerEvents(new dev.adf.awesomeChat.listeners.ItemDisplayListener(this), this);
+        if (chatColorGUI != null) {
+            getServer().getPluginManager().registerEvents(chatColorGUI, this);
+        }
 
         getCommand("awesomechat").setExecutor(new AwesomeChatCommand(this));
         getCommand("awesomechat").setTabCompleter(new AwesomeChatTabCompleter());
@@ -188,6 +204,8 @@ public final class AwesomeChat extends JavaPlugin {
         getCommand("mutechat").setExecutor(new MuteChatCommand(this));
         getCommand("chatlogs").setExecutor(new ChatLogCommand(this));
         getCommand("chatlogs").setTabCompleter(new ChatLogTabCompleter(this));
+        getCommand("chatcolor").setExecutor(new ChatColorCommand(this));
+        getCommand("chatcolor").setTabCompleter(new ChatColorTabCompleter());
 
         getLogger().info("Attempting to hook into PlaceholderAPI...");
         getLogger().info("AwesomeChat has been enabled!");
@@ -459,6 +477,14 @@ public final class AwesomeChat extends JavaPlugin {
 
     public ChatLogManager getChatLogManager() {
         return chatLogManager;
+    }
+
+    public ChatColorManager getChatColorManager() {
+        return chatColorManager;
+    }
+
+    public dev.adf.awesomeChat.gui.ChatColorGUI getChatColorGUI() {
+        return chatColorGUI;
     }
 
     public boolean isChatMuted() {

@@ -134,7 +134,7 @@ hoverable-messages:
         username-click-action: "/msg %player% "
         username-click-type: "suggest"
         message:
-          - "&7Owner message"
+          - "&7Click to copy message"
 
       admin:
         username:
@@ -145,7 +145,7 @@ hoverable-messages:
         username-click-action: "/msg %player% "
         username-click-type: "suggest"
         message:
-          - "&7Admin message"
+          - "&7Click to copy message"
 
       moderator:
         username:
@@ -157,7 +157,7 @@ hoverable-messages:
         username-click-action: "/msg %player% "
         username-click-type: "suggest"
         message:
-          - "&7Moderator message"
+          - "&7Click to copy message"
 
       default:
         username:
@@ -737,6 +737,20 @@ chat-logging:
   log-format: "&7{timestamp} &8- &f{player}&7: &f{message}"
   log-filtered: true              # Also log messages that were filtered/censored
   log-commands: false             # Log filtered commands (not yet implemented)
+
+
+# ================================================================
+#            Chat Color Picker (/chatcolor)                       =
+# ================================================================
+# Allow players to set a persistent chat color via a GUI.
+# Colors are saved per-player in data/chatcolors/{UUID}.json.
+#
+# Permissions:
+#   awesomechat.command.chatcolor   - Use /chatcolor (opens GUI)
+#   awesomechat.chatcolor.gradient  - Access gradient presets
+#   awesomechat.chatcolor.custom    - Create custom gradients
+chatcolor:
+  enabled: true
 
 
 # This will disable minecraft's new chat validation system introduced in 1.19
