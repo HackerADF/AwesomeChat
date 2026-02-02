@@ -128,6 +128,17 @@ Most servers need 3–5 separate plugins to handle chat formatting, filtering, p
 <li>Fully async</li>
 </ul>
 
+<h3 style="color:#00BFFF;">Chat Color</h3>
+<ul>
+<li><code>/chatcolor</code> — GUI picker with 16 standard colors, gradient presets, and custom gradients</li>
+<li>8 dual-color and 5 triple-color gradient presets (Sunset, Ocean, Royal, Ice, Aurora, etc.)</li>
+<li>Custom gradients with up to 4 hex color stops</li>
+<li>Style toggles (bold, italic, underline, strikethrough, obfuscated)</li>
+<li>Persistent per-player storage — survives restarts</li>
+<li>LuckPerms <code>chat-color</code> meta takes priority</li>
+<li>Manual <code>&amp;</code> color codes still work and override</li>
+</ul>
+
 <h3 style="color:#00BFFF;">Developer API</h3>
 <ul>
 <li><code>AwesomeChatAPI</code></li>
@@ -160,6 +171,7 @@ Most servers need 3–5 separate plugins to handle chat formatting, filtering, p
 /clearchat (/cc)
 /mutechat (/mc)
 /chatlogs (/cl)
+/chatcolor (/chatcolour, /ccolor)
 </pre>
 
 <hr>
