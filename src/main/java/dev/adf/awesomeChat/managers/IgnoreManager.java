@@ -10,13 +10,14 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class IgnoreManager {
 
     private final JavaPlugin plugin;
     private final Path dataFolder;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    private final Map<UUID, Set<UUID>> ignoreMap = new HashMap<>();
+    private final Map<UUID, Set<UUID>> ignoreMap = new ConcurrentHashMap<>();
 
     public IgnoreManager(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -47,7 +48,7 @@ public class IgnoreManager {
         UUID playerId = player.getUniqueId();
         UUID targetId = target.getUniqueId();
 
-        Set<UUID> ignored = ignoreMap.computeIfAbsent(playerId, k -> new HashSet<>());
+        Set<UUID> ignored = ignoreMap.computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet());
 
         boolean nowIgnored;
         if (ignored.contains(targetId)) {
@@ -66,7 +67,7 @@ public class IgnoreManager {
         UUID playerId = player.getUniqueId();
         UUID targetId = target.getUniqueId();
 
-        Set<UUID> ignored = ignoreMap.computeIfAbsent(playerId, k -> new HashSet<>());
+        Set<UUID> ignored = ignoreMap.computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet());
 
         if (ignore) {
             ignored.add(targetId);
@@ -106,9 +107,9 @@ public class IgnoreManager {
         try (Reader reader = Files.newBufferedReader(file)) {
             Type type = new TypeToken<List<String>>() {}.getType();
             List<String> uuidStrings = gson.fromJson(reader, type);
-            if (uuidStrings == null) return new HashSet<>();
+            if (uuidStrings == null) return ConcurrentHashMap.newKeySet();
 
-            Set<UUID> result = new HashSet<>();
+            Set<UUID> result = ConcurrentHashMap.newKeySet();
             for (String s : uuidStrings) {
                 try {
                     result.add(UUID.fromString(s));
@@ -117,7 +118,7 @@ public class IgnoreManager {
             return result;
         } catch (IOException e) {
             plugin.getLogger().warning("Failed to load ignore file: " + file.getFileName());
-            return new HashSet<>();
+            return ConcurrentHashMap.newKeySet();
         }
     }
 
