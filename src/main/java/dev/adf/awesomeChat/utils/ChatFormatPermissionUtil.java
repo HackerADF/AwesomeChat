@@ -6,7 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ChatFormatPermissionUtil {
-    private static final Pattern COLOR_PATTERN = Pattern.compile("(&[0-9a-fk-or])|(§[0-9a-fk-or])|(&#[A-Fa-f0-9]{6})");
+    private static final Pattern COLOR_PATTERN = Pattern.compile("(?i)(&[0-9a-fk-or])|(§[0-9a-fk-or])|(&#[A-Fa-f0-9]{6})");
     private static final Pattern MINIMESSAGE_TAG_PATTERN = Pattern.compile("<([^>]+)>");
     private static final Pattern HEX_COLOR_PATTERN = Pattern.compile("#[A-Fa-f0-9]{6}");
 
@@ -22,7 +22,7 @@ public class ChatFormatPermissionUtil {
                 continue;
             }
 
-            matcher.appendReplacement(buffer, code);
+            matcher.appendReplacement(buffer, Matcher.quoteReplacement(code));
         }
 
         matcher.appendTail(buffer);
