@@ -49,6 +49,15 @@ Type `:heart:`, `:star:`, `:fire:` and more in chat to insert unicode symbols. 2
 ### Join/Leave Messages
 Per-group join/leave messages with first-join support, MOTD lines, sounds, PlaceholderAPI placeholders, and EssentialsX vanish integration. Fully toggleable.
 
+### Item Display
+Type `[item]`, `[inventory]`, `[enderchest]`, or `[/command]` in chat to display interactive items. Other players can hover to see item tooltips or click to view read-only inventory snapshots. Snapshots expire after a configurable TTL. Permission-gated per trigger type.
+
+### Chat Radius / Local Chat
+Distance-based chat so players only see messages from nearby players. Per-group radii via LuckPerms (staff can have unlimited range). Shout prefix (`!`) bypasses the radius for server-wide messages. Cross-world toggle available.
+
+### Chat Logging
+Log all chat messages to SQLite or MySQL. Staff can search with `/chatlogs <player>` using time filters (`time:5m`, `after:1d`, `before:2h`). Clickable pagination, filtered message highlighting, and fully async writes for zero performance impact.
+
 ### Interactive Messages
 Hover text and click events on chat messages. Per-group and per-component (username vs message) configuration. Supports suggest command, run command, and copy to clipboard.
 
@@ -91,6 +100,7 @@ Public `AwesomeChatAPI` interface for other plugins to access player data, viola
 | `/ignore` (`/block`) | Ignore a player |
 | `/clearchat` (`/cc`) | Clear chat |
 | `/mutechat` (`/mc`) | Toggle chat mute |
+| `/chatlogs` (`/cl`) | Search chat logs |
 
 ---
 
