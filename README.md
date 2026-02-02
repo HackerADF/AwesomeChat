@@ -102,6 +102,17 @@ A powerful, fully-featured chat management plugin for Paper/Spigot servers (1.19
 - **Filtered message tracking** - Censored/blocked messages flagged in logs
 - **Async writes** - Zero performance impact on the main thread
 
+### Chat Color
+- **`/chatcolor` GUI** - 54-slot chest interface for choosing a persistent chat color
+- **16 standard colors** - All classic Minecraft color codes
+- **Gradient presets** - 8 dual-color and 5 triple-color gradient presets (Sunset, Ocean, Royal, etc.)
+- **Custom gradients** - Create your own gradient with up to 4 hex color stops (OP only by default)
+- **Style toggles** - Bold, italic, underline, strikethrough, obfuscated (permission-gated)
+- **Persistent storage** - Per-player JSON files survive restarts
+- **LuckPerms priority** - `chat-color` meta overrides the GUI selection
+- **Non-destructive** - Manual `&` color codes still work and override the persistent color
+- **Reset option** - `/chatcolor reset` clears your persistent color
+
 ### Interactive Messages
 - **Hover text** - Per-group and global hover tooltips on usernames and messages
 - **Click events** - Suggest command, run command, or copy to clipboard on click
@@ -150,6 +161,7 @@ A powerful, fully-featured chat management plugin for Paper/Spigot servers (1.19
 | `/clearchat` | `/cc` | `awesomechat.clearchat` | Clear chat |
 | `/mutechat` | `/chatmute`, `/mc` | `awesomechat.mutechat` | Toggle chat mute |
 | `/chatlogs` | `/cl`, `/chatlog` | `awesomechat.chatlogs` | Search chat logs |
+| `/chatcolor` | `/chatcolour`, `/ccolor` | `awesomechat.command.chatcolor` | Chat color picker GUI |
 
 ## Permissions
 
@@ -186,6 +198,9 @@ A powerful, fully-featured chat management plugin for Paper/Spigot servers (1.19
 | `awesomechat.display.enderchest` | OP | Use `[enderchest]`/`[echest]` in chat |
 | `awesomechat.display.command` | true | Use `[/command]` in chat |
 | `awesomechat.format.minimessage` | OP | Use MiniMessage tags |
+| `awesomechat.command.chatcolor` | true | Use `/chatcolor` command |
+| `awesomechat.chatcolor.gradient` | true | Use gradient presets in GUI |
+| `awesomechat.chatcolor.custom` | OP | Create custom gradient colors |
 | `awesomechat.styling.*` | - | Per-code formatting permissions |
 
 ## Configuration
@@ -207,6 +222,7 @@ All settings are in `config.yml`. Key sections:
 - **`item-display`** - Item display triggers and snapshot TTL
 - **`chat-radius`** - Local chat distance, shout prefix, per-group radii
 - **`chat-logging`** - Database storage (SQLite/MySQL), search settings
+- **`chatcolor`** - Persistent chat color GUI (enable/disable)
 
 Auto-broadcaster messages are configured separately in `AutoBroadcaster.yml`.
 
