@@ -172,7 +172,7 @@ public class ChatLogCommand implements CommandExecutor {
                 .append(Component.text(" (" + total + " results)").color(NamedTextColor.DARK_GRAY));
         player.sendMessage(header);
 
-        Component divider = Component.text(" " + "\u2500".repeat(40)).color(NamedTextColor.DARK_GRAY);
+        Component divider = Component.text(" " + "\u2500".repeat(35)).color(NamedTextColor.DARK_GRAY);
         player.sendMessage(divider);
 
         if (entries.isEmpty()) {
@@ -188,7 +188,7 @@ public class ChatLogCommand implements CommandExecutor {
                 Component line = Component.text("  ")
                         .append(Component.text("[" + shortTs + "]").color(NamedTextColor.GRAY))
                         .append(Component.text(" - ").color(NamedTextColor.DARK_GRAY))
-                        .append(Component.text(entry.username).color(NamedTextColor.WHITE))
+                        .append(Component.text(entry.username).color(NamedTextColor.AQUA))
                         .append(Component.text(": ").color(NamedTextColor.GRAY))
                         .append(Component.text(entry.message).color(
                                 entry.filtered ? NamedTextColor.RED : NamedTextColor.WHITE));

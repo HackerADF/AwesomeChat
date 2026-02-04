@@ -1,5 +1,6 @@
 package dev.adf.awesomeChat.api.events;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -16,6 +17,7 @@ public class ChatFilterViolationEvent extends Event implements Cancellable {
     private final int violationCount;
 
     public ChatFilterViolationEvent(Player player, String message, String ruleName, int violationCount) {
+        super(!Bukkit.isPrimaryThread());
         this.player = player;
         this.message = message;
         this.ruleName = ruleName;

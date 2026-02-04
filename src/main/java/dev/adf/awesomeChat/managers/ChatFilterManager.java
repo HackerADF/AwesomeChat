@@ -29,40 +29,80 @@ public class ChatFilterManager {
     private final JavaPlugin plugin;
     private File dataFile;
 
-    private final ConfigurationSection filterSection;
-    private final boolean bypassEnabled;
-    private final boolean announceActions;
+    // Settings loaded from filter.yml
+    private boolean enabled;
+    private String prefix;
+    private String filterMode;
+    private String censorChar;
+    private boolean bypassEnabled;
+    private boolean filterCommands;
+    private boolean announceActions;
 
-    private final List<String> bannedWords;
-    private final boolean antiAdvertisingEnabled;
-    private final List<String> tlds;
-    private final List<String> antiAdPhrases;
+    // Cooldown settings
+    private boolean cooldownEnabled;
+    private String cooldownMessage;
+    private String cooldownBypassPermission;
+    private long cooldownMs;
+    private List<String> cooldownCommands;
+    private List<String> cooldownWhitelist;
 
+    // Spam settings
+    private boolean spamEnabled;
+    private int spamLimit;
+    private boolean spamArgSensitive;
+    private List<String> spamCommands;
+    private List<String> spamWhitelist;
+
+    // Similarity settings
+    private boolean similarityEnabled;
+    private double similarityThreshold;
+    private List<String> similarityCommands;
+    private List<String> similarityWhitelist;
+
+    // Banned words
+    private List<String> bannedWords = Collections.emptyList();
     private final List<Pattern> wildcardBannedPatterns = new ArrayList<>();
     private final List<String> wildcardBannedRaw = new ArrayList<>();
 
+    // Anti-advertising
+    private boolean antiAdvertisingEnabled;
+    private String antiAdPlayerMessage;
+    private String antiAdStaffMessage;
+    private List<String> tlds;
+    private List<String> antiAdPhrases;
+    private Map<String, Object> antiAdPunishments;
+
+    // Global punishments & messages
+    private Map<String, Object> globalPunishments;
+    private String playerMessage;
+    private String staffMessage;
+
+    // Rules
     private final Map<String, FilterRule> rules = new LinkedHashMap<>();
+
+    // Offenses
     private final Map<UUID, Map<String, Integer>> offensesCache = new HashMap<>();
 
-    private boolean enabled = true;
+    // Cooldown and spam runtime caches
+    private final Map<UUID, Long> lastMessageTime = new HashMap<>();
+    private final Map<UUID, String> lastMessageContent = new HashMap<>();
+    private final Map<UUID, Integer> spamCount = new HashMap<>();
 
-    public ChatFilterManager(JavaPlugin plugin) {
+    private static final Gson GSON = new Gson();
+
+    public ChatFilterManager(JavaPlugin plugin, FileConfiguration filterConfig) {
         this.plugin = plugin;
 
         // ensure data folder exists
         if (!plugin.getDataFolder().exists()) plugin.getDataFolder().mkdirs();
 
-        // data file
+        // data file for offense counts
         this.dataFile = new File(plugin.getDataFolder(), "data/uuid.json");
-
-        // ensure parent folder exists
         if (!dataFile.getParentFile().exists()) dataFile.getParentFile().mkdirs();
 
-        // create the file if it does not exist
         if (!dataFile.exists()) {
             try {
                 dataFile.createNewFile();
-                // Initialize with an empty JSON object to avoid parsing errors
                 try (FileWriter writer = new FileWriter(dataFile)) {
                     writer.write("{}");
                 }
@@ -71,118 +111,696 @@ public class ChatFilterManager {
             }
         }
 
-        FileConfiguration config = plugin.getConfig();
-        ConfigurationSection filterSection = config.getConfigurationSection("chat-filter");
+        loadFromConfig(filterConfig);
+        loadOffensesFromFile();
+    }
 
-        if (filterSection == null || !filterSection.getBoolean("enabled", true)) {
-            plugin.getLogger().info("Chat filter is disabled in config.yml — ChatFilterManager will not initialize.");
-            this.enabled = false;
-            this.dataFile = null;
-            this.filterSection = null;
+    /**
+     * Reload the filter manager with a fresh filter config.
+     */
+    public void reload(FileConfiguration filterConfig) {
+        loadFromConfig(filterConfig);
+        // Clear runtime caches on reload
+        lastMessageTime.clear();
+        lastMessageContent.clear();
+        spamCount.clear();
+    }
+
+    private void loadFromConfig(FileConfiguration config) {
+        this.enabled = config.getBoolean("enabled", true);
+
+        if (!enabled) {
+            plugin.getLogger().info("Chat filter is disabled in filter.yml — ChatFilterManager will not filter.");
+            this.prefix = "";
+            this.filterMode = "block";
+            this.censorChar = "*";
             this.bypassEnabled = false;
+            this.filterCommands = false;
             this.announceActions = false;
+            this.cooldownEnabled = false;
+            this.cooldownMessage = "";
+            this.cooldownBypassPermission = "";
+            this.cooldownCommands = Collections.emptyList();
+            this.cooldownWhitelist = Collections.emptyList();
+            this.spamEnabled = false;
+            this.spamCommands = Collections.emptyList();
+            this.spamWhitelist = Collections.emptyList();
+            this.similarityEnabled = false;
+            this.similarityCommands = Collections.emptyList();
+            this.similarityWhitelist = Collections.emptyList();
             this.bannedWords = Collections.emptyList();
             this.antiAdvertisingEnabled = false;
             this.tlds = Collections.emptyList();
             this.antiAdPhrases = Collections.emptyList();
+            this.antiAdPunishments = Collections.emptyMap();
+            this.globalPunishments = Collections.emptyMap();
+            this.playerMessage = "";
+            this.staffMessage = "";
+            this.antiAdPlayerMessage = "";
+            this.antiAdStaffMessage = "";
+            wildcardBannedPatterns.clear();
+            wildcardBannedRaw.clear();
+            rules.clear();
             return;
         }
 
-        if (filterSection == null) {
-            plugin.getLogger().warning("chat-filter section missing in config.yml! Using defaults.");
-            ChatSettings.COOLDOWN_MS = 2000L;
-            ChatSettings.SIMILARITY_THRESHOLD = 0.85;
-            ChatSettings.SPAM_LIMIT = 3;
-        } else {
-            ChatSettings.COOLDOWN_MS = filterSection.getLong("cooldown.time-ms", 2000L);
-            ChatSettings.SIMILARITY_THRESHOLD = filterSection.getDouble("similarity.threshold", 0.85);
-            ChatSettings.SPAM_LIMIT = filterSection.getInt("spam.limit", 3);
+        this.prefix = config.getString("prefix", "&8[&cFilter&8]&r ");
+        this.filterMode = config.getString("mode", "block");
+        this.censorChar = config.getString("censor-char", "*");
+        this.bypassEnabled = config.getBoolean("bypass-permission", true);
+        this.filterCommands = config.getBoolean("filter-commands", false);
+        this.announceActions = config.getBoolean("announce-actions", false);
+
+        this.cooldownEnabled = config.getBoolean("cooldown.enabled", true);
+        this.cooldownMs = config.getLong("cooldown.time-ms", 2000L);
+        List<String> cooldownCmdsList = config.getStringList("cooldown.commands");
+        this.cooldownCommands = cooldownCmdsList.contains("*") ? Collections.emptyList() : cooldownCmdsList;
+        this.cooldownWhitelist = config.getStringList("cooldown.command-whitelist");
+        this.cooldownMessage = config.getString("cooldown.message",
+                "&cPlease wait &e{time}s &cbefore sending another message.");
+        this.cooldownBypassPermission = config.getString("cooldown.bypass-permission",
+                "awesomechat.filter.cooldown.bypass");
+
+        this.spamEnabled = config.getBoolean("spam.enabled", true);
+        this.spamLimit = config.getInt("spam.limit", 3);
+        this.spamArgSensitive = config.getBoolean("spam.arg-sensitive", false);
+        List<String> spamCmdsList = config.getStringList("spam.commands");
+        this.spamCommands = spamCmdsList.contains("*") ? Collections.emptyList() : spamCmdsList;
+        this.spamWhitelist = config.getStringList("spam.command-whitelist");
+
+        this.similarityEnabled = config.getBoolean("similarity.enabled", true);
+        this.similarityThreshold = config.getDouble("similarity.threshold", 0.85);
+        List<String> similarityCmdsList = config.getStringList("similarity.commands");
+        this.similarityCommands = similarityCmdsList.contains("*") ? Collections.emptyList() : similarityCmdsList;
+        this.similarityWhitelist = config.getStringList("similarity.command-whitelist");
+
+        this.playerMessage = config.getString("player-message", "&cYou cannot send this message.");
+        this.staffMessage = config.getString("staff-message", "&c{player} triggered filter: &7{message}");
+        this.globalPunishments = Collections.emptyMap();
+        if (config.isConfigurationSection("punishments")) {
+            this.globalPunishments = new HashMap<>(config.getConfigurationSection("punishments").getValues(false));
         }
 
-        Gson gson = new Gson();
-        try (FileReader reader = new FileReader(dataFile)) {
-            Type type = new TypeToken<Map<String, Map<String, Integer>>>() {}.getType();
-            Map<String, Map<String, Integer>> snapshot = gson.fromJson(reader, type);
-            if (snapshot != null) {
-                for (Map.Entry<String, Map<String, Integer>> e : snapshot.entrySet()) {
-                    try {
-                        UUID uuid = UUID.fromString(e.getKey());
-                        offensesCache.put(uuid, e.getValue());
-                    } catch (IllegalArgumentException ignored) {
-                        plugin.getLogger().warning("Invalid UUID in offenses file: " + e.getKey());
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // config section
-        FileConfiguration cfg = plugin.getConfig();
-        this.filterSection = cfg.getConfigurationSection("chat-filter");
-        if (filterSection == null) {
-            plugin.getLogger().warning("chat-filter section is missing in config.");
-            throw new IllegalStateException("chat-filter missing");
-        }
-
-        this.bypassEnabled = filterSection.getBoolean("bypass-permission", true);
-        this.announceActions = filterSection.getBoolean("announce-actions", false);
-
-        // banned words
-        Object bannedObj = filterSection.get("banned-words");
-
+        Object bannedObj = config.get("banned-words");
         List<String> listFallback = Collections.emptyList();
         if (bannedObj instanceof List) {
-            // old format still supported
-            listFallback = filterSection.getStringList("banned-words");
+            listFallback = config.getStringList("banned-words");
         }
+        this.bannedWords = listFallback.stream().map(String::toLowerCase).collect(Collectors.toList());
 
-        this.bannedWords = Optional.ofNullable(listFallback)
-                .orElse(Collections.emptyList())
-                .stream().map(String::toLowerCase).collect(Collectors.toList());
-
+        wildcardBannedPatterns.clear();
+        wildcardBannedRaw.clear();
         if (bannedObj instanceof String) {
-            String path = String.valueOf(bannedObj).trim();
+            String path = ((String) bannedObj).trim();
             if (!path.isEmpty()) {
                 File target = new File(plugin.getDataFolder(), path);
-
                 ensureDefaultWildcardFilters(target);
-
                 loadWildcardBannedFromPath(target);
                 plugin.getLogger().info("[ChatFilter] Loaded " + wildcardBannedPatterns.size()
                         + " wildcard banned patterns from: " + target.getPath());
             }
         }
 
-        // anti-advertising
-        ConfigurationSection anti = filterSection.getConfigurationSection("anti-advertising");
+        ConfigurationSection anti = config.getConfigurationSection("anti-advertising");
         this.antiAdvertisingEnabled = anti != null && anti.getBoolean("enabled", true);
-        this.tlds = anti != null ? Optional.ofNullable(anti.getStringList("tlds")).orElse(Collections.emptyList()) : Collections.emptyList();
-        this.antiAdPhrases = anti != null ? Optional.ofNullable(anti.getStringList("block-phrases")).orElse(Collections.emptyList()) : Collections.emptyList();
-
-        // load rules
-        List<Map<?,?>> rawRules = filterSection.getMapList("rules");
-        for (Map<?,?> raw : rawRules) {
-            String name = String.valueOf(raw.get("name"));
-            String regex = raw.containsKey("regex") ? String.valueOf(raw.get("regex")) : null;
-            String playerMsg = raw.containsKey("player-message") ? String.valueOf(raw.get("player-message")) : "";
-            String staffMsg = raw.containsKey("staff-message") ? String.valueOf(raw.get("staff-message")) : "";
-            Map<String, Object> punish = raw.containsKey("punishments") ? (Map<String, Object>) raw.get("punishments") : Collections.emptyMap();
-            FilterRule fr = new FilterRule(name, regex, playerMsg, staffMsg, punish);
-            rules.put(name, fr);
+        this.tlds = anti != null ? anti.getStringList("tlds") : Collections.emptyList();
+        this.antiAdPhrases = anti != null ? anti.getStringList("block-phrases") : Collections.emptyList();
+        this.antiAdPlayerMessage = anti != null ? anti.getString("player-message", "&cAdvertising is not allowed.") : "&cAdvertising is not allowed.";
+        this.antiAdStaffMessage = anti != null ? anti.getString("staff-message", "&c{player} attempted to advertise: &7{message}") : "&c{player} attempted to advertise: &7{message}";
+        this.antiAdPunishments = Collections.emptyMap();
+        if (anti != null && anti.isConfigurationSection("punishments")) {
+            this.antiAdPunishments = new HashMap<>(anti.getConfigurationSection("punishments").getValues(false));
         }
 
-        // load offenses into memory from file
-        loadOffensesFromFile();
+        rules.clear();
+        List<Map<?, ?>> rawRules = config.getMapList("rules");
+        for (Map<?, ?> raw : rawRules) {
+            String name = String.valueOf(raw.get("name"));
+            String regex = null;
+            if (raw.containsKey("regex")) {
+                Object regexObj = raw.get("regex");
+                if (regexObj instanceof byte[]) {
+                    regex = new String((byte[]) regexObj);
+                } else if (regexObj != null) {
+                    regex = String.valueOf(regexObj);
+                }
+            }
+            String rulePlayerMsg = raw.containsKey("player-message") ? String.valueOf(raw.get("player-message")) : "";
+            String ruleStaffMsg = raw.containsKey("staff-message") ? String.valueOf(raw.get("staff-message")) : "";
+            @SuppressWarnings("unchecked")
+            Map<String, Object> punish = raw.containsKey("punishments") ? (Map<String, Object>) raw.get("punishments") : Collections.emptyMap();
+            FilterRule fr = new FilterRule(name, regex, rulePlayerMsg, ruleStaffMsg, punish);
+            rules.put(name, fr);
+        }
     }
 
-    private static final File DATA_FOLDER = new File("plugins/AwesomeChat/data");
-    private static final Gson GSON = new Gson();
+    // =========================================================================
+    //  FilterResult
+    // =========================================================================
+
+    public static class FilterResult {
+        public final boolean blocked;
+        public final boolean censored;
+        public final String censoredMessage;
+
+        private FilterResult(boolean blocked, boolean censored, String censoredMessage) {
+            this.blocked = blocked;
+            this.censored = censored;
+            this.censoredMessage = censoredMessage;
+        }
+
+        public static FilterResult pass() { return new FilterResult(false, false, null); }
+        public static FilterResult block() { return new FilterResult(true, false, null); }
+        public static FilterResult censor(String msg) { return new FilterResult(false, true, msg); }
+    }
+
+    // =========================================================================
+    //  Single entry point: checkAndCensor
+    // =========================================================================
+
+    /**
+     * Single entry point for all filter checks. Works in both block and censor mode.
+     * In block mode, returns FilterResult.block() on violation.
+     * In censor mode, returns FilterResult.censor(censored) with bad words replaced.
+     * Cooldown/spam/similarity always block regardless of mode.
+     */
+    public FilterResult checkAndCensor(Player player, String message, String type) {
+        if (!enabled) return FilterResult.pass();
+        if (bypassEnabled && player.hasPermission("awesomechat.filter.bypass")) return FilterResult.pass();
+
+        UUID uuid = player.getUniqueId();
+        String normalized = message.toLowerCase();
+        long now = System.currentTimeMillis();
+        boolean censorMode = filterMode.equalsIgnoreCase("censor");
+
+        boolean isCommand = type.equalsIgnoreCase("command");
+        String baseCommand = "";
+        if (isCommand && message.startsWith("/")) {
+            String[] parts = message.substring(1).split(" ");
+            baseCommand = parts[0].toLowerCase();
+        }
+
+        // ================= Cooldown Check (always blocks) =================
+        if (cooldownEnabled && (cooldownBypassPermission == null
+                || !player.hasPermission(cooldownBypassPermission))) {
+
+            boolean applyCooldown = !isCommand;
+
+            if (isCommand) {
+                boolean listed = cooldownCommands.isEmpty() || cooldownCommands.contains(baseCommand);
+                boolean whitelisted = cooldownWhitelist.contains(baseCommand);
+                applyCooldown = listed && !whitelisted;
+            }
+
+            if (applyCooldown) {
+                Long last = lastMessageTime.get(uuid);
+
+                if (last != null && now - last < cooldownMs) {
+                    long remainingMs = cooldownMs - (now - last);
+                    double remainingSeconds = Math.ceil(remainingMs / 100.0) / 10.0;
+
+                    String raw = cooldownMessage
+                            .replace("{prefix}", plugin.getConfig().getString("prefix", "&7[&bAwesomeChat&7] "))
+                            .replace("{time}", String.valueOf(remainingSeconds));
+
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        for (String line : raw.split("\n")) {
+                            player.sendMessage(chatColorTranslate(line));
+                        }
+                    });
+
+                    return FilterResult.block();
+                }
+
+                lastMessageTime.put(uuid, now);
+            }
+        }
+
+        // ================= Spam / Similarity Check (always blocks) =================
+        if (spamEnabled || similarityEnabled) {
+            boolean applyCheck = !isCommand;
+
+            if (isCommand) {
+                boolean spamListed = spamCommands.isEmpty() || spamCommands.contains(baseCommand);
+                boolean simListed = similarityCommands.isEmpty() || similarityCommands.contains(baseCommand);
+                boolean spamWhitelisted = spamWhitelist.contains(baseCommand);
+                boolean simWhitelisted = similarityWhitelist.contains(baseCommand);
+
+                boolean isSpamTarget = spamListed && !spamWhitelisted;
+                boolean isSimilarityTarget = simListed && !simWhitelisted;
+
+                applyCheck = isSpamTarget || isSimilarityTarget;
+            }
+
+            if (applyCheck) {
+                String compareValue = spamArgSensitive ? normalized : (isCommand ? baseCommand : normalized);
+
+                if (lastMessageContent.containsKey(uuid)) {
+                    String prev = lastMessageContent.get(uuid);
+                    double sim = similarity(compareValue, prev);
+
+                    if (sim >= similarityThreshold) {
+                        int count = spamCount.getOrDefault(uuid, 0) + 1;
+                        spamCount.put(uuid, count);
+
+                        if (count >= spamLimit) {
+                            handleViolation(player, message, "spam", "similar-message", type);
+                            spamCount.put(uuid, 0);
+                            return FilterResult.block();
+                        }
+                    } else {
+                        spamCount.put(uuid, 0);
+                    }
+                }
+                lastMessageContent.put(uuid, compareValue);
+            }
+        }
+
+        // ================= Content checks (block or censor) =================
+        if (censorMode) {
+            return doCensorChecks(player, message, type);
+        } else {
+            return doBlockChecks(player, message, type);
+        }
+    }
+
+    // =========================================================================
+    //  Block mode checks
+    // =========================================================================
+
+    private FilterResult doBlockChecks(Player player, String message, String type) {
+        String normalized = message.toLowerCase();
+
+        // Banned words
+        for (String bw : bannedWords) {
+            Pattern p = Pattern.compile("(?i)(^|\\W)" + Pattern.quote(bw) + "($|\\W)");
+            if (p.matcher(message).find()) {
+                handleBannedWord(player, message, bw, type);
+                return FilterResult.block();
+            }
+        }
+
+        // Wildcard banned patterns
+        String[] words = message.split("\\s+");
+        for (int i = 0; i < wildcardBannedPatterns.size(); i++) {
+            Pattern pat = wildcardBannedPatterns.get(i);
+            for (String word : words) {
+                if (pat.matcher(word).matches()) {
+                    handleBannedWord(player, message, wildcardBannedRaw.get(i), type);
+                    return FilterResult.block();
+                }
+            }
+        }
+
+        // Anti-advertising
+        if (antiAdvertisingEnabled) {
+            for (String phrase : antiAdPhrases) {
+                if (normalized.contains(phrase.toLowerCase())) {
+                    handleAdvertising(player, message, phrase, type);
+                    return FilterResult.block();
+                }
+            }
+
+            for (String tld : tlds) {
+                Pattern p = Pattern.compile("\\b[a-zA-Z0-9-]+" + Pattern.quote(tld) + "\\b", Pattern.CASE_INSENSITIVE);
+                if (p.matcher(message).find()) {
+                    handleAdvertising(player, message, tld, type);
+                    return FilterResult.block();
+                }
+            }
+        }
+
+        // Regex rules
+        for (FilterRule rule : rules.values()) {
+            if (rule.regex == null || rule.regex.isEmpty()) continue;
+            try {
+                Pattern p = Pattern.compile(rule.regex, Pattern.CASE_INSENSITIVE);
+                Matcher m = p.matcher(message);
+                if (m.find()) {
+                    handleViolation(player, message, rule.name, m.group(), type);
+                    return FilterResult.block();
+                }
+            } catch (Exception ex) {
+                plugin.getLogger().warning("Invalid regex for rule " + rule.name + ": " + rule.regex);
+            }
+        }
+
+        return FilterResult.pass();
+    }
+
+    // =========================================================================
+    //  Censor mode checks
+    // =========================================================================
+
+    private FilterResult doCensorChecks(Player player, String message, String type) {
+        String censored = message;
+        boolean anyCensored = false;
+
+        // Banned words censor
+        for (String bw : bannedWords) {
+            Pattern p = Pattern.compile("(?i)(^|\\W)(" + Pattern.quote(bw) + ")($|\\W)");
+            Matcher m = p.matcher(censored);
+            if (m.find()) {
+                String replacement = censorChar.repeat(bw.length());
+                censored = censored.replaceAll("(?i)" + Pattern.quote(bw), replacement);
+                anyCensored = true;
+                incrementOffense(player, "banned-word");
+            }
+        }
+
+        // Wildcard patterns censor
+        for (int i = 0; i < wildcardBannedPatterns.size(); i++) {
+            Pattern pat = wildcardBannedPatterns.get(i);
+            String[] words = censored.split("\\s+");
+            StringBuilder sb = new StringBuilder();
+            for (int w = 0; w < words.length; w++) {
+                if (w > 0) sb.append(" ");
+                if (pat.matcher(words[w]).matches()) {
+                    sb.append(censorChar.repeat(words[w].length()));
+                    anyCensored = true;
+                } else {
+                    sb.append(words[w]);
+                }
+            }
+            censored = sb.toString();
+        }
+        if (anyCensored && wildcardBannedPatterns.size() > 0) {
+            incrementOffense(player, "banned-word");
+        }
+
+        // Anti-advertising censor
+        if (antiAdvertisingEnabled) {
+            String normalized = censored.toLowerCase();
+            for (String phrase : antiAdPhrases) {
+                if (normalized.contains(phrase.toLowerCase())) {
+                    censored = censored.replaceAll("(?i)" + Pattern.quote(phrase), censorChar.repeat(phrase.length()));
+                    anyCensored = true;
+                    incrementOffense(player, "advertising");
+                }
+            }
+
+            for (String tld : tlds) {
+                Pattern p = Pattern.compile("(\\b[a-zA-Z0-9-]+" + Pattern.quote(tld) + "\\b)", Pattern.CASE_INSENSITIVE);
+                Matcher m = p.matcher(censored);
+                if (m.find()) {
+                    censored = m.replaceAll(matchResult -> censorChar.repeat(matchResult.group().length()));
+                    anyCensored = true;
+                    incrementOffense(player, "advertising");
+                }
+            }
+        }
+
+        // Regex rules censor
+        for (FilterRule rule : rules.values()) {
+            if (rule.regex == null || rule.regex.isEmpty()) continue;
+            try {
+                Pattern p = Pattern.compile(rule.regex, Pattern.CASE_INSENSITIVE);
+                Matcher m = p.matcher(censored);
+                if (m.find()) {
+                    censored = m.replaceAll(matchResult -> censorChar.repeat(matchResult.group().length()));
+                    anyCensored = true;
+                    incrementOffense(player, rule.name);
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (anyCensored) {
+            // Notify staff about the censor action
+            String staffNotify = replacePlaceholders(prefix + staffMessage, player, message);
+            notifyStaff(player, staffNotify);
+
+            FilterLogger.log(player.getName() + " message censored: " + message);
+            return FilterResult.censor(censored);
+        }
+
+        return FilterResult.pass();
+    }
+
+    /**
+     * Increment offense count for a player+rule without triggering full violation handling.
+     * Used in censor mode where the message is allowed through (censored) but offenses still tracked.
+     */
+    private void incrementOffense(Player player, String ruleName) {
+        UUID id = player.getUniqueId();
+        Map<String, Integer> userMap = offensesCache.computeIfAbsent(id, k -> new HashMap<>());
+        int count = userMap.getOrDefault(ruleName, 0) + 1;
+        userMap.put(ruleName, count);
+        saveOffensesToFileAsync();
+
+        ViolationStorage.addViolation(id, ruleName);
+
+        ChatFilterViolationEvent event = new ChatFilterViolationEvent(player, "", ruleName, count);
+        Bukkit.getPluginManager().callEvent(event);
+
+        // Check if a punishment threshold is reached
+        FilterRule rule = rules.get(ruleName);
+        Map<String, Object> punishments;
+        if (rule != null) {
+            punishments = rule.punishments;
+        } else if ("banned-word".equals(ruleName)) {
+            punishments = globalPunishments;
+        } else if ("advertising".equals(ruleName)) {
+            punishments = antiAdPunishments;
+        } else {
+            punishments = Collections.emptyMap();
+        }
+
+        String action = resolvePunishment(punishments, count);
+        if (action != null && !action.trim().isEmpty()) {
+            final String cmd = action
+                    .replace("{player}", player.getName())
+                    .replace("{uuid}", player.getUniqueId().toString());
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+                }
+            }.runTask(plugin);
+        }
+    }
+
+    // =========================================================================
+    //  Similarity algorithm
+    // =========================================================================
+
+    private double similarity(String s1, String s2) {
+        if (s1.equals(s2)) return 1.0;
+        if (s1.isEmpty() || s2.isEmpty()) return 0.0;
+
+        int maxDist = Math.max(s1.length(), s2.length()) / 2 - 1;
+        if (maxDist < 0) maxDist = 0;
+        int m = 0, t = 0;
+
+        boolean[] s1Matches = new boolean[s1.length()];
+        boolean[] s2Matches = new boolean[s2.length()];
+
+        for (int i = 0; i < s1.length(); i++) {
+            int start = Math.max(0, i - maxDist);
+            int end = Math.min(i + maxDist + 1, s2.length());
+
+            for (int j = start; j < end; j++) {
+                if (s2Matches[j]) continue;
+                if (s1.charAt(i) != s2.charAt(j)) continue;
+                s1Matches[i] = true;
+                s2Matches[j] = true;
+                m++;
+                break;
+            }
+        }
+        if (m == 0) return 0.0;
+
+        int k = 0;
+        for (int i = 0; i < s1.length(); i++) {
+            if (!s1Matches[i]) continue;
+            while (!s2Matches[k]) k++;
+            if (s1.charAt(i) != s2.charAt(k)) t++;
+            k++;
+        }
+        double jaro = ((m / (double) s1.length()) + (m / (double) s2.length()) + ((m - t / 2.0) / m)) / 3.0;
+
+        // Winkler adjustment
+        int winklerPrefix = 0;
+        for (int i = 0; i < Math.min(4, Math.min(s1.length(), s2.length())); i++) {
+            if (s1.charAt(i) == s2.charAt(i)) winklerPrefix++;
+            else break;
+        }
+        return jaro + 0.1 * winklerPrefix * (1 - jaro);
+    }
+
+    // =========================================================================
+    //  Violation handling (block mode)
+    // =========================================================================
+
+    private void handleViolation(Player player, String message, String ruleName, String matched, String type) {
+        UUID id = player.getUniqueId();
+
+        Map<String, Integer> userMap = offensesCache.computeIfAbsent(id, k -> new HashMap<>());
+        int count = userMap.getOrDefault(ruleName, 0) + 1;
+        userMap.put(ruleName, count);
+        saveOffensesToFileAsync();
+
+        FilterRule rule = rules.get(ruleName);
+        if (rule == null) {
+            rule = new FilterRule(
+                    ruleName,
+                    null,
+                    playerMessage,
+                    staffMessage,
+                    Collections.emptyMap()
+            );
+        }
+
+        ViolationStorage.addViolation(id, rule.name);
+        FilterLogger.log(player.getName() + " violated rule " + rule.name + " with message: " + message);
+
+        ChatFilterViolationEvent event = new ChatFilterViolationEvent(player, message, rule.name, count);
+        Bukkit.getPluginManager().callEvent(event);
+
+        if (event.isCancelled()) {
+            return;
+        }
+
+        String resolvedPlayerMessage = replacePlaceholders(prefix + rule.playerMessage, player, message);
+        String resolvedStaffMessage = replacePlaceholders(prefix + rule.staffMessage, player, message);
+
+        String action = resolvePunishment(rule.punishments, count);
+
+        final String finalAction = action;
+        final String finalPlayerMessage = resolvedPlayerMessage;
+        final String finalStaffMessage = resolvedStaffMessage;
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (finalPlayerMessage != null && !finalPlayerMessage.isEmpty()) {
+                    player.sendMessage(chatColorTranslate(finalPlayerMessage));
+                }
+
+                notifyStaff(player, finalStaffMessage);
+
+                if (finalAction != null && !finalAction.trim().isEmpty()) {
+                    String consoleCommand = finalAction
+                            .replace("{player}", player.getName())
+                            .replace("{uuid}", player.getUniqueId().toString())
+                            .replace("{message}", message)
+                            .replace("{matched}", matched);
+
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), consoleCommand);
+                }
+            }
+        }.runTask(plugin);
+    }
+
+    private void handleBannedWord(Player player, String message, String matchedWord, String type) {
+        String ruleName = "banned-word";
+        FilterRule rule = rules.get(ruleName);
+
+        if (rule == null) {
+            rule = new FilterRule(
+                    ruleName,
+                    null,
+                    playerMessage,
+                    staffMessage,
+                    globalPunishments
+            );
+        }
+
+        handleViolation(player, message, rule.name, matchedWord, type);
+    }
+
+    private void handleAdvertising(Player player, String message, String matched, String type) {
+        String ruleName = "advertising";
+        FilterRule rule = rules.get(ruleName);
+
+        if (rule == null) {
+            rule = new FilterRule(
+                    ruleName,
+                    null,
+                    antiAdPlayerMessage,
+                    antiAdStaffMessage,
+                    antiAdPunishments
+            );
+        }
+
+        handleViolation(player, message, rule.name, matched, type);
+    }
+
+    // =========================================================================
+    //  Punishment resolution
+    // =========================================================================
+
+    private String resolvePunishment(Map<String, Object> punishments, int count) {
+        if (punishments == null || punishments.isEmpty()) return null;
+
+        // Direct match
+        Object actionObj = punishments.get(count);
+        if (actionObj == null) {
+            actionObj = punishments.get(String.valueOf(count));
+        }
+        if (actionObj != null) return String.valueOf(actionObj);
+
+        // Fallback: find best matching threshold
+        int best = -1;
+        boolean hasRepeat = false;
+
+        for (Object keyObj : punishments.keySet()) {
+            if ("repeat".equalsIgnoreCase(String.valueOf(keyObj))) {
+                hasRepeat = true;
+                continue;
+            }
+
+            int keyNum = -1;
+            if (keyObj instanceof Number) {
+                keyNum = ((Number) keyObj).intValue();
+            } else {
+                try {
+                    keyNum = Integer.parseInt(String.valueOf(keyObj));
+                } catch (NumberFormatException ignored) {}
+            }
+            if (keyNum > 0 && keyNum <= count && keyNum > best) {
+                best = keyNum;
+            }
+        }
+
+        if (best != -1) {
+            Object bestObj = punishments.get(best);
+            if (bestObj == null) bestObj = punishments.get(String.valueOf(best));
+            if (bestObj != null) return String.valueOf(bestObj);
+        } else if (hasRepeat) {
+            // Only use repeat if all numeric thresholds are below count
+            boolean hasFutureNonRepeat = false;
+            for (Object keyObj : punishments.keySet()) {
+                if ("repeat".equalsIgnoreCase(String.valueOf(keyObj))) continue;
+                int keyNum = -1;
+                if (keyObj instanceof Number) {
+                    keyNum = ((Number) keyObj).intValue();
+                } else {
+                    try {
+                        keyNum = Integer.parseInt(String.valueOf(keyObj));
+                    } catch (NumberFormatException ignored) {}
+                }
+                if (keyNum > count) {
+                    hasFutureNonRepeat = true;
+                    break;
+                }
+            }
+
+            if (!hasFutureNonRepeat) {
+                Object repeatObj = punishments.get("repeat");
+                if (repeatObj != null) return String.valueOf(repeatObj);
+            }
+        }
+
+        return null;
+    }
+
+    // =========================================================================
+    //  Offenses persistence
+    // =========================================================================
 
     private void loadOffensesFromFile() {
         offensesCache.clear();
-
-        if (!dataFile.exists()) return;
+        if (dataFile == null || !dataFile.exists()) return;
 
         try (FileReader reader = new FileReader(dataFile)) {
             Type type = new TypeToken<Map<String, Map<String, Integer>>>() {}.getType();
@@ -218,491 +836,19 @@ public class ChatFilterManager {
                     plugin.getLogger().severe("Failed to save offenses: " + e.getMessage());
                 }
             }
-        }.runTask(plugin);
+        }.runTaskAsynchronously(plugin);
     }
 
-    /**
-     * Main entry used by ChatListener. Returns true if the chat should be cancelled (violation) and nothing else should run.
-     */
-    // Cooldown and spam cache
-    private final Map<UUID, Long> lastMessageTime = new HashMap<>();
-    private final Map<UUID, String> lastMessageContent = new HashMap<>();
-    private final Map<UUID, Integer> spamCount = new HashMap<>();
-
-    public class ChatSettings {
-        public static long COOLDOWN_MS;
-        public static double SIMILARITY_THRESHOLD;
-        public static int SPAM_LIMIT;
-    }
-
-    public static class FilterResult {
-        public final boolean blocked;
-        public final boolean censored;
-        public final String censoredMessage;
-
-        private FilterResult(boolean blocked, boolean censored, String censoredMessage) {
-            this.blocked = blocked;
-            this.censored = censored;
-            this.censoredMessage = censoredMessage;
-        }
-
-        public static FilterResult pass() { return new FilterResult(false, false, null); }
-        public static FilterResult block() { return new FilterResult(true, false, null); }
-        public static FilterResult censor(String msg) { return new FilterResult(false, true, msg); }
-    }
-
-    public FilterResult checkAndCensor(Player player, String message, String type) {
-        if (bypassEnabled && player.hasPermission("awesomechat.filter.bypass")) return FilterResult.pass();
-
-        FileConfiguration config = plugin.getConfig();
-        String filterMode = config.getString("chat-filter.filter-mode", "block");
-        boolean censorMode = filterMode.equalsIgnoreCase("censor");
-        String censorChar = config.getString("chat-filter.censor-char", "*");
-
-        if (!censorMode) {
-            boolean blocked = checkAndHandle(player, message, type);
-            return blocked ? FilterResult.block() : FilterResult.pass();
-        }
-
-        // In censor mode, replace matched words instead of blocking
-        String censored = message;
-        boolean anyCensored = false;
-
-        // Banned words censor
-        for (String bw : bannedWords) {
-            Pattern p = Pattern.compile("(?i)(^|\\W)(" + Pattern.quote(bw) + ")($|\\W)");
-            Matcher m = p.matcher(censored);
-            if (m.find()) {
-                String replacement = censorChar.repeat(bw.length());
-                censored = censored.replaceAll("(?i)" + Pattern.quote(bw), replacement);
-                anyCensored = true;
-            }
-        }
-
-        // Wildcard patterns censor
-        for (int i = 0; i < wildcardBannedPatterns.size(); i++) {
-            Pattern pat = wildcardBannedPatterns.get(i);
-            String raw = wildcardBannedRaw.get(i);
-            String[] words = censored.split("\\s+");
-            StringBuilder sb = new StringBuilder();
-            for (int w = 0; w < words.length; w++) {
-                if (w > 0) sb.append(" ");
-                if (pat.matcher(words[w]).matches()) {
-                    sb.append(censorChar.repeat(words[w].length()));
-                    anyCensored = true;
-                } else {
-                    sb.append(words[w]);
-                }
-            }
-            censored = sb.toString();
-        }
-
-        // Regex rules censor
-        for (FilterRule rule : rules.values()) {
-            if (rule.regex == null || rule.regex.isEmpty()) continue;
-            try {
-                Pattern p = Pattern.compile(rule.regex, Pattern.CASE_INSENSITIVE);
-                Matcher m = p.matcher(censored);
-                if (m.find()) {
-                    censored = m.replaceAll(matchResult ->
-                            censorChar.repeat(matchResult.group().length()));
-                    anyCensored = true;
-                }
-            } catch (Exception ignored) {}
-        }
-
-        // Still apply cooldown/spam as blocking (not censorable)
-        UUID uuid = player.getUniqueId();
-        long now = System.currentTimeMillis();
-        boolean isCommand = type.equalsIgnoreCase("command");
-        String baseCommand = "";
-        if (isCommand && message.startsWith("/")) {
-            baseCommand = message.substring(1).split(" ")[0].toLowerCase();
-        }
-
-        if (config.getBoolean("cooldown.enabled")) {
-            boolean applyCooldown = !isCommand;
-            if (isCommand) {
-                List<String> commands = config.getStringList("cooldown.commands");
-                List<String> whitelist = config.getStringList("cooldown.command-whitelist");
-                applyCooldown = (commands.isEmpty() || commands.contains(baseCommand)) && !whitelist.contains(baseCommand);
-            }
-            if (applyCooldown) {
-                long cooldownTime = config.getLong("cooldown.time-ms");
-                if (lastMessageTime.containsKey(uuid) && now - lastMessageTime.get(uuid) < cooldownTime) {
-                    handleViolation(player, message, "cooldown", "too-fast", type);
-                    return FilterResult.block();
-                }
-                lastMessageTime.put(uuid, now);
-            }
-        }
-
-        if (anyCensored) {
-            return FilterResult.censor(censored);
-        }
-
-        return FilterResult.pass();
-    }
-
-    public boolean checkAndHandle(Player player, String message, String type) {
-        if (bypassEnabled && player.hasPermission("awesomechat.filter.bypass")) return false;
-
-        UUID uuid = player.getUniqueId();
-        String normalized = message.toLowerCase();
-        long now = System.currentTimeMillis();
-
-        FileConfiguration config = plugin.getConfig();
-
-        boolean isCommand = type.equalsIgnoreCase("command");
-        String baseCommand = "";
-        if (isCommand && message.startsWith("/")) {
-            String[] parts = message.substring(1).split(" ");
-            baseCommand = parts[0].toLowerCase();
-        }
-
-        // ================= Cooldown Check =================
-        if (config.getBoolean("cooldown.enabled")) {
-            boolean applyCooldown = !isCommand;
-            if (isCommand) {
-                List<String> commands = config.getStringList("cooldown.commands");
-                List<String> whitelist = config.getStringList("cooldown.command-whitelist");
-                boolean listed = commands.isEmpty() || commands.contains(baseCommand);
-                boolean whitelisted = whitelist.contains(baseCommand);
-                applyCooldown = listed && !whitelisted;
-            }
-
-            if (applyCooldown) {
-                long cooldownTime = config.getLong("cooldown.time-ms");
-                if (lastMessageTime.containsKey(uuid) && now - lastMessageTime.get(uuid) < cooldownTime) {
-                    handleViolation(player, message, "cooldown", "too-fast", type);
-                    return true;
-                }
-                lastMessageTime.put(uuid, now);
-            }
-        }
-
-        // ================= Spam / Similarity Check =================
-        if (config.getBoolean("spam.enabled") || config.getBoolean("similarity.enabled")) {
-            boolean applyCheck = !isCommand;
-
-            if (isCommand) {
-                List<String> spamCommands = config.getStringList("spam.commands");
-                List<String> similarityCommands = config.getStringList("similarity.commands");
-                List<String> spamWhitelist = config.getStringList("spam.command-whitelist");
-                List<String> similarityWhitelist = config.getStringList("similarity.command-similarity-whitelist");
-
-                boolean spamListed = spamCommands.isEmpty() || spamCommands.contains(baseCommand);
-                boolean simListed = similarityCommands.isEmpty() || similarityCommands.contains(baseCommand);
-                boolean spamWhitelisted = spamWhitelist.contains(baseCommand);
-                boolean similarityWhitelisted = similarityWhitelist.contains(baseCommand);
-
-                boolean isSpamTarget = spamListed && !spamWhitelisted;
-                boolean isSimilarityTarget = simListed && !similarityWhitelisted;
-
-                applyCheck = isSpamTarget || isSimilarityTarget;
-            }
-
-            if (applyCheck) {
-                boolean argSensitive = config.getBoolean("spam.arg-sensitive");
-                String compareValue = argSensitive ? normalized : baseCommand;
-
-                if (lastMessageContent.containsKey(uuid)) {
-                    String prev = lastMessageContent.get(uuid);
-                    double sim = similarity(compareValue, prev);
-                    double threshold = config.getDouble("similarity.threshold");
-                    int limit = config.getInt("spam.limit");
-
-                    if (sim >= threshold) {
-                        int count = spamCount.getOrDefault(uuid, 0) + 1;
-                        spamCount.put(uuid, count);
-
-                        if (count >= limit) {
-                            handleViolation(player, message, "spam", "similar-message", type);
-                            spamCount.put(uuid, 0);
-                            return true;
-                        }
-                    } else {
-                        spamCount.put(uuid, 0);
-                    }
-                }
-                lastMessageContent.put(uuid, compareValue);
-            }
-        }
-
-        // ================= Banned Words =================
-        for (String bw : bannedWords) {
-            Pattern p = Pattern.compile("(?i)(^|\\W)" + Pattern.quote(bw) + "($|\\W)");
-            if (p.matcher(message).find()) {
-                Bukkit.getLogger().info("Profanity matched: word='" + bw + "' in message='" + message + "'");
-                handleBannedWord(player, message, bw, type);
-                return true;
-            }
-        }
-
-        // ================= Anti-Advertising =================
-        if (antiAdvertisingEnabled) {
-            for (String phrase : antiAdPhrases) {
-                if (normalized.contains(phrase.toLowerCase())) {
-                    handleAdvertising(player, message, phrase, type);
-                    return true;
-                }
-            }
-
-            for (String tld : tlds) {
-                Pattern p = Pattern.compile("\\b[a-zA-Z0-9-]+\\." + Pattern.quote(tld) + "\\b", Pattern.CASE_INSENSITIVE);
-                if (p.matcher(message).find()) {
-                    handleAdvertising(player, message, "." + tld, type);
-                    return true;
-                }
-            }
-
-            Pattern domain = Pattern.compile("([a-zA-Z0-9-]+\\.[a-z]{2,})(:[0-9]{1,5})?", Pattern.CASE_INSENSITIVE);
-            if (domain.matcher(message).find()) {
-                handleAdvertising(player, message, "domain", type);
-                return true;
-            }
-        }
-
-        // ================= Regex Rules =================
-        for (FilterRule rule : rules.values()) {
-            if (rule.regex == null || rule.regex.isEmpty()) continue;
-            try {
-                Pattern p = Pattern.compile(rule.regex, Pattern.CASE_INSENSITIVE);
-                Matcher m = p.matcher(message);
-                if (m.find()) {
-                    handleViolation(player, message, rule.name, m.group(), type);
-                    return true;
-                }
-            } catch (Exception ex) {
-                plugin.getLogger().warning("Invalid regex for rule " + rule.name + ": " + rule.regex);
-            }
-        }
-
-        return false; // clean
-    }
-
-    /**
-     * Jaro-Winkler similarity for spam detection
-     */
-    private double similarity(String s1, String s2) {
-        if (s1.equals(s2)) return 1.0;
-        int maxDist = Math.max(s1.length(), s2.length()) / 2 - 1;
-        int[] matches = new int[2];
-        int m = 0, t = 0;
-
-        boolean[] s1Matches = new boolean[s1.length()];
-        boolean[] s2Matches = new boolean[s2.length()];
-
-        for (int i = 0; i < s1.length(); i++) {
-            int start = Math.max(0, i - maxDist);
-            int end = Math.min(i + maxDist + 1, s2.length());
-
-            for (int j = start; j < end; j++) {
-                if (s2Matches[j]) continue;
-                if (s1.charAt(i) != s2.charAt(j)) continue;
-                s1Matches[i] = true;
-                s2Matches[j] = true;
-                m++;
-                break;
-            }
-        }
-        if (m == 0) return 0.0;
-
-        int k = 0;
-        for (int i = 0; i < s1.length(); i++) {
-            if (!s1Matches[i]) continue;
-            while (!s2Matches[k]) k++;
-            if (s1.charAt(i) != s2.charAt(k)) t++;
-            k++;
-        }
-        double jaro = ((m / (double) s1.length()) + (m / (double) s2.length()) + ((m - t / 2.0) / m)) / 3.0;
-
-        // Winkler adjustment
-        int prefix = 0;
-        for (int i = 0; i < Math.min(4, Math.min(s1.length(), s2.length())); i++) {
-            if (s1.charAt(i) == s2.charAt(i)) prefix++;
-            else break;
-        }
-        return jaro + 0.1 * prefix * (1 - jaro);
-    }
-
-    private void handleViolation(Player player, String message, String ruleName, String matched, String type) {
-        UUID id = player.getUniqueId();
-
-        Map<String, Integer> userMap = offensesCache.computeIfAbsent(id, k -> new HashMap<>());
-        int count = userMap.getOrDefault(ruleName, 0) + 1;
-        userMap.put(ruleName, count);
-        saveOffensesToFileAsync();
-
-        FilterRule rule = rules.get(ruleName);
-        if (rule == null) {
-            rule = new FilterRule(
-                    ruleName,
-                    null,
-                    "&cYour " + type + " was blocked.",
-                    "&c{player} triggered " + ruleName + ": {message}",
-                    Collections.emptyMap()
-            );
-        }
-
-        ViolationStorage.addViolation(id, rule.name);
-        FilterLogger.log(player.getName() + " violated rule " + rule.name + " with message: " + message);
-
-        ChatFilterViolationEvent event = new ChatFilterViolationEvent(player, message, rule.name, count);
-        Bukkit.getPluginManager().callEvent(event);
-
-        if (event.isCancelled()) {
-            return;
-        }
-
-        String prefix = plugin.getConfig().getString("chat-filter.prefix", "&8[&cChatFilter&8]&r ");
-        String playerMessage = replacePlaceholders(prefix + rule.playerMessage, player, message);
-        String staffMessage = replacePlaceholders(prefix + rule.staffMessage, player, message);
-
-        // determine action based on config
-        String action = null;
-        if (rule.punishments != null && !rule.punishments.isEmpty()) {
-            Object actionObj = rule.punishments.get(count);
-            if (actionObj == null) {
-                actionObj = rule.punishments.get(String.valueOf(count));
-            }
-            if (actionObj != null) action = String.valueOf(actionObj);
-
-            // Fallback
-            if (action == null) {
-                int best = -1;
-                boolean hasRepeat = false;
-
-                for (Object keyObj : rule.punishments.keySet()) {
-                    if ("repeat".equalsIgnoreCase(String.valueOf(keyObj))) {
-                        hasRepeat = true;
-                        continue;
-                    }
-
-                    int keyNum = -1;
-                    if (keyObj instanceof Number) {
-                        keyNum = ((Number) keyObj).intValue();
-                    } else {
-                        try {
-                            keyNum = Integer.parseInt(String.valueOf(keyObj));
-                        } catch (NumberFormatException ignored) {}
-                    }
-                    if (keyNum <= count && keyNum > best) {
-                        best = keyNum;
-                    }
-                }
-                if (best != -1) {
-                    Object bestObj = rule.punishments.get(best);
-                    if (bestObj == null) bestObj = rule.punishments.get(String.valueOf(best));
-                    if (bestObj != null) action = String.valueOf(bestObj);
-                }
-                else if (hasRepeat) {
-                    boolean hasFutureNonRepeat = false;
-                    for (Object keyObj : rule.punishments.keySet()) {
-                        if ("repeat".equalsIgnoreCase(String.valueOf(keyObj))) continue;
-                        int keyNum = -1;
-                        if (keyObj instanceof Number) {
-                            keyNum = ((Number) keyObj).intValue();
-                        } else {
-                            try {
-                                keyNum = Integer.parseInt(String.valueOf(keyObj));
-                            } catch (NumberFormatException ignored) {}
-                        }
-
-                        if (keyNum > count) {
-                            hasFutureNonRepeat = true;
-                            break;
-                        }
-                    }
-
-                    if (!hasFutureNonRepeat) {
-                        Object repeatObj = rule.punishments.get("repeat");
-                        if (repeatObj != null) action = String.valueOf(repeatObj);
-                    }
-                }
-            }
-        }
-
-        final String finalAction = action;
-        final String finalPlayerMessage = playerMessage;
-        final String finalStaffMessage = staffMessage;
-
-        // execute messages and commands asynchronousyl on the main thread
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (finalPlayerMessage != null && !finalPlayerMessage.isEmpty()) {
-                    player.sendMessage(ChatColorTranslate(finalPlayerMessage));
-                }
-
-                String notifyPerm = "awesomechat.filter.notify";
-                Bukkit.getOnlinePlayers().stream()
-                        .filter(p -> p.hasPermission(notifyPerm))
-                        .forEach(p -> p.sendMessage(ChatColorTranslate(finalStaffMessage)));
-
-                if (finalAction != null && !finalAction.trim().isEmpty()) {
-                    String consoleCommand = finalAction
-                            .replace("{player}", player.getName())
-                            .replace("{uuid}", player.getUniqueId().toString())
-                            .replace("{message}", message)
-                            .replace("{matched}", matched);
-
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), consoleCommand);
-                }
-            }
-        }.runTask(plugin);
-    }
-
-    private void handleBannedWord(Player player, String message, String matchedWord, String type) {
-        // Treat banned-word like a FilterRule
-        String ruleName = "banned-word";
-        FilterRule rule = rules.get(ruleName);
-
-        // Fallback rule if none exists
-        if (rule == null) {
-            Map<String, Object> punishments = Collections.emptyMap();
-            if (plugin.getConfig().isConfigurationSection("chat-filter.punishments")) {
-                punishments = new HashMap<>(plugin.getConfig()
-                        .getConfigurationSection("chat-filter.punishments")
-                        .getValues(false));
-            }
-
-            rule = new FilterRule(
-                    ruleName,
-                    null,
-                    "&cPlease do not use profanity!",
-                    "&c{player} used profanity in chat: &7{message}",
-                    punishments
-            );
-        }
-
-        handleViolation(player, message, rule.name, matchedWord, type);
-    }
-
-    private void handleAdvertising(Player player, String message, String matched, String type) {
-        String ruleName = "advertising";
-
-        // Fetch the rule from the config if it exists
-        FilterRule rule = rules.get(ruleName);
-
-        // Fallback rule if none exists
-        if (rule == null) {
-            ConfigurationSection antiAdSection = filterSection.getConfigurationSection("anti-advertising");
-            Map<String, Object> punishmentsMap = Collections.emptyMap();
-            String playerMsg = "&cAdvertising is not allowed.";
-            String staffMsg = "&c{player} attempted to advertise in chat: {message}";
-
-            if (antiAdSection != null) {
-                punishmentsMap = antiAdSection.getConfigurationSection("punishments") != null
-                        ? new HashMap<>(antiAdSection.getConfigurationSection("punishments").getValues(false))
-                        : Collections.emptyMap();
-                playerMsg = antiAdSection.getString("player-message", playerMsg);
-                staffMsg = antiAdSection.getString("staff-message", staffMsg);
-            }
-
-            rule = new FilterRule(ruleName, null, playerMsg, staffMsg, punishmentsMap);
-        }
-        handleViolation(player, message, rule.name, matched, type);
+    // =========================================================================
+    //  Utility
+    // =========================================================================
+
+    private void notifyStaff(Player source, String message) {
+        if (!announceActions) return;
+        String notifyPerm = "awesomechat.filter.notify";
+        Bukkit.getOnlinePlayers().stream()
+                .filter(p -> p.hasPermission(notifyPerm))
+                .forEach(p -> p.sendMessage(chatColorTranslate(message)));
     }
 
     private String replacePlaceholders(String template, Player player, String message) {
@@ -713,12 +859,22 @@ public class ChatFilterManager {
                 .replace("{message}", message);
     }
 
-    private String ChatColorTranslate(String input) {
-        // no import collision: use org.bukkit.ChatColor here
+    private String chatColorTranslate(String input) {
         return org.bukkit.ChatColor.translateAlternateColorCodes('&', input == null ? "" : input);
     }
 
-    // Basic rule holder
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public boolean isFilterCommands() {
+        return filterCommands;
+    }
+
+    // =========================================================================
+    //  FilterRule
+    // =========================================================================
+
     private static class FilterRule {
         final String name;
         final String regex;
@@ -735,9 +891,16 @@ public class ChatFilterManager {
         }
     }
 
+    // =========================================================================
+    //  Wildcard / banned-words file loading
+    // =========================================================================
+
     private void ensureDefaultWildcardFilters(File target) {
         try {
-            File dir = target.isDirectory() ? target : target.getParentFile();
+            // Detect if target is meant to be a directory (path has no file extension or already is a directory)
+            boolean isDir = target.isDirectory()
+                    || (!target.exists() && !target.getName().contains("."));
+            File dir = isDir ? target : target.getParentFile();
             if (dir == null) return;
 
             if (!dir.exists()) dir.mkdirs();
@@ -747,7 +910,7 @@ public class ChatFilterManager {
             File slurs = new File(dir, "slurs.txt");
             File abuse = new File(dir, "abuse_violence.txt");
 
-            if (!curse.exists() && target.isDirectory()) {
+            if (!curse.exists() && isDir) {
                 writeTextFile(curse, String.join("\n",
                         "# Curse / general profanity",
                         "fuck*",
@@ -770,7 +933,7 @@ public class ChatFilterManager {
                 ));
             }
 
-            if (!sexual.exists() && target.isDirectory()) {
+            if (!sexual.exists() && isDir) {
                 writeTextFile(sexual, String.join("\n",
                         "# Sexual / anatomy / explicit",
                         "pussy*",
@@ -801,7 +964,7 @@ public class ChatFilterManager {
                 ));
             }
 
-            if (!slurs.exists() && target.isDirectory()) {
+            if (!slurs.exists() && isDir) {
                 writeTextFile(slurs, String.join("\n",
                         "# Slurs / hate language",
                         "fag*",
@@ -819,7 +982,7 @@ public class ChatFilterManager {
                 ));
             }
 
-            if (!abuse.exists() && target.isDirectory()) {
+            if (!abuse.exists() && isDir) {
                 writeTextFile(abuse, String.join("\n",
                         "# Sexual violence / abuse terms",
                         "rape*",
@@ -835,7 +998,7 @@ public class ChatFilterManager {
     }
 
     private void writeTextFile(File file, String content) throws IOException {
-        if (file.exists()) return; // don't overwrite
+        if (file.exists()) return;
         if (file.getParentFile() != null && !file.getParentFile().exists()) file.getParentFile().mkdirs();
         try (FileWriter w = new FileWriter(file)) {
             w.write(content);
@@ -887,9 +1050,6 @@ public class ChatFilterManager {
         }
     }
 
-    /**
-     * Convert wildcard pattern to a safe regex pattern.
-     */
     private Pattern wildcardToPattern(String wildcard) {
         String w = wildcard.trim();
         StringBuilder sb = new StringBuilder();
@@ -905,19 +1065,5 @@ public class ChatFilterManager {
         }
 
         return Pattern.compile("^" + sb + "$", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
-    }
-
-    /**
-     * Tokenize message into "words" in such a way that avoids blocking inside other words unless wildcard requires it.
-     */
-    private List<String> tokenizeWords(String message) {
-        String[] parts = message.split("[\\s\\p{Punct}]+");
-        List<String> out = new ArrayList<>(parts.length);
-        for (String p : parts) {
-            if (p == null) continue;
-            String t = p.trim();
-            if (!t.isEmpty()) out.add(t);
-        }
-        return out;
     }
 }

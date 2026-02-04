@@ -1,7 +1,9 @@
 package dev.adf.awesomeChat.managers;
 
 import dev.adf.awesomeChat.AwesomeChat;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,7 +16,7 @@ import java.util.Map;
 
 public class ConfigManager {
 
-    private static final int CURRENT_VERSION = 7;
+    private static final int CURRENT_VERSION = 16;
 
     private final AwesomeChat plugin;
     private final File configFile;
@@ -57,6 +59,11 @@ public class ConfigManager {
         if (version < 5) migrateToV5(config);
         if (version < 6) migrateToV6(config);
         if (version < 7) migrateToV7(config);
+        if (version < 8) migrateToV8(config);
+        if (version < 9) migrateToV9(config);
+        if (version < 10) migrateToV10(config);
+        if (version < 15) migrateToV15(config);
+        if (version < 16) migrateToV16(config);
 
         config.set("config-version", CURRENT_VERSION);
 
@@ -379,6 +386,275 @@ public class ConfigManager {
         if (!config.contains("chatcolor")) {
             config.set("chatcolor.enabled", true);
             plugin.getLogger().info("    Added chatcolor section.");
+        }
+    }
+
+    // =========================================================================
+    //  v7 -> v8: Item display configurable formats, hover text, GUI titles
+    // =========================================================================
+    private void migrateToV8(FileConfiguration config) {
+        plugin.getLogger().info("  Running v7 -> v8 migration...");
+
+        setIfAbsent(config, "item-display.formats.item", "&f[{item}&f x{count}&f]");
+        setIfAbsent(config, "item-display.formats.empty-hand", "&7[Empty Hand]");
+        setIfAbsent(config, "item-display.formats.inventory", "&a[{player}'s Inventory]");
+        setIfAbsent(config, "item-display.formats.enderchest", "&5[{player}'s Ender Chest]");
+        setIfAbsent(config, "item-display.formats.command", "&6[{command}]");
+
+        setIfAbsent(config, "item-display.hover-text.inventory", "&eClick to view inventory");
+        setIfAbsent(config, "item-display.hover-text.enderchest", "&eClick to view ender chest");
+        setIfAbsent(config, "item-display.hover-text.command", "&eClick to use {command}");
+
+        setIfAbsent(config, "item-display.gui-titles.inventory", "{player}'s Inventory");
+        setIfAbsent(config, "item-display.gui-titles.enderchest", "{player}'s Ender Chest");
+
+        plugin.getLogger().info("    Added item-display format, hover-text, and gui-titles settings.");
+    }
+
+    // =========================================================================
+    //  v8 -> v9: Chat color custom-gradients section
+    // =========================================================================
+    private void migrateToV9(FileConfiguration config) {
+        plugin.getLogger().info("  Running v8 -> v9 migration...");
+
+        if (!config.contains("chatcolor.custom-gradients")) {
+            config.createSection("chatcolor.custom-gradients");
+            plugin.getLogger().info("    Added chatcolor.custom-gradients section.");
+        }
+    }
+
+    // =========================================================================
+    //  v9 -> v10: Item display trigger prefix/suffix, item GUI title
+    // =========================================================================
+    private void migrateToV10(FileConfiguration config) {
+        plugin.getLogger().info("  Running v9 -> v10 migration...");
+
+        setIfAbsent(config, "item-display.trigger-prefix", "[");
+        setIfAbsent(config, "item-display.trigger-suffix", "]");
+        setIfAbsent(config, "item-display.gui-titles.item", "{player}'s Item");
+
+        plugin.getLogger().info("    Added item-display trigger prefix/suffix and item GUI title.");
+    }
+
+    // =========================================================================
+    //  v10-14 -> v15: Extract chat-filter to filter.yml
+    // =========================================================================
+    private void migrateToV15(FileConfiguration config) {
+        plugin.getLogger().info("  Running v10-14 -> v15 migration (extracting chat-filter to modules/filter.yml)...");
+
+        File modulesDir = new File(plugin.getDataFolder(), "modules");
+        if (!modulesDir.exists()) modulesDir.mkdirs();
+        File filterFile = new File(modulesDir, "filter.yml");
+
+        // Only migrate if chat-filter section exists in config.yml
+        ConfigurationSection chatFilter = config.getConfigurationSection("chat-filter");
+        if (chatFilter != null && !filterFile.exists()) {
+            // Build filter.yml from the existing chat-filter section
+            YamlConfiguration filterConfig = new YamlConfiguration();
+
+            filterConfig.set("enabled", chatFilter.getBoolean("enabled", true));
+            filterConfig.set("prefix", chatFilter.getString("prefix", "&8[&cFilter&8]&r "));
+
+            // Map old filter-mode to new mode key
+            filterConfig.set("mode", chatFilter.getString("filter-mode", "block"));
+            filterConfig.set("censor-char", chatFilter.getString("censor-char", "*"));
+            filterConfig.set("bypass-permission", chatFilter.getBoolean("bypass-permission", true));
+            filterConfig.set("filter-commands", chatFilter.getBoolean("filter-commands", false));
+            filterConfig.set("announce-actions", chatFilter.getBoolean("announce-actions", false));
+
+            // Cooldown
+            ConfigurationSection cooldown = chatFilter.getConfigurationSection("cooldown");
+            if (cooldown != null) {
+                filterConfig.set("cooldown.enabled", cooldown.getBoolean("enabled", true));
+                filterConfig.set("cooldown.time-ms", cooldown.getLong("time-ms", 2000L));
+                filterConfig.set("cooldown.commands", cooldown.getStringList("commands"));
+                filterConfig.set("cooldown.command-whitelist", cooldown.getStringList("command-whitelist"));
+            }
+
+            // Spam
+            ConfigurationSection spam = chatFilter.getConfigurationSection("spam");
+            if (spam != null) {
+                filterConfig.set("spam.enabled", spam.getBoolean("enabled", true));
+                filterConfig.set("spam.limit", spam.getInt("limit", 3));
+                filterConfig.set("spam.arg-sensitive", spam.getBoolean("arg-sensitive", false));
+                filterConfig.set("spam.commands", spam.getStringList("commands"));
+                filterConfig.set("spam.command-whitelist", spam.getStringList("command-whitelist"));
+            }
+
+            // Similarity
+            ConfigurationSection similarity = chatFilter.getConfigurationSection("similarity");
+            if (similarity != null) {
+                filterConfig.set("similarity.enabled", similarity.getBoolean("enabled", true));
+                filterConfig.set("similarity.threshold", similarity.getDouble("threshold", 0.85));
+                filterConfig.set("similarity.commands", similarity.getStringList("commands"));
+                // Handle old key name
+                List<String> simWhitelist = similarity.getStringList("command-whitelist");
+                if (simWhitelist.isEmpty()) {
+                    simWhitelist = similarity.getStringList("command-similarity-whitelist");
+                }
+                filterConfig.set("similarity.command-whitelist", simWhitelist);
+            }
+
+            // Banned words
+            Object bannedObj = chatFilter.get("banned-words");
+            if (bannedObj != null) {
+                filterConfig.set("banned-words", bannedObj);
+            }
+
+            // Anti-advertising
+            ConfigurationSection anti = chatFilter.getConfigurationSection("anti-advertising");
+            if (anti != null) {
+                filterConfig.set("anti-advertising.enabled", anti.getBoolean("enabled", true));
+                filterConfig.set("anti-advertising.player-message", anti.getString("player-message", "&cAdvertising is not allowed."));
+                filterConfig.set("anti-advertising.staff-message", anti.getString("staff-message", "&c{player} attempted to advertise: &7{message}"));
+                filterConfig.set("anti-advertising.tlds", anti.getStringList("tlds"));
+                filterConfig.set("anti-advertising.block-phrases", anti.getStringList("block-phrases"));
+                if (anti.isConfigurationSection("punishments")) {
+                    for (String key : anti.getConfigurationSection("punishments").getKeys(false)) {
+                        filterConfig.set("anti-advertising.punishments." + key, anti.get("punishments." + key));
+                    }
+                }
+            }
+
+            // Global punishments
+            ConfigurationSection punishments = chatFilter.getConfigurationSection("punishments");
+            if (punishments != null) {
+                for (String key : punishments.getKeys(false)) {
+                    filterConfig.set("punishments." + key, punishments.get(key));
+                }
+            }
+
+            // Messages
+            filterConfig.set("player-message", chatFilter.getString("player-message", "&cYou cannot send this message."));
+            filterConfig.set("staff-message", chatFilter.getString("staff-message", "&c{player} triggered filter: &7{message}"));
+
+            // Rules
+            List<Map<?, ?>> rules = chatFilter.getMapList("rules");
+            if (!rules.isEmpty()) {
+                filterConfig.set("rules", rules);
+            }
+
+            // Logging
+            ConfigurationSection logging = chatFilter.getConfigurationSection("logging");
+            if (logging != null) {
+                filterConfig.set("logging.enabled", logging.getBoolean("enabled", true));
+                filterConfig.set("logging.file", logging.getString("file", "filter-violations.log"));
+            }
+
+            try {
+                filterConfig.save(filterFile);
+                plugin.getLogger().info("    Migrated chat-filter settings to modules/filter.yml");
+            } catch (IOException e) {
+                plugin.getLogger().severe("    Failed to save filter.yml during migration: " + e.getMessage());
+            }
+        }
+
+        // Remove chat-filter section from config.yml
+        if (config.contains("chat-filter")) {
+            config.set("chat-filter", null);
+            plugin.getLogger().info("    Removed chat-filter section from config.yml");
+        }
+
+        plugin.getLogger().info("    Chat filter settings have moved to modules/filter.yml");
+    }
+
+    // =========================================================================
+    //  v15 -> v16: Channel command declarations & Chat filter cooldown
+    // =========================================================================
+    private void migrateToV16(FileConfiguration config) {
+        plugin.getLogger().info("  Running v15 -> v16 migration...");
+
+        FileConfiguration filter = plugin.getFilterConfig();
+
+        setIfAbsent(filter, "cooldown.bypass-permission", "awesomechat.filter.bypass.cooldown");
+        setIfAbsent(filter, "cooldown.message", "{prefix} &7Please wait &b{time}&7s before sending another message.");
+        plugin.getLogger().info("    Added cooldown message & bypass permission sections to filter manager");
+
+        setIfAbsent(config, "channels.staff.command", "/staffchat");
+        setIfAbsent(config, "channels.admin.command", "/adminchat");
+        setIfAbsent(config, "channels.vip.command", "none");
+        plugin.getLogger().info("    Added command section to channel configuration");
+    }
+
+    /**
+     * Ensures modules/filter.yml exists. Called during plugin startup.
+     * Migrates from old filter.yml location if present, otherwise saves the default.
+     * Also ensures the default banned-word list files exist.
+     */
+    public void ensureFilterConfig() {
+        File modulesDir = new File(plugin.getDataFolder(), "modules");
+        if (!modulesDir.exists()) modulesDir.mkdirs();
+
+        File filterFile = new File(modulesDir, "filter.yml");
+
+        if (!filterFile.exists()) {
+            // Migrate from old location if present
+            File oldFilterFile = new File(plugin.getDataFolder(), "filter.yml");
+            if (oldFilterFile.exists()) {
+                oldFilterFile.renameTo(filterFile);
+                plugin.getLogger().info("Migrated filter.yml -> modules/filter.yml");
+
+                // Update banned-words path if it still references the old location
+                try {
+                    org.bukkit.configuration.file.YamlConfiguration filterConfig =
+                            org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(filterFile);
+                    String bannedPath = filterConfig.getString("banned-words", "");
+                    if ("filter/".equals(bannedPath) || "filter".equals(bannedPath)) {
+                        filterConfig.set("banned-words", "modules/filter/");
+                        filterConfig.save(filterFile);
+                        plugin.getLogger().info("Updated banned-words path to modules/filter/");
+                    }
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Failed to update banned-words path: " + e.getMessage());
+                }
+            } else {
+                plugin.saveResource("modules/filter.yml", false);
+                plugin.getLogger().info("Generated default modules/filter.yml.");
+            }
+        }
+
+        // Migrate old filter/ directory to modules/filter/
+        File oldFilterDir = new File(plugin.getDataFolder(), "filter");
+        File newFilterDir = new File(modulesDir, "filter");
+        if (oldFilterDir.exists() && oldFilterDir.isDirectory()) {
+            if (!newFilterDir.exists()) newFilterDir.mkdirs();
+            File[] files = oldFilterDir.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    File dest = new File(newFilterDir, f.getName());
+                    if (!dest.exists()) {
+                        f.renameTo(dest);
+                    }
+                }
+            }
+            // Remove old directory if empty
+            String[] remaining = oldFilterDir.list();
+            if (remaining != null && remaining.length == 0) {
+                oldFilterDir.delete();
+            }
+            plugin.getLogger().info("Migrated filter/ -> modules/filter/");
+        }
+
+        // Save default banned-word list files from jar if they don't exist
+        saveDefaultFilterFiles(newFilterDir);
+    }
+
+    private void saveDefaultFilterFiles(File filterDir) {
+        String[] defaultFiles = {
+                "modules/filter/curse_words.txt",
+                "modules/filter/sexual.txt",
+                "modules/filter/slurs.txt",
+                "modules/filter/abuse_violence.txt"
+        };
+        for (String resourcePath : defaultFiles) {
+            File target = new File(plugin.getDataFolder(), resourcePath);
+            if (!target.exists()) {
+                try {
+                    plugin.saveResource(resourcePath, false);
+                } catch (Exception e) {
+                    // Resource may not exist in jar; will be created by ChatFilterManager fallback
+                }
+            }
         }
     }
 

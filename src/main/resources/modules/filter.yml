@@ -1,0 +1,154 @@
+# ================================================================
+#                 AwesomeChat Filter Configuration
+# ================================================================
+#
+# This file controls all chat filtering, spam prevention,
+# and moderation features. Extracted from config.yml for clarity.
+#
+# Permission to bypass all filters: awesomechat.filter.bypass
+#
+# ================================================================
+
+enabled: true
+prefix: "&8[&cFilter&8]&r "
+
+# How to handle violations: "block" cancels the message, "censor" replaces bad words with *
+mode: "block"
+censor-char: "*"
+
+# Permission to bypass all filters: awesomechat.filter.bypass
+bypass-permission: true
+
+# Also filter commands (not just chat)
+filter-commands: true
+
+# Notify staff when a filter triggers
+announce-actions: true
+
+# --- Cooldown ---
+cooldown:
+  enabled: true
+  time-ms: 2000
+  bypass-permission: "awesomechat.filter.bypass.cooldown"
+  message: |
+    {prefix} &7Please wait &b{time}&7s before sending another message.
+        &7Purchase &eVIP&7 to send messages quicker.
+
+  commands: [msg, pm, tell, whisper, w, message, privatemessage, r, reply, me]
+    # or, if you want to filter all commands: [*]
+    # additionally, you can filter NO commands: []
+
+  command-whitelist:
+    - skill
+
+# --- Spam Detection ---
+spam:
+  enabled: true
+  limit: 3
+  arg-sensitive: false
+  commands: [msg, pm, tell, whisper, w, message, privatemessage, r, reply, me]
+    # or, if you want to filter all commands: [*]
+    # additionally, you can filter NO commands: []
+
+  command-whitelist:
+    - skill
+
+# --- Similarity Detection ---
+similarity:
+  enabled: true
+  threshold: 0.85
+  commands: [ msg, pm, tell, whisper, w, message, privatemessage, r, reply, me ]
+  # or, if you want to filter all commands: [*]
+  # additionally, you can filter NO commands: []
+
+  command-whitelist:
+    - skill
+
+# Messages shown to the player and staff
+player-message: "&cYou cannot send this message."
+staff-message: "&c{player} triggered filter: &7{message}"
+
+# --- Punishments ---
+# Escalating punishments based on offense count.
+# Use {player}, {uuid}, {message}, {matched} placeholders.
+punishments:
+  3: "warn {player} &cPlease watch your language!"
+  5: "mute {player} 1d &cInappropriate language."
+  7: "mute {player} 7d &cRepeated violations."
+  repeat: "mute {player} 14d &cRepeated violations."
+
+# ================================================================
+#          Built-in chat filter modules & custom rules
+# ================================================================
+#
+# This section controls the built-in anti-swear, anti-advertise,
+# and anti-chatflood modules. It also has a section where you can
+# define your own regex-powered rules.
+#
+# Permission to bypass all filters: awesomechat.filter.bypass
+#
+# ================================================================
+
+# --- Banned Words ---
+# Point to a directory or file of banned word lists.
+# Supports wildcard patterns (e.g., "fuck*").
+# Use a directory to load all .txt files inside it.
+banned-words: "modules/filter/"
+
+# --- Anti-Advertising ---
+anti-advertising:
+  enabled: true
+  player-message: "&cAdvertising is not allowed."
+  staff-message: "&c{player} attempted to advertise: &7{message}"
+  tlds:
+    - ".com"
+    - ".org"
+    - ".net"
+    - ".gg"
+    - ".xyz"
+    - ".pro"
+    - ".co"
+    - ".info"
+    - ".shop"
+    - ".online"
+    - ".vip"
+    - ".fun"
+    - ".dev"
+    - ".uk"
+    - ".ms"
+    - ".ly"
+  block-phrases:
+    - "join my server"
+    - "play at"
+    - "server ip"
+  punishments:
+    3: "warn {player} Please do not advertise."
+    5: "mute {player} 1d Advertising."
+    7: "ban {player} Repeated advertising."
+    repeat: ""
+
+# --- Custom Regex Rules ---
+rules:
+  - name: "profanity"
+    regex: "(?i)\\b(fuck|shit|bitch|asshole|nigg|cum|cunt|fuk|fak)\\b"
+    player-message: "&cPlease do not use profanity!"
+    staff-message: "&c{player} used profanity: &7{message}"
+    punishments:
+      3: "warn {player} Profanity"
+      5: "mute {player} 1d Profanity"
+      7: "mute {player} 7d Profanity"
+      repeat: ""
+
+  - name: "spam-chars"
+    regex: "(.)\\1{6,}"
+    player-message: "&cSpamming is not allowed!"
+    staff-message: "&6{player} spammed: &7{message}"
+    punishments:
+      3: "warn {player} Spam"
+      5: "mute {player} 30m Spam"
+      repeat: ""
+
+# --- Logging ---
+logging:
+  enabled: true
+  file: "filter-violations.log"

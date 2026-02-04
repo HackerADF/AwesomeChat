@@ -268,17 +268,21 @@ public class ChatListener implements Listener {
         IgnoreManager ignoreManager = plugin.getIgnoreManager();
 
         if (!config.getBoolean("disable-chat-signing")) {
-            event.renderer((source, displayName, message, audience) -> {
-                if (audience instanceof Player viewer) {
-                    if (ignoreManager != null && ignoreManager.isIgnoring(viewer, source)) {
-                        return Component.empty();
+            // Remove ignored and out-of-range players from viewers entirely
+            // so they receive no message at all (no empty space, no hover)
+            event.viewers().removeIf(audience -> {
+                if (audience instanceof Player viewer && !viewer.equals(player)) {
+                    if (ignoreManager != null && ignoreManager.isIgnoring(viewer, player)) {
+                        return true;
                     }
-                    if (radiusEnabled && !finalIsShout && !radiusManager.isInRange(source, viewer)) {
-                        return Component.empty();
+                    if (radiusEnabled && !finalIsShout && !radiusManager.isInRange(player, viewer)) {
+                        return true;
                     }
                 }
-                return finalChatComponent;
+                return false;
             });
+
+            event.renderer((source, displayName, message, audience) -> finalChatComponent);
         } else {
             event.setCancelled(true);
             for (Player target : Bukkit.getOnlinePlayers()) {

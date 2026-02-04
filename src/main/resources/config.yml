@@ -189,7 +189,7 @@ chat-format:
 
     # Per-group sounds (different sounds per LuckPerms group)
     per-group:
-      enabled: true
+      enabled: false
       groups:
         owner:
           name: "ENTITY_ENDER_DRAGON_GROWL"
@@ -295,6 +295,8 @@ channels:
     pitch: 1.5
     auto-join: false
 
+    command: /staffchat
+
   admin:
     display-name: "Admin"
     prefix: "&8[&4&lADMIN&8]&r "
@@ -305,6 +307,8 @@ channels:
     pitch: 1.0
     auto-join: false
 
+    command: /adminchat
+
   vip:
     display-name: "VIP"
     prefix: "&8[&6&lVIP&8]&r "
@@ -314,6 +318,8 @@ channels:
     volume: 1.0
     pitch: 1.0
     auto-join: false
+
+    command: none
 
   # Example: open channel anyone can join (empty permission = open)
   # general:
@@ -394,192 +400,7 @@ broadcast: # Command Permission: awesomechat.broadcast
     - "&7[&cBroadcast&7]"
     - "&f%message%"
 
-# ================================================================
-#            Chat Filter System (Regex + Offenses)               =
-# ================================================================
-chat-filter:
-  prefix: "&8[&cChatFilter&8]&r "
-
-  enabled: true
-
-  # Filter mode: "block" cancels the message entirely, "censor" replaces matched words
-  # In censor mode, banned words and regex matches are replaced with the censor-char
-  # Cooldown and spam checks always block regardless of mode
-  filter-mode: "block"     # Options: "block" or "censor"
-  censor-char: "*"         # Character used to replace censored words (e.g., "****")
-
-  filter-commands: true
-  announce-actions: true
-
-  # Players with this permission will bypass all filters
-  # Permission: awesomechat.filter.bypass
-  bypass-permission: true
-
-  # ===============================================================
-  #                       Basic filtering                         =
-  #                                                               =
-  #                         Cooldown                              =
-  #    Control how fast a player can send a message or command    =
-  # ===============================================================
-  cooldown:
-    enabled: true
-
-    # 1 second = 1000 ms
-    time-ms: 2000
-
-    # Only filter specific commands (will not affect normal messages)
-    # Leave at "[]" for all commands
-    commands: []
-
-    # Ignore specific commands
-    # Set to "[]" to disable
-    command-whitelist:
-      - skill
-      - AnotherCommand
-
-  # ====================== Spam Limits ============================
-  #    Control how many times a player can send the same          =
-  #          message/command before being blocked                 =
-  # ===============================================================
-  spam:
-    enabled: true
-
-    # Number of times before filtered
-    limit: 3
-
-    # Only filter specific commands (will not affect normal messages)
-    # Leave at "[]" for all commands
-    commands: [ ]
-
-    # Whether to just count the command itself, or
-    # all the args as well
-
-    # Example:
-    # /msg <player> test
-    # /msg <player> test2
-    # ^^^^^^^^^^^^^^^^^^^
-    # When enabled, this option will count these
-    # as two different commands
-    arg-sensitive: false
-
-    # Ignore specific commands
-    # Set to "[]" to disable
-    command-whitelist:
-      - skill
-      - AnotherCommand
-
-
-  # ====================== Spam Limits ============================
-  #    Control how close a message/command can be to a            =
-  #             previous one to be counted as spam                =
-  # ===============================================================
-  similarity:
-    enabled: true
-
-    # How similar two messages must be (0.0 – 1.0) to count as duplicates
-    # A value of 0 means completely different; 1 means identical
-    # Messages above this ratio are treated as repeated or spam
-    threshold: 0.85
-
-    # Only filter specific commands (will not affect normal messages)
-    # Leave at "[]" for all commands
-    commands: []
-
-    # Ignore specific commands
-    # Set to "[]" to disable
-    command-similarity-whitelist:
-      - skill
-      - AnotherCommand
-
-  # ====================== Banned Words ===========================
-  #            Words that will be blocked in chat                 =
-  # ===============================================================
-  banned-words: filter/   # directory
-  # or: banned-words: filter/curse_words.txt  # single file
-
-
-  # ================ Punishment Thresholds ========================
-  #       Punish players based on filter offenses, if the         =
-  #      player's offense number is higher than the highest       =
-  #     offense listed below, it will execute the "repeat" entry  =
-  # ===============================================================
-  punishments:
-    3: "warn {player} &cPlease watch your language!"
-    5: "mute {player} 1d &cMuted for inappropriate language."
-    7: "mute {player} 7d &cMuted for repeated filter violations."
-
-    # This will be triggered after the player has reached the max offense above
-    # This will trigger every further offense, leave blank to disable
-    repeat: "mute {player} 14d &cMuted for repeated filter violations."
-
-  # Messages
-  player-message: "&cYou cannot send this message."
-  staff-message: "&c{player} triggered chat filter: &7{message}"
-
-  # Global anti-advertising settings
-  anti-advertising:
-    enabled: true
-    block-tlds: true
-
-    player-message: "&cAdvertising is not allowed."
-    staff-message: "&c{player} attempted to advertise in chat: &7{message}"
-
-    punishments:
-      3: "warn {player} Please watch your language!"
-      5: "mute {player} 1d Muted for inappropriate language."
-      7: "ban {player} Banned for repeated filter violations."
-      repeat: ""
-
-    tlds:
-      - ".com"
-      - ".org"
-      - ".net"
-      - ".gg"
-      - ".xyz"
-      - ".pro"
-      - ".co"
-      - ".info"
-    block-phrases:
-      - "join my server"
-      - "play at"
-      - "server ip"
-
-  # Custom rules (regex support)
-  rules:
-    - name: "swear-words"
-      regex: "(?i)\b(fuck|shit|bitch|asshole|ass|nigg|cum|cunt|gger|fuk|fak)\b"
-      player-message: "&cPlease do not use profanity!"
-      staff-message: "&c{player} used profanity in chat: &7{message}"
-      punishments:
-        3: "warn {player} [AUTOMUTE] Repeatedly attempting to use profanity"
-        5: "mute {player} 1d [AUTOMUTE] Repeated attempts to use profanity"
-        7: "mute {player} 7d [AUTOMUTE] Repeated attempts to use profanity"
-        repeat: ""
-
-    - name: "advertising"
-      regex: "(?i)(join\\s+my\\s+server|[a-z0-9-]+\\.[a-z]{2,})"
-      player-message: "&cAdvertising is not allowed!"
-      staff-message: "&e{player} attempted to advertise: &7{message}"
-      punishments:
-        3: "mute {player} 1d [AUTOMUTE] Repeatedly attempting to advertise"
-        5: "mute {player} 7d [AUTOMUTE] Repeatedly attempting to advertise"
-        7: "ban {player} 7d [AUTOBAN] Advertising"
-        repeat: ""
-
-    - name: "spam"
-      regex: "(.)\\1{6,}"
-      player-message: "&cSpamming is not allowed!"
-      staff-message: "&6{player} was caught spamming: &7{message}"
-      punishments:
-        3: "warn {player} spam"
-        5: "mute {player} 30m Repeatedly attempting to spam"
-        repeat: ""
-
-  # Logging of filtered messages
-  logging:
-    enabled: true
-    file: "filter-violations.log"
-
+# Chat filter settings have moved to modules/filter.yml
 
 # ================================================================
 #            Configuration for plugin messages:                  =
@@ -697,8 +518,8 @@ chat-radius:
 # to display interactive items. Other players can hover to see item
 # tooltips or click to view inventory snapshots.
 #
-# Triggers:
-#   [item] or [hand]         - Show held item with hover tooltip
+# Triggers (default prefix "[", suffix "]"):
+#   [item], [hand], [this]   - Show held item (hover tooltip + click to view GUI)
 #   [inventory] or [inv]     - Clickable link to view player's inventory
 #   [enderchest] or [echest] - Clickable link to view ender chest
 #   [/command]               - Clickable command suggestion
@@ -709,9 +530,29 @@ chat-radius:
 #   awesomechat.display.enderchest - Use [enderchest]/[echest]/[ec]
 #   awesomechat.display.command    - Use [/command]
 item-display:
-  enabled: false
+  enabled: true
   snapshot-ttl-seconds: 300       # How long inventory snapshots remain viewable
   expired-message: "&cThis inventory snapshot has expired."
+  # Trigger prefix and suffix for item display triggers.
+  # Default: "[" and "]" → [item], [inv], [echest], [/command]
+  # Example: "!" and "" → !item, !inv, !echest (commands disabled without suffix)
+  # Supported keywords: item, hand, this, inventory, inv, enderchest, echest, ec
+  trigger-prefix: "["
+  trigger-suffix: "]"
+  formats:
+    item: "&f[{item}&f x{count}&f]"
+    empty-hand: "&7[Empty Hand]"
+    inventory: "&a[{player}'s Inventory]"
+    enderchest: "&5[{player}'s Ender Chest]"
+    command: "&6[{command}]"
+  hover-text:
+    inventory: "&eClick to view inventory"
+    enderchest: "&eClick to view ender chest"
+    command: "&eClick to use {command}"
+  gui-titles:
+    item: "{player}'s Item"
+    inventory: "{player}'s Inventory"
+    enderchest: "{player}'s Ender Chest"
 
 
 # ================================================================
@@ -723,7 +564,7 @@ item-display:
 # Duration format: 30s, 5m, 12h, 1d, 2w
 # Permissions: awesomechat.chatlogs
 chat-logging:
-  enabled: false
+  enabled: true
   storage-type: "sqlite"          # "sqlite" or "mysql"
   sqlite:
     file: "chat-logs.db"
@@ -733,8 +574,8 @@ chat-logging:
     database: "awesomechat"
     username: "root"
     password: ""
-  page-size: 10                   # Messages per page in /chatlogs
-  log-format: "&7{timestamp} &8- &f{player}&7: &f{message}"
+  page-size: 7                    # Messages per page in /chatlogs
+  log-format: "&7{timestamp} &8- &b{player}&7: &f{message}"
   log-filtered: true              # Also log messages that were filtered/censored
   log-commands: false             # Log filtered commands (not yet implemented)
 
@@ -751,13 +592,9 @@ chat-logging:
 #   awesomechat.chatcolor.custom    - Create custom gradients
 chatcolor:
   enabled: true
-
-
-# This will disable minecraft's new chat validation system introduced in 1.19
-# This should fix most chat-related errors, if enabled, please ensure that
-# "enforce-secure-profile" in your config is set to false.
-# Do not enable if you do not understand what you're doing.
-disable-chat-signing: false
+  # Admin-created custom gradients. Use /chatcolor create <name> <material> <color1> <color2> [color3] [color4]
+  # Each gradient requires permission: awesomechat.chatcolor.gradient.<name>
+  custom-gradients: {}
 
 
 # ================================================================
@@ -792,6 +629,11 @@ minimessage:
 chat-formatting:
   enabled: true
 
+# This will disable minecraft's new chat validation system introduced in 1.19
+# This should fix most chat-related errors, if enabled, please ensure that
+# "enforce-secure-profile" in your config is set to false.
+# Do not enable if you do not understand what you're doing.
+disable-chat-signing: false
 
 # DO NOT TOUCH
-config-version: 11
+config-version: 16

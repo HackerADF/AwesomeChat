@@ -8,6 +8,7 @@ import dev.adf.awesomeChat.managers.*;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginEnableEvent;
@@ -29,6 +30,7 @@ public final class AwesomeChat extends JavaPlugin {
 
     // init manager instances
     private AutoBroadcasterManager autoBroadcasterManager;
+    private ChatListener chatListener;
     private ChatFilterManager chatFilterManager;
     private PrivateMessageManager privateMessageManager;
     private SocialSpyManager socialSpyManager;
@@ -43,7 +45,14 @@ public final class AwesomeChat extends JavaPlugin {
     private ChatLogManager chatLogManager;
     private ChatColorManager chatColorManager;
     private dev.adf.awesomeChat.gui.ChatColorGUI chatColorGUI;
+
+    private File filterFile;
+    private FileConfiguration filterConfig;
+
     private dev.adf.awesomeChat.api.AwesomeChatAPIImpl api;
+
+    // filter config
+    private File filterConfigFile;
 
     // misc
     private boolean chatMuted = false;
@@ -58,6 +67,10 @@ public final class AwesomeChat extends JavaPlugin {
         registerPluginDependencyChecks();
 
         saveDefaultConfig();
+
+        // Load filter.yml
+        configManager.ensureFilterConfig();
+        loadFilterConfig();
 
         try {
             privateMessageManager = new PrivateMessageManager();
@@ -76,7 +89,15 @@ public final class AwesomeChat extends JavaPlugin {
         }
 
         try {
-            chatFilterManager = new ChatFilterManager(this);
+            chatListener = new ChatListener(this);
+            getLogger().info("ChatListener loaded.");
+        } catch (Exception e) {
+            getLogger().warning("ChatListener failed to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
+            chatFilterManager = new ChatFilterManager(this, filterConfig);
             getLogger().info("ChatFilterManager loaded.");
         } catch (Exception e) {
             getLogger().warning("ChatFilterManager failed to initialize: " + e.getMessage());
@@ -205,7 +226,7 @@ public final class AwesomeChat extends JavaPlugin {
         getCommand("chatlogs").setExecutor(new ChatLogCommand(this));
         getCommand("chatlogs").setTabCompleter(new ChatLogTabCompleter(this));
         getCommand("chatcolor").setExecutor(new ChatColorCommand(this));
-        getCommand("chatcolor").setTabCompleter(new ChatColorTabCompleter());
+        getCommand("chatcolor").setTabCompleter(new ChatColorTabCompleter(this));
 
         getLogger().info("Attempting to hook into PlaceholderAPI...");
         getLogger().info("AwesomeChat has been enabled!");
@@ -420,9 +441,50 @@ public final class AwesomeChat extends JavaPlugin {
         return getConfig();
     }
 
+    public void loadFilterConfig() {
+        filterConfigFile = new File(getDataFolder(), "modules/filter.yml");
+        filterConfig = YamlConfiguration.loadConfiguration(filterConfigFile);
+    }
+
+    public void reloadFilterConfig() {
+        loadFilterConfig();
+    }
+
+    public FileConfiguration getFilterConfig() {
+        return filterConfig;
+    }
+
+    public void reloadChatLogManager() {
+        boolean enabled = getPluginConfig().getBoolean("chat-logging.enabled", false);
+        if (enabled) {
+            try {
+                if (chatLogManager != null) {
+                    chatLogManager.reload();
+                } else {
+                    chatLogManager = new ChatLogManager(this);
+                }
+                getLogger().info("ChatLogManager reloaded (" + getPluginConfig().getString("chat-logging.storage-type", "sqlite") + ").");
+            } catch (Exception e) {
+                getLogger().warning("ChatLogManager failed to reload: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            if (chatLogManager != null) {
+                chatLogManager.close();
+                chatLogManager = null;
+                getLogger().info("ChatLogManager disabled.");
+            }
+        }
+    }
+
     public void reloadFilterModule() {
+        reloadFilterConfig();
         try {
-            chatFilterManager = new ChatFilterManager(this);
+            if (chatFilterManager != null) {
+                chatFilterManager.reload(filterConfig);
+            } else {
+                chatFilterManager = new ChatFilterManager(this, filterConfig);
+            }
             getLogger().info("ChatFilterManager reloaded.");
         } catch (Exception e) {
             getLogger().warning("ChatFilterManager failed to reload: " + e.getMessage());
@@ -430,6 +492,9 @@ public final class AwesomeChat extends JavaPlugin {
         }
     }
 
+    public ChatListener getChatListener() {
+        return chatListener;
+    }
 
     public ChatFilterManager getChatFilterManager() {
         return chatFilterManager;
@@ -494,6 +559,10 @@ public final class AwesomeChat extends JavaPlugin {
     public boolean toggleChatMuted() {
         chatMuted = !chatMuted;
         return chatMuted;
+    }
+
+    public String getPluginPrefix() {
+        return getPluginConfig().getString("prefix", "&7[&bAwesomeChat&7] ");
     }
 
     public dev.adf.awesomeChat.api.AwesomeChatAPI getAPI() {

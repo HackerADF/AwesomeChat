@@ -1,0 +1,40 @@
+# AutoBroadcaster Configuration
+enabled: true
+interval: 75 # Time in seconds between broadcasts
+broadcasts:
+  - message:
+      - ""
+      - ""
+      - "                            &x&0&0&3&9&F&F&l&oA&x&1&A&3&3&F&A&l&ow&x&3&3&2&E&F&5&l&oe&x&4&D&2&8&E&F&l&os&x&6&6&2&2&E&A&l&oo&x&8&0&1&D&E&5&l&om&x&9&9&1&7&E&0&l&oe&x&B&3&1&1&D&B&l&oC&x&C&C&0&B&D&5&l&oh&x&E&6&0&6&D&0&l&oa&x&F&F&0&0&C&B&l&ot"
+      - "                &7Advanced Chat Management"
+      - ""
+      - "          &f● &7Enhance your server's chat experience"
+      - "          &f● &7Professional formatting and moderation"
+      - "          &f● &7Configure in &e/plugins/&x&0&0&3&9&F&F&oA&x&1&A&3&3&F&A&ow&x&3&3&2&E&F&5&oe&x&4&D&2&8&E&F&os&x&6&6&2&2&E&A&oo&x&8&0&1&D&E&5&om&x&9&9&1&7&E&0&oe&x&B&3&1&1&D&B&oC&x&C&C&0&B&D&5&oh&x&E&6&0&6&D&0&oa&x&F&F&0&0&C&B&ot&e/"
+      - ""
+      - ""
+    sound: "ENTITY_PLAYER_LEVELUP"
+  - message:
+      - ""
+      - ""
+      - "                            &x&0&0&3&9&F&F&l&oA&x&1&A&3&3&F&A&l&ow&x&3&3&2&E&F&5&l&oe&x&4&D&2&8&E&F&l&os&x&6&6&2&2&E&A&l&oo&x&8&0&1&D&E&5&l&om&x&9&9&1&7&E&0&l&oe&x&B&3&1&1&D&B&l&oC&x&C&C&0&B&D&5&l&oh&x&E&6&0&6&D&0&l&oa&x&F&F&0&0&C&B&l&ot"
+      - "                    &7Hover Text Feature"
+      - ""
+      - "          &f● &7Display custom text on username hover"
+      - "          &f● &7Edit hover messages in &econfig.yml"
+      - "          &f● &7Create interactive chat experiences"
+      - ""
+      - ""
+    sound: "BLOCK_NOTE_BLOCK_PLING"
+  - message:
+      - ""
+      - ""
+      - "                            &x&0&0&3&9&F&F&l&oA&x&1&A&3&3&F&A&l&ow&x&3&3&2&E&F&5&l&oe&x&4&D&2&8&E&F&l&os&x&6&6&2&2&E&A&l&oo&x&8&0&1&D&E&5&l&om&x&9&9&1&7&E&0&l&oe&x&B&3&1&1&D&B&l&oC&x&C&C&0&B&D&5&l&oh&x&E&6&0&6&D&0&l&oa&x&F&F&0&0&C&B&l&ot"
+      - "                     &7Chat Filter System"
+      - ""
+      - "          &f● &7Intelligent &cspam detection"
+      - "          &f● &7Customizable &6word filters &7& &eregex rules"
+      - "          &f● &7&aCooldowns &7and &banti-advertising &7protection"
+      - ""
+      - ""
+    sound: "ENTITY_EXPERIENCE_ORB_PICKUP"

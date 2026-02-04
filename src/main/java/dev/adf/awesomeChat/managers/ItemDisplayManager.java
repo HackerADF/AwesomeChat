@@ -4,9 +4,8 @@ import dev.adf.awesomeChat.AwesomeChat;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -23,20 +22,48 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static dev.adf.awesomeChat.listeners.ChatListener.formatColors;
+import static dev.adf.awesomeChat.listeners.ChatListener.deserializeLegacy;
+
 public class ItemDisplayManager {
 
     private final AwesomeChat plugin;
     private final NamespacedKey displayTagKey;
     private final Map<UUID, InventorySnapshot> snapshots = new HashMap<>();
+    private Pattern triggerPattern;
 
-    private static final Pattern TRIGGER_PATTERN = Pattern.compile(
-            "\\[(item|hand|inventory|inv|enderchest|echest|ec|/[^\\]]+)\\]",
-            Pattern.CASE_INSENSITIVE
-    );
+    private static final String KEYWORDS = "item|hand|this|inventory|inv|enderchest|echest|ec";
 
     public ItemDisplayManager(AwesomeChat plugin) {
         this.plugin = plugin;
         this.displayTagKey = new NamespacedKey(plugin, "display_item");
+        this.triggerPattern = buildTriggerPattern(plugin.getPluginConfig());
+    }
+
+    public void reloadConfig() {
+        this.triggerPattern = buildTriggerPattern(plugin.getPluginConfig());
+    }
+
+    private Pattern buildTriggerPattern(FileConfiguration config) {
+        String prefix = config.getString("item-display.trigger-prefix", "[");
+        String suffix = config.getString("item-display.trigger-suffix", "]");
+
+        String escapedPrefix = Pattern.quote(prefix);
+
+        if (suffix.isEmpty()) {
+            return Pattern.compile(
+                    escapedPrefix + "(" + KEYWORDS + ")\\b",
+                    Pattern.CASE_INSENSITIVE
+            );
+        }
+
+        String escapedSuffix = Pattern.quote(suffix);
+        String commandPart = "|/(?:(?!" + escapedSuffix + ").)+";
+
+        return Pattern.compile(
+                escapedPrefix + "(" + KEYWORDS + commandPart + ")" + escapedSuffix,
+                Pattern.CASE_INSENSITIVE
+        );
     }
 
     public static class DisplayInventoryHolder implements InventoryHolder {
@@ -52,7 +79,7 @@ public class ItemDisplayManager {
         long timestamp;
         SnapshotType type;
 
-        enum SnapshotType { INVENTORY, ENDER_CHEST }
+        enum SnapshotType { INVENTORY, ENDER_CHEST, ITEM }
 
         boolean isExpired(long ttlMs) {
             return System.currentTimeMillis() - timestamp > ttlMs;
@@ -60,7 +87,7 @@ public class ItemDisplayManager {
     }
 
     public boolean hasTriggers(String message) {
-        return TRIGGER_PATTERN.matcher(message).find();
+        return triggerPattern.matcher(message).find();
     }
 
     /**
@@ -80,84 +107,197 @@ public class ItemDisplayManager {
         FileConfiguration config = plugin.getPluginConfig();
         if (!config.getBoolean("item-display.enabled", false)) return null;
 
-        Matcher matcher = TRIGGER_PATTERN.matcher(message);
+        Matcher matcher = triggerPattern.matcher(message);
         if (!matcher.find()) return null;
 
         matcher.reset();
         Component result = Component.empty();
         int lastEnd = 0;
 
+        // Track the last seen color in the chat so item components inherit it
+        TextColor lastColor = null;
+
         while (matcher.find()) {
             if (matcher.start() > lastEnd) {
                 String textPart = message.substring(lastEnd, matcher.start());
-                result = result.append(textFormatter.apply(textPart));
+                Component formatted = textFormatter.apply(textPart);
+                result = result.append(formatted);
+
+                TextColor color = formatted.color();
+                if (color != null) {
+                    lastColor = color;
+                }
             }
 
             String trigger = matcher.group(1);
-            Component triggerComp = createTriggerComponent(player, trigger);
+            Component triggerComp = createTriggerComponent(player, trigger, lastColor);
             if (triggerComp != null) {
                 result = result.append(triggerComp);
             } else {
                 // No permission or invalid trigger, keep as plain text
-                result = result.append(textFormatter.apply(matcher.group()));
+                Component plain = textFormatter.apply(matcher.group());
+                result = result.append(plain);
+
+                TextColor color = plain.color();
+                if (color != null) {
+                    lastColor = color;
+                }
             }
 
             lastEnd = matcher.end();
         }
 
         if (lastEnd < message.length()) {
-            result = result.append(textFormatter.apply(message.substring(lastEnd)));
+            String textPart = message.substring(lastEnd);
+            Component formatted = textFormatter.apply(textPart);
+            result = result.append(formatted);
+
+            TextColor color = formatted.color();
+            if (color != null) {
+                lastColor = color;
+            }
         }
 
         return result;
     }
 
-    private Component createTriggerComponent(Player player, String trigger) {
+    private Component createTriggerComponent(Player player, String trigger, TextColor baseColor) {
+        FileConfiguration config = plugin.getPluginConfig();
         String lower = trigger.toLowerCase();
 
         return switch (lower) {
-            case "item", "hand" -> {
+            case "item", "hand", "this" -> {
                 if (!player.hasPermission("awesomechat.display.item")) yield null;
                 ItemStack held = player.getInventory().getItemInMainHand();
                 if (held.getType() == Material.AIR) {
-                    yield Component.text("[Empty Hand]").color(NamedTextColor.GRAY);
+                    String emptyFormat = config.getString("item-display.formats.empty-hand", "&7[Empty Hand]");
+                    yield buildSimpleFormatComponent(emptyFormat);
                 }
-                String name = getItemDisplayName(held);
-                yield Component.text("[" + name + "]")
-                        .color(NamedTextColor.AQUA)
-                        .decorate(TextDecoration.BOLD)
-                        .hoverEvent(held.asHoverEvent());
+                UUID snapshotId = createItemSnapshot(player, held);
+                yield buildItemFormatComponent(config, held, baseColor)
+                        .clickEvent(ClickEvent.runCommand("/ac _view " + snapshotId));
             }
             case "inventory", "inv" -> {
                 if (!player.hasPermission("awesomechat.display.inventory")) yield null;
                 UUID snapshotId = createSnapshot(player, InventorySnapshot.SnapshotType.INVENTORY);
-                yield Component.text("[" + player.getName() + "'s Inventory]")
-                        .color(NamedTextColor.GREEN)
+                String format = config.getString("item-display.formats.inventory", "&a[{player}'s Inventory]");
+                String hoverText = config.getString("item-display.hover-text.inventory", "&eClick to view inventory");
+                yield buildSimpleFormatComponent(format, "{player}", player.getName())
                         .clickEvent(ClickEvent.runCommand("/ac _view " + snapshotId))
                         .hoverEvent(HoverEvent.showText(
-                                Component.text("Click to view inventory").color(NamedTextColor.YELLOW)));
+                                buildSimpleFormatComponent(hoverText, "{player}", player.getName())));
             }
             case "enderchest", "echest", "ec" -> {
                 if (!player.hasPermission("awesomechat.display.enderchest")) yield null;
                 UUID snapshotId = createSnapshot(player, InventorySnapshot.SnapshotType.ENDER_CHEST);
-                yield Component.text("[" + player.getName() + "'s Ender Chest]")
-                        .color(NamedTextColor.DARK_PURPLE)
+                String format = config.getString("item-display.formats.enderchest", "&5[{player}'s Ender Chest]");
+                String hoverText = config.getString("item-display.hover-text.enderchest", "&eClick to view ender chest");
+                yield buildSimpleFormatComponent(format, "{player}", player.getName())
                         .clickEvent(ClickEvent.runCommand("/ac _view " + snapshotId))
                         .hoverEvent(HoverEvent.showText(
-                                Component.text("Click to view ender chest").color(NamedTextColor.YELLOW)));
+                                buildSimpleFormatComponent(hoverText, "{player}", player.getName())));
             }
             default -> {
                 if (trigger.startsWith("/")) {
                     if (!player.hasPermission("awesomechat.display.command")) yield null;
-                    yield Component.text("[" + trigger + "]")
-                            .color(NamedTextColor.GOLD)
+                    String format = config.getString("item-display.formats.command", "&6[{command}]");
+                    String hoverText = config.getString("item-display.hover-text.command", "&eClick to use {command}");
+                    yield buildSimpleFormatComponent(format, "{command}", trigger)
                             .clickEvent(ClickEvent.suggestCommand(trigger))
                             .hoverEvent(HoverEvent.showText(
-                                    Component.text("Click to use " + trigger).color(NamedTextColor.YELLOW)));
+                                    buildSimpleFormatComponent(hoverText, "{command}", trigger)));
                 }
                 yield null;
             }
         };
+    }
+
+    /**
+     * Returns the item name component:
+     * - If the item has a custom display name, that full component (colors + formatting).
+     * - Otherwise, a nicely formatted material name, colored with the current chat color.
+     */
+    private Component getItemNameComponent(ItemStack item, TextColor baseColor) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null && meta.hasDisplayName()) {
+            Component displayName = meta.displayName();
+            if (displayName != null) {
+                return displayName;
+            }
+        }
+
+        String materialName = formatMaterialName(item.getType().name());
+        Component comp = Component.text(materialName);
+        if (baseColor != null) {
+            comp = comp.color(baseColor);
+        }
+        return comp;
+    }
+
+    /**
+     * Builds something like:
+     * - "[Stone x34]"
+     * - "[Enchanted Golden Apple x2]"
+     * - "[(dark red bold)Blood Sword(then back)x1]" (if you keep x1)
+     *
+     * Uses the current chat color around the component for non‑custom names,
+     * and keeps hover showing the full item.
+     */
+    private Component buildItemFormatComponent(FileConfiguration config, ItemStack item, TextColor baseColor) {
+        String format = config.getString("item-display.formats.item", "&f[{item}&f x{count}&f]");
+        int amount = item.getAmount();
+
+        String[] parts = format.split("\\{item}", -1);
+
+        Component result = Component.empty();
+        TextColor currentColor = baseColor;
+
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
+
+            if (amount == 1) {
+                // Remove the `{count}` placeholders when it's a single item
+                part = part.replace(" x{count}", "").replace("x{count}", "");
+            } else {
+                part = part.replace("{count}", String.valueOf(amount));
+            }
+
+            Component textComp = deserializeLegacy(formatColors(part));
+            result = result.append(textComp);
+
+            TextColor segColor = textComp.color();
+            if (segColor != null) {
+                currentColor = segColor;
+            }
+
+            // After each {item} position (except the last part), insert the item name
+            if (i < parts.length - 1) {
+                Component itemNameComp = getItemNameComponent(item, currentColor);
+                result = result.append(itemNameComp);
+            }
+        }
+
+        return result.hoverEvent(item.asHoverEvent());
+    }
+
+    private Component buildSimpleFormatComponent(String format, String... replacements) {
+        for (int i = 0; i < replacements.length - 1; i += 2) {
+            format = format.replace(replacements[i], replacements[i + 1]);
+        }
+        return deserializeLegacy(formatColors(format));
+    }
+
+    private UUID createItemSnapshot(Player player, ItemStack item) {
+        UUID id = UUID.randomUUID();
+        InventorySnapshot snapshot = new InventorySnapshot();
+        snapshot.playerName = player.getName();
+        snapshot.timestamp = System.currentTimeMillis();
+        snapshot.type = InventorySnapshot.SnapshotType.ITEM;
+        snapshot.items = new ItemStack[]{ item.clone() };
+
+        snapshots.put(id, snapshot);
+        cleanExpired();
+        return id;
     }
 
     private UUID createSnapshot(Player player, InventorySnapshot.SnapshotType type) {
@@ -190,17 +330,40 @@ public class ItemDisplayManager {
             return;
         }
 
-        if (snapshot.type == InventorySnapshot.SnapshotType.ENDER_CHEST) {
-            openEnderChestGUI(viewer, snapshot);
-        } else {
-            openInventoryGUI(viewer, snapshot);
+        switch (snapshot.type) {
+            case ITEM -> openItemGUI(viewer, snapshot);
+            case ENDER_CHEST -> openEnderChestGUI(viewer, snapshot);
+            default -> openInventoryGUI(viewer, snapshot);
         }
     }
 
+    private void openItemGUI(Player viewer, InventorySnapshot snapshot) {
+        FileConfiguration config = plugin.getPluginConfig();
+        String title = config.getString("item-display.gui-titles.item", "{player}'s Item")
+                .replace("{player}", snapshot.playerName);
+        Inventory gui = Bukkit.createInventory(
+                new DisplayInventoryHolder(), 27,
+                deserializeLegacy(formatColors(title)));
+
+        ItemStack glass = createGlassPane();
+        for (int i = 0; i < 27; i++) {
+            gui.setItem(i, glass.clone());
+        }
+
+        if (snapshot.items.length > 0 && snapshot.items[0] != null) {
+            gui.setItem(13, tagItem(snapshot.items[0].clone()));
+        }
+
+        viewer.openInventory(gui);
+    }
+
     private void openInventoryGUI(Player viewer, InventorySnapshot snapshot) {
+        FileConfiguration config = plugin.getPluginConfig();
+        String title = config.getString("item-display.gui-titles.inventory", "{player}'s Inventory")
+                .replace("{player}", snapshot.playerName);
         Inventory gui = Bukkit.createInventory(
                 new DisplayInventoryHolder(), 54,
-                Component.text(snapshot.playerName + "'s Inventory"));
+                deserializeLegacy(formatColors(title)));
 
         ItemStack glass = createGlassPane();
 
@@ -234,9 +397,12 @@ public class ItemDisplayManager {
     }
 
     private void openEnderChestGUI(Player viewer, InventorySnapshot snapshot) {
+        FileConfiguration config = plugin.getPluginConfig();
+        String title = config.getString("item-display.gui-titles.enderchest", "{player}'s Ender Chest")
+                .replace("{player}", snapshot.playerName);
         Inventory gui = Bukkit.createInventory(
                 new DisplayInventoryHolder(), 27,
-                Component.text(snapshot.playerName + "'s Ender Chest"));
+                deserializeLegacy(formatColors(title)));
 
         for (int i = 0; i < snapshot.items.length && i < 27; i++) {
             if (snapshot.items[i] != null) {
@@ -284,16 +450,6 @@ public class ItemDisplayManager {
     private void cleanExpired() {
         long ttl = plugin.getPluginConfig().getLong("item-display.snapshot-ttl-seconds", 300) * 1000L;
         snapshots.entrySet().removeIf(e -> e.getValue().isExpired(ttl));
-    }
-
-    private String getItemDisplayName(ItemStack item) {
-        if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
-            Component displayName = item.getItemMeta().displayName();
-            if (displayName != null) {
-                return PlainTextComponentSerializer.plainText().serialize(displayName);
-            }
-        }
-        return formatMaterialName(item.getType().name());
     }
 
     private String formatMaterialName(String name) {

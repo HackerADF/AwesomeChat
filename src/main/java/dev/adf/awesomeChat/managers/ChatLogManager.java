@@ -18,7 +18,7 @@ public class ChatLogManager {
 
     private final AwesomeChat plugin;
     private Connection connection;
-    private final String storageType;
+    private String storageType;
     private final Map<UUID, SearchState> searchStates = new ConcurrentHashMap<>();
 
     private static final DateTimeFormatter SHORT_DATE = DateTimeFormatter.ofPattern("MMM d");
@@ -26,6 +26,13 @@ public class ChatLogManager {
 
     public ChatLogManager(AwesomeChat plugin) {
         this.plugin = plugin;
+        FileConfiguration config = plugin.getPluginConfig();
+        this.storageType = config.getString("chat-logging.storage-type", "sqlite").toLowerCase();
+        initDatabase();
+    }
+
+    public void reload() {
+        close();
         FileConfiguration config = plugin.getPluginConfig();
         this.storageType = config.getString("chat-logging.storage-type", "sqlite").toLowerCase();
         initDatabase();

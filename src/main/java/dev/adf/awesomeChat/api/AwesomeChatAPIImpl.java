@@ -1,6 +1,7 @@
 package dev.adf.awesomeChat.api;
 
 import dev.adf.awesomeChat.AwesomeChat;
+import dev.adf.awesomeChat.listeners.ChatListener;
 import dev.adf.awesomeChat.managers.ChatFilterManager;
 import dev.adf.awesomeChat.managers.PrivateMessageManager;
 import dev.adf.awesomeChat.managers.SocialSpyManager;
@@ -96,7 +97,15 @@ public class AwesomeChatAPIImpl implements AwesomeChatAPI {
         if (filter == null) {
             return false;
         }
-        return filter.checkAndHandle(player, message, "check");
+        ChatFilterManager.FilterResult result = filter.checkAndCensor(player, message, "check");
+        return result.blocked;
+    }
+
+    @Deprecated
+    public String getFormattedMessage(Player player, String message, String primaryGroup) {
+        ChatListener formatter = plugin.getChatListener();
+
+        return "In Progress";
     }
 
     @Override

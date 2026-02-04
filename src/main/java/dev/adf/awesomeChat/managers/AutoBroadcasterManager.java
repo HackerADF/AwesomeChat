@@ -27,10 +27,19 @@ public class AutoBroadcasterManager {
     }
 
     public void loadConfig() {
-        autoBroadcasterFile = new File(plugin.getDataFolder(), "AutoBroadcaster.yml");
+        autoBroadcasterFile = new File(plugin.getDataFolder(), "modules/autobroadcaster.yml");
 
         if (!autoBroadcasterFile.exists()) {
-            plugin.saveResource("AutoBroadcaster.yml", false);
+            // Migrate from old location if present
+            File oldFile = new File(plugin.getDataFolder(), "AutoBroadcaster.yml");
+            if (oldFile.exists()) {
+                oldFile.getParentFile().mkdirs();
+                autoBroadcasterFile.getParentFile().mkdirs();
+                oldFile.renameTo(autoBroadcasterFile);
+                plugin.getLogger().info("Migrated AutoBroadcaster.yml -> modules/autobroadcaster.yml");
+            } else {
+                plugin.saveResource("modules/autobroadcaster.yml", false);
+            }
         }
 
         autoBroadcasterConfig = YamlConfiguration.loadConfiguration(autoBroadcasterFile);

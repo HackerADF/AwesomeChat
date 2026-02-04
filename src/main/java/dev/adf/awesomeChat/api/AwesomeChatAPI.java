@@ -4,6 +4,7 @@ import dev.adf.awesomeChat.managers.ChatFilterManager;
 import dev.adf.awesomeChat.managers.PrivateMessageManager;
 import dev.adf.awesomeChat.managers.SocialSpyManager;
 import dev.adf.awesomeChat.storage.ViolationStorage;
+import dev.adf.awesomeChat.utils.LuckPermsUtil;
 import org.bukkit.entity.Player;
 
 import java.util.List;
@@ -38,6 +39,8 @@ public interface AwesomeChatAPI {
     void clearViolations(UUID playerId);
 
     boolean isMessageBlocked(Player player, String message);
+
+    String getFormattedMessage(Player player, String message, String primaryGroup);
 
     String getMatchedRule(String message);
 

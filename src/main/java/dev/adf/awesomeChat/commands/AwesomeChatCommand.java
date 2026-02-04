@@ -1,7 +1,7 @@
 package dev.adf.awesomeChat.commands;
 
 import dev.adf.awesomeChat.AwesomeChat;
-import dev.adf.awesomeChat.managers.AutoBroadcasterManager;
+import dev.adf.awesomeChat.managers.*;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -51,6 +51,9 @@ public class AwesomeChatCommand implements CommandExecutor {
             // Reload the main config file
             plugin.reloadConfig();
 
+            // Reload filter config and manager
+            plugin.reloadFilterModule();
+
             // Reload broadcaster manager
             AutoBroadcasterManager broadcaster = plugin.getAutoBroadcasterManager();
             if (broadcaster != null) {
@@ -59,15 +62,20 @@ public class AwesomeChatCommand implements CommandExecutor {
                 broadcaster.start();
             }
 
-            // Reload filter manager
-            plugin.reloadFilterModule();
-
             // Reload channel manager
             if (plugin.getChannelManager() != null) {
                 plugin.getChannelManager().loadChannels();
             }
 
-            sender.sendMessage(plugin.getChatPrefix() + ChatColor.GREEN + "AwesomeChat config reloaded and AutoBroadcaster restarted!");
+            // Reload item display manager (trigger pattern depends on config)
+            if (plugin.getItemDisplayManager() != null) {
+                plugin.getItemDisplayManager().reloadConfig();
+            }
+
+            // Reload chat log manager (database connection may change)
+            plugin.reloadChatLogManager();
+
+            sender.sendMessage(plugin.getChatPrefix() + ChatColor.GREEN + "AwesomeChat reloaded (config.yml + modules/).");
             return true;
         }
 

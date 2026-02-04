@@ -2,6 +2,8 @@ package dev.adf.awesomeChat.managers;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.bukkit.Material;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
@@ -169,6 +171,40 @@ public class ChatColorManager {
         } else {
             awaitingCustomInput.remove(playerId);
         }
+    }
+
+    // ========== Admin Gradient CRUD ==========
+
+    public boolean createAdminGradient(String name, Material material, List<String> colors) {
+        String key = name.toLowerCase();
+        FileConfiguration config = plugin.getConfig();
+        String path = "chatcolor.custom-gradients." + key;
+
+        if (config.contains(path)) return false;
+
+        config.set(path + ".colors", colors);
+        config.set(path + ".material", material.name());
+        plugin.saveConfig();
+        return true;
+    }
+
+    public boolean deleteAdminGradient(String name) {
+        String key = name.toLowerCase();
+        FileConfiguration config = plugin.getConfig();
+        String path = "chatcolor.custom-gradients." + key;
+
+        if (!config.contains(path)) return false;
+
+        config.set(path, null);
+        plugin.saveConfig();
+        return true;
+    }
+
+    public Set<String> getAdminGradientNames() {
+        FileConfiguration config = plugin.getConfig();
+        var section = config.getConfigurationSection("chatcolor.custom-gradients");
+        if (section == null) return Collections.emptySet();
+        return section.getKeys(false);
     }
 
     // ========== Color Application ==========

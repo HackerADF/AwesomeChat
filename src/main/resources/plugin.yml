@@ -74,8 +74,8 @@ commands:
     permission: awesomechat.chatlogs
     permission-message: "You don't have permission to use this command."
   chatcolor:
-    description: Open the chat color picker GUI
-    usage: /chatcolor [reset]
+    description: Open the chat color picker GUI or manage gradients
+    usage: /chatcolor [reset|create|delete|list]
     aliases: [chatcolour, ccolor]
     permission: awesomechat.command.chatcolor
     permission-message: "You don't have permission to use this command."
@@ -156,8 +156,98 @@ permissions:
     description: Allows use of the /chatcolor command
     default: true
   awesomechat.chatcolor.gradient:
-    description: Allows using gradient preset colors
+    description: Allows using gradient preset colors (legacy, kept for compat)
     default: true
   awesomechat.chatcolor.custom:
     description: Allows creating custom gradient colors
     default: op
+  awesomechat.chatcolor.admin:
+    description: Allows creating and deleting server-wide gradients
+    default: op
+  awesomechat.chatcolor.color.black:
+    description: Allows using Black chat color
+    default: true
+  awesomechat.chatcolor.color.darkblue:
+    description: Allows using Dark Blue chat color
+    default: true
+  awesomechat.chatcolor.color.darkgreen:
+    description: Allows using Dark Green chat color
+    default: true
+  awesomechat.chatcolor.color.darkaqua:
+    description: Allows using Dark Aqua chat color
+    default: true
+  awesomechat.chatcolor.color.darkred:
+    description: Allows using Dark Red chat color
+    default: true
+  awesomechat.chatcolor.color.darkpurple:
+    description: Allows using Dark Purple chat color
+    default: true
+  awesomechat.chatcolor.color.gold:
+    description: Allows using Gold chat color
+    default: true
+  awesomechat.chatcolor.color.gray:
+    description: Allows using Gray chat color
+    default: true
+  awesomechat.chatcolor.color.darkgray:
+    description: Allows using Dark Gray chat color
+    default: true
+  awesomechat.chatcolor.color.blue:
+    description: Allows using Blue chat color
+    default: true
+  awesomechat.chatcolor.color.green:
+    description: Allows using Green chat color
+    default: true
+  awesomechat.chatcolor.color.aqua:
+    description: Allows using Aqua chat color
+    default: true
+  awesomechat.chatcolor.color.red:
+    description: Allows using Red chat color
+    default: true
+  awesomechat.chatcolor.color.lightpurple:
+    description: Allows using Light Purple chat color
+    default: true
+  awesomechat.chatcolor.color.yellow:
+    description: Allows using Yellow chat color
+    default: true
+  awesomechat.chatcolor.color.white:
+    description: Allows using White chat color
+    default: true
+  awesomechat.chatcolor.gradient.sunset:
+    description: Allows using the Sunset gradient
+    default: true
+  awesomechat.chatcolor.gradient.ocean:
+    description: Allows using the Ocean gradient
+    default: true
+  awesomechat.chatcolor.gradient.royal:
+    description: Allows using the Royal gradient
+    default: true
+  awesomechat.chatcolor.gradient.mint:
+    description: Allows using the Mint gradient
+    default: true
+  awesomechat.chatcolor.gradient.sakura:
+    description: Allows using the Sakura gradient
+    default: true
+  awesomechat.chatcolor.gradient.ember:
+    description: Allows using the Ember gradient
+    default: true
+  awesomechat.chatcolor.gradient.golden:
+    description: Allows using the Golden gradient
+    default: true
+  awesomechat.chatcolor.gradient.teal:
+    description: Allows using the Teal gradient
+    default: true
+  awesomechat.chatcolor.gradient.ice:
+    description: Allows using the Ice gradient
+    default: true
+  awesomechat.chatcolor.gradient.fire:
+    description: Allows using the Fire gradient
+    default: true
+  awesomechat.chatcolor.gradient.aurora:
+    description: Allows using the Aurora gradient
+    default: true
+  awesomechat.chatcolor.gradient.cottoncandy:
+    description: Allows using the Cotton Candy gradient
+    default: true
+  awesomechat.chatcolor.gradient.forest:
+    description: Allows using the Forest gradient
+    default: true

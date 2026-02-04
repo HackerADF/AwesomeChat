@@ -2,7 +2,6 @@ package dev.adf.awesomeChat.listeners;
 
 import dev.adf.awesomeChat.AwesomeChat;
 import dev.adf.awesomeChat.managers.ChatFilterManager;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -21,17 +20,16 @@ public class CommandListener implements Listener {
         Player player = event.getPlayer();
         String commandMessage = event.getMessage();
 
-        FileConfiguration config = plugin.getConfig();
-        if (!config.getBoolean("chat-filter.filter-commands", false)) {
+        ChatFilterManager filter = plugin.getChatFilterManager();
+        if (filter == null || !filter.isFilterCommands()) {
             return;
         }
 
-        ChatFilterManager filter = plugin.getChatFilterManager();
-        if (filter != null) {
-            boolean blocked = filter.checkAndHandle(player, commandMessage, "command");
-            if (blocked) {
-                event.setCancelled(true);
-            }
+        ChatFilterManager.FilterResult result = filter.checkAndCensor(player, commandMessage, "command");
+        if (result.blocked) {
+            event.setCancelled(true);
+        } else if (result.censored) {
+            event.setMessage(result.censoredMessage);
         }
     }
 }
