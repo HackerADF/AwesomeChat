@@ -379,15 +379,15 @@ private-messages:
 mutechat:
   announce: true                  # Broadcast mute/unmute to all players
   log: true                       # Log to console
-  muted-message: "&c&lChat has been muted by {player}."
-  unmuted-message: "&a&lChat has been unmuted by {player}."
+  muted-message: "{prefix}&c&lChat has been muted by {player}."
+  unmuted-message: "{prefix}&a&lChat has been unmuted by {player}."
   player-message: "&cChat is currently muted."
 
 # Command /clearchat
 clearchat:
   line-count: 100                 # Number of blank lines to send
   show-announcement: true         # Show "Chat cleared by X" after clear
-  announcement: "&7Chat has been cleared by &b{player}&7."
+  announcement: "{prefix} &7Chat has been cleared by &b{player}&7."
   log: true                       # Log who cleared chat to console
 
 # Command /broadcast
