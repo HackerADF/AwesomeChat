@@ -203,24 +203,26 @@ public class ChatColorGUI implements Listener {
             fillGlass(inv, 25, 26);
         }
 
-        // Row 4: Style toggles + glass
-        setStyleItem(inv, 27, Material.IRON_INGOT,  "&f&lBold",          "bold",          current, player, "awesomechat.styling.bold");
-        setStyleItem(inv, 28, Material.FEATHER,      "&f&lItalic",        "italic",        current, player, "awesomechat.styling.italic");
-        setStyleItem(inv, 29, Material.CHAIN,        "&f&lUnderline",     "underline",     current, player, "awesomechat.styling.underline");
-        setStyleItem(inv, 30, Material.STRING,       "&f&lStrikethrough", "strikethrough", current, player, "awesomechat.styling.strikethrough");
-        setStyleItem(inv, 31, Material.ENDER_PEARL,  "&f&lObfuscated",   "obfuscated",    current, player, "awesomechat.styling.obfuscated");
-        fillGlass(inv, 32, 35);
+        // Row 4-5: Glass filler
+        fillGlass(inv, 27, 44);
 
-        // Row 5: Glass filler
-        fillGlass(inv, 36, 44);
-
-        // Row 6: Navigation
-        inv.setItem(45, createItem(Material.SPECTRAL_ARROW, "&a&lGradients \u2192",
-                List.of("", "&7Browse gradient colors")));
-        fillGlass(inv, 46, 51);
-        inv.setItem(52, createItem(Material.LAVA_BUCKET, "&c&lReset Color",
+        inv.setItem(45, createItem(Material.GRINDSTONE, "&c&lReset Color",
                 List.of("", "&7Remove your custom", "&7chat color and styles.")));
-        setGlass(inv, 53);
+
+        setGlass(inv, 46);
+
+        // Row 6: Style toggles + glass
+        setStyleItem(inv, 47, Material.IRON_INGOT,  "&f&lBold",          "bold",          current, player, "awesomechat.styling.bold");
+        setStyleItem(inv, 48, Material.FEATHER,      "&f&lItalic",        "italic",        current, player, "awesomechat.styling.italic");
+        setStyleItem(inv, 49, Material.CHAIN,        "&f&lUnderline",     "underline",     current, player, "awesomechat.styling.underline");
+        setStyleItem(inv, 50, Material.STRING,       "&f&lStrikethrough", "strikethrough", current, player, "awesomechat.styling.strikethrough");
+        setStyleItem(inv, 51, Material.ENDER_PEARL,  "&f&lObfuscated",   "obfuscated",    current, player, "awesomechat.styling.obfuscated");
+
+        // Row 6 (part 2): Navigation
+        setGlass(inv, 52);
+
+        inv.setItem(53, createItem(Material.SPECTRAL_ARROW, "&a&lGradients \u2192",
+                List.of("", "&7Browse gradient colors")));
 
         player.openInventory(inv);
     }
@@ -318,17 +320,22 @@ public class ChatColorGUI implements Listener {
         fillGlass(inv, 37, 44);
 
         // Row 6: Navigation
-        inv.setItem(45, createItem(Material.SPECTRAL_ARROW, "&c&l\u2190 Colors",
+        inv.setItem(45, createItem(Material.ARROW, "&c&l\u2190 Colors",
                 List.of("", "&7Back to solid colors")));
 
+        inv.setItem(46, createItem(Material.GRINDSTONE, "&c&lReset Color",
+                List.of("", "&7Remove your custom", "&7chat color and styles.")));
+
+        setGlass(inv, 47);
+
         if (page > 0) {
-            inv.setItem(46, createItem(Material.ARROW, "&e&l\u2190 Previous",
+            inv.setItem(48, createItem(Material.ARROW, "&e&l\u2190 Previous",
                     List.of("", "&7Go to page " + page)));
         } else {
-            setGlass(inv, 46);
+            setGlass(inv, 48);
         }
 
-        fillGlass(inv, 47, 48);
+        setGlass(inv, 48);
 
         // Page indicator (slot 49)
         inv.setItem(49, createItem(Material.PAPER, "&7Page &f" + (page + 1) + "&7/&f" + totalPages,
@@ -341,11 +348,7 @@ public class ChatColorGUI implements Listener {
             setGlass(inv, 50);
         }
 
-        setGlass(inv, 51);
-        inv.setItem(52, createItem(Material.LAVA_BUCKET, "&c&lReset Color",
-                List.of("", "&7Remove your custom", "&7chat color and styles.")));
-        setGlass(inv, 53);
-
+        fillGlass(inv, 51, 53);
         player.openInventory(inv);
     }
 
@@ -557,18 +560,17 @@ public class ChatColorGUI implements Listener {
             return;
         }
 
-        // Gradients button (slot 45)
-        if (slot == 45) {
-            openGradientPage(player, 0);
-            return;
-        }
-
         // Reset (slot 52)
-        if (slot == 52) {
+        if (slot == 45) {
             manager.clearPlayerColor(player.getUniqueId());
             player.sendMessage(deserializeLegacy(formatColors(
                     plugin.getChatPrefix() + "&aChat color has been reset.")));
             player.closeInventory();
+        }
+
+        // Gradients button (slot 45)
+        if (slot == 53) {
+            openGradientPage(player, 0);
         }
     }
 
@@ -622,8 +624,16 @@ public class ChatColorGUI implements Listener {
             return;
         }
 
-        // Previous page (slot 46)
-        if (slot == 46 && page > 0) {
+        // Reset (slot 56)
+        if (slot == 46) {
+            manager.clearPlayerColor(player.getUniqueId());
+            player.sendMessage(deserializeLegacy(formatColors(
+                    plugin.getChatPrefix() + "&aChat color has been reset.")));
+            player.closeInventory();
+        }
+
+        // Previous page (slot 47)
+        if (slot == 48 && page > 0) {
             openGradientPage(player, page - 1);
             return;
         }
@@ -636,14 +646,6 @@ public class ChatColorGUI implements Listener {
                 openGradientPage(player, page + 1);
             }
             return;
-        }
-
-        // Reset (slot 52)
-        if (slot == 52) {
-            manager.clearPlayerColor(player.getUniqueId());
-            player.sendMessage(deserializeLegacy(formatColors(
-                    plugin.getChatPrefix() + "&aChat color has been reset.")));
-            player.closeInventory();
         }
     }
 
@@ -659,11 +661,11 @@ public class ChatColorGUI implements Listener {
 
     private String getStyleForSlot(int slot) {
         return switch (slot) {
-            case 27 -> "bold";
-            case 28 -> "italic";
-            case 29 -> "underline";
-            case 30 -> "strikethrough";
-            case 31 -> "obfuscated";
+            case 47 -> "bold";
+            case 48 -> "italic";
+            case 49 -> "underline";
+            case 50 -> "strikethrough";
+            case 51 -> "obfuscated";
             default -> null;
         };
     }
