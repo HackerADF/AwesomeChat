@@ -1,4 +1,4 @@
-# 🚀 AwesomeChat v1.0.7-DEV Changelog
+# 🚀 AwesomeChat v1.0.8-DEV Changelog (official)
 
 ### New Features
 - **Chat Channels** — Staff, admin, VIP + custom channels with per-channel formats, sounds, and permissions (`/ch join`, `/ch send`, `/ch leave`)
