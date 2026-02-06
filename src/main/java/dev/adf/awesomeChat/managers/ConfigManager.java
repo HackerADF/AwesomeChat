@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class ConfigManager {
 
-    private static final int CURRENT_VERSION = 16;
+    private static final int CURRENT_VERSION = 17;
 
     private final AwesomeChat plugin;
     private final File configFile;
@@ -64,6 +64,7 @@ public class ConfigManager {
         if (version < 10) migrateToV10(config);
         if (version < 15) migrateToV15(config);
         if (version < 16) migrateToV16(config);
+        if (version < 17) migrateToV17(config);
 
         config.set("config-version", CURRENT_VERSION);
 
@@ -574,6 +575,21 @@ public class ConfigManager {
         setIfAbsent(config, "channels.admin.command", "/adminchat");
         setIfAbsent(config, "channels.vip.command", "none");
         plugin.getLogger().info("    Added command section to channel configuration");
+    }
+
+    // =========================================================================
+    //  v16 -> v17: Chat management Improvements
+    // =========================================================================
+    private void migrateToV17(FileConfiguration config) {
+        plugin.getLogger().info("  Running v16 -> v17 migration...");
+
+        setIfAbsent(config, "clearchat.announcement-self", "{prefix}&eYour chat has been cleared.");
+
+        setIfAbsent(config, "clearchat.bypass-message", "&7&oYour chat wasn't cleared due to the bypass permission.");
+
+        setIfAbsent(config, "clearchat.no-permission-all", "{prefix}&cYou don't have permission to clear chat for everyone.");
+        setIfAbsent(config, "clearchat.no-permission-all", "{prefix}&cYou do not have permission to clear your own chat.");
+
     }
 
     /**
