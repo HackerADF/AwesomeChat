@@ -50,7 +50,9 @@ public class BroadcastCommand implements CommandExecutor {
         List<String> formatLines = plugin.getBroadcastFormat();
 
         for (String line : formatLines) {
-            String formattedLine = line.replace("%message%", rawMessage);
+            String formattedLine = line
+                    .replace("%message%", rawMessage)
+                    .replace("%player%", sender.getName());
             formattedLine = ChatColor.translateAlternateColorCodes('&', formattedLine);
             Bukkit.broadcastMessage(formattedLine);
         }
