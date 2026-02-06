@@ -387,7 +387,13 @@ mutechat:
 clearchat:
   line-count: 100                 # Number of blank lines to send
   show-announcement: true         # Show "Chat cleared by X" after clear
-  announcement: "{prefix} &7Chat has been cleared by &b{player}&7."
+  announcement: "{prefix}&7Chat has been cleared by &b{player}&7."
+  announcement-self: "{prefix}&eYour chat has been cleared."
+
+  bypass-message: "&7&oYour chat wasn't cleared due to the bypass permission."
+
+  no-permission-all: "{prefix}&cYou don't have permission to clear chat for everyone."
+  no-permission-self: "{prefix}&cYou do not have permission to clear your own chat."
   log: true                       # Log who cleared chat to console
 
 # Command /broadcast
@@ -636,4 +642,4 @@ chat-formatting:
 disable-chat-signing: false
 
 # DO NOT TOUCH
-config-version: 16
+config-version: 17
