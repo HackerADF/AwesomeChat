@@ -349,6 +349,39 @@ private-messages:
     receiver: "&7[&b{sender} &7-> &bYou&7] &f{message}"
     spy: "&7[&cSpy&7] &b{sender} &7-> &b{receiver}&7: &f{message}"
 
+  # Hover components and click actions for PM messages
+  # When enabled, player names and messages become interactive
+  hover:
+    enabled: false
+
+    # Hover text for sender name (in receiver's view)
+    sender-hover:
+      - "&bPlayer: &f%sender%"
+      - ""
+      - "&7Click to reply!"
+
+    # Click action for sender name
+    sender-click-action: "/msg %player% "
+    sender-click-type: "suggest"  # suggest, execute, copy, open_url
+
+    # Hover text for receiver name (in sender's view)
+    receiver-hover:
+      - "&bPlayer: &f%receiver%"
+      - ""
+      - "&7Click to send another message!"
+
+    # Click action for receiver name
+    receiver-click-action: "/msg %player% "
+    receiver-click-type: "suggest"
+
+    # Hover text for the message itself
+    message-hover:
+      - "&7Click to copy message"
+
+    # Click action for message
+    message-click-action: "%message%"
+    message-click-type: "copy"  # copy to clipboard
+
   # To disable, set volume to 0
   sound:
     sent:
@@ -451,48 +484,152 @@ emoji:
 # ================================================================
 # Highlight @mentions in chat and notify mentioned players.
 # Types: @player, @(role), @everyone, @here
+#
+# Features:
+# - Optional @ symbol (configurable per type)
+# - Customizable mention format (supports gradients, colors, MiniMessage)
+# - Multiple notification types: Sound, Title, Action Bar, Chat Message
+# - LuckPerms group mentions with @(groupname)
+# - Hover components for mentions (planned)
+#
+# Format options:
+# - Use MiniMessage: <gradient:red:blue>%mention%</gradient>
+# - Use legacy codes: &e%mention%
+# - Use hex codes: &#FF5733%mention%
+#
+# Placeholders: %mention%, %sender%, %player%, %role%
 mentions:
   enabled: false
+
+  # Player mentions (@playername)
   player:
     enabled: true
-    highlight-color: "&e"
+    require-at-symbol: true  # If false, players can be mentioned without @
+
+    # Format for the mention itself in chat
+    # Supports: MiniMessage, legacy codes (&), hex codes (&#RRGGBB)
+    # Examples:
+    #   - Simple color: "&e@%player%"
+    #   - Gradient: "<gradient:yellow:gold>@%player%</gradient>"
+    #   - Hex: "&#FFD700@%player%"
+    format: "&e@%player%"
+
+    # Sound notification
     sound:
+      enabled: true
       name: ENTITY_EXPERIENCE_ORB_PICKUP
       volume: 1.0
       pitch: 1.0
+
+    # Title/Subtitle notification
+    title:
+      enabled: false
+      text: "&e&lMention!"
+      subtitle: "&7%sender% mentioned you"
+      fade-in: 10      # ticks (20 ticks = 1 second)
+      stay: 70         # ticks
+      fade-out: 20     # ticks
+
+    # Action bar notification
     actionbar:
       enabled: true
       message: "&e%sender% mentioned you!"
+
+    # Custom chat message notification
+    chat-message:
+      enabled: false
+      text: "&8[&e!&8] &e%sender% &7mentioned you in chat!"
+
+  # Role/Group mentions (@(groupname)) - Uses LuckPerms groups
   role:
     enabled: true
-    highlight-color: "&b"
+    require-at-symbol: true  # If false: (admin) works, if true: only @(admin)
+
+    # Format examples:
+    #   - "<gradient:aqua:blue>@(%role%)</gradient>"
+    #   - "&#00FFFF@(%role%)"
+    format: "&b@(%role%)"
+
     sound:
+      enabled: true
       name: ENTITY_EXPERIENCE_ORB_PICKUP
       volume: 1.0
       pitch: 1.2
+
+    title:
+      enabled: false
+      text: "&b&lRole Mention!"
+      subtitle: "&7%sender% mentioned &b%role%"
+      fade-in: 10
+      stay: 70
+      fade-out: 20
+
     actionbar:
       enabled: true
-      message: "&b%sender% mentioned your role!"
+      message: "&b%sender% mentioned your role &f(%role%)&b!"
+
+    chat-message:
+      enabled: false
+      text: "&8[&b!&8] &b%sender% &7mentioned your role &b%role%&7!"
+
+  # Everyone mentions (@everyone)
   everyone:
     enabled: true
-    highlight-color: "&c"
+    require-at-symbol: true
+
+    # Gradient example: "<gradient:red:dark_red>@everyone</gradient>"
+    format: "&c&l@everyone"
+
     sound:
+      enabled: true
       name: BLOCK_NOTE_BLOCK_PLING
       volume: 1.0
       pitch: 1.0
+
+    title:
+      enabled: true
+      text: "&c&l@everyone"
+      subtitle: "&7%sender% mentioned everyone!"
+      fade-in: 10
+      stay: 70
+      fade-out: 20
+
     actionbar:
       enabled: true
       message: "&c%sender% mentioned @everyone!"
+
+    chat-message:
+      enabled: false
+      text: "&8[&c!&8] &c%sender% &7mentioned &c@everyone&7!"
+
+  # Here mentions (@here)
   here:
     enabled: true
-    highlight-color: "&c"
+    require-at-symbol: true
+
+    format: "&c@here"
+
     sound:
+      enabled: true
       name: BLOCK_NOTE_BLOCK_PLING
       volume: 1.0
       pitch: 0.8
+
+    title:
+      enabled: false
+      text: "&c&l@here"
+      subtitle: "&7%sender% mentioned here!"
+      fade-in: 10
+      stay: 70
+      fade-out: 20
+
     actionbar:
       enabled: true
       message: "&c%sender% mentioned @here!"
+
+    chat-message:
+      enabled: false
+      text: "&8[&c!&8] &c%sender% &7mentioned &c@here&7!"
 
 # ================================================================
 #            Chat Radius / Local Chat                             =
@@ -539,6 +676,7 @@ item-display:
   enabled: true
   snapshot-ttl-seconds: 300       # How long inventory snapshots remain viewable
   expired-message: "&cThis inventory snapshot has expired."
+  require-permission-to-view: false  # If true, players need awesomechat.display.view to click and view items
   # Trigger prefix and suffix for item display triggers.
   # Default: "[" and "]" → [item], [inv], [echest], [/command]
   # Example: "!" and "" → !item, !inv, !echest (commands disabled without suffix)
@@ -642,4 +780,4 @@ chat-formatting:
 disable-chat-signing: false
 
 # DO NOT TOUCH
-config-version: 17
+config-version: 18

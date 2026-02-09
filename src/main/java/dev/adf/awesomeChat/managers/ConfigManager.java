@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class ConfigManager {
 
-    private static final int CURRENT_VERSION = 17;
+    private static final int CURRENT_VERSION = 18;
 
     private final AwesomeChat plugin;
     private final File configFile;
@@ -65,6 +65,7 @@ public class ConfigManager {
         if (version < 15) migrateToV15(config);
         if (version < 16) migrateToV16(config);
         if (version < 17) migrateToV17(config);
+        if (version < 18) migrateToV18(config);
 
         config.set("config-version", CURRENT_VERSION);
 
@@ -590,6 +591,89 @@ public class ConfigManager {
         setIfAbsent(config, "clearchat.no-permission-all", "{prefix}&cYou don't have permission to clear chat for everyone.");
         setIfAbsent(config, "clearchat.no-permission-all", "{prefix}&cYou do not have permission to clear your own chat.");
 
+    }
+
+    // =========================================================================
+    //  v17 -> v18: Enhanced Mentions & PM Hover Components
+    // =========================================================================
+    private void migrateToV18(FileConfiguration config) {
+        plugin.getLogger().info("  Running v17 -> v18 migration...");
+
+        // Add new mention settings
+        setIfAbsent(config, "mentions.player.require-at-symbol", true);
+        setIfAbsent(config, "mentions.player.format", "&e@%player%");
+        setIfAbsent(config, "mentions.player.title.enabled", false);
+        setIfAbsent(config, "mentions.player.title.text", "&e&lMention!");
+        setIfAbsent(config, "mentions.player.title.subtitle", "&7%sender% mentioned you");
+        setIfAbsent(config, "mentions.player.title.fade-in", 10);
+        setIfAbsent(config, "mentions.player.title.stay", 70);
+        setIfAbsent(config, "mentions.player.title.fade-out", 20);
+        setIfAbsent(config, "mentions.player.chat-message.enabled", false);
+        setIfAbsent(config, "mentions.player.chat-message.text", "&8[&e!&8] &e%sender% &7mentioned you in chat!");
+        setIfAbsent(config, "mentions.player.sound.enabled", true);
+        setIfAbsent(config, "mentions.player.actionbar.enabled", true);
+
+        setIfAbsent(config, "mentions.role.require-at-symbol", true);
+        setIfAbsent(config, "mentions.role.format", "&b@(%role%)");
+        setIfAbsent(config, "mentions.role.title.enabled", false);
+        setIfAbsent(config, "mentions.role.title.text", "&b&lRole Mention!");
+        setIfAbsent(config, "mentions.role.title.subtitle", "&7%sender% mentioned &b%role%");
+        setIfAbsent(config, "mentions.role.title.fade-in", 10);
+        setIfAbsent(config, "mentions.role.title.stay", 70);
+        setIfAbsent(config, "mentions.role.title.fade-out", 20);
+        setIfAbsent(config, "mentions.role.chat-message.enabled", false);
+        setIfAbsent(config, "mentions.role.chat-message.text", "&8[&b!&8] &b%sender% &7mentioned your role &b%role%&7!");
+        setIfAbsent(config, "mentions.role.sound.enabled", true);
+        setIfAbsent(config, "mentions.role.actionbar.enabled", true);
+
+        setIfAbsent(config, "mentions.everyone.require-at-symbol", true);
+        setIfAbsent(config, "mentions.everyone.format", "&c&l@everyone");
+        setIfAbsent(config, "mentions.everyone.title.enabled", true);
+        setIfAbsent(config, "mentions.everyone.title.text", "&c&l@everyone");
+        setIfAbsent(config, "mentions.everyone.title.subtitle", "&7%sender% mentioned everyone!");
+        setIfAbsent(config, "mentions.everyone.title.fade-in", 10);
+        setIfAbsent(config, "mentions.everyone.title.stay", 70);
+        setIfAbsent(config, "mentions.everyone.title.fade-out", 20);
+        setIfAbsent(config, "mentions.everyone.chat-message.enabled", false);
+        setIfAbsent(config, "mentions.everyone.chat-message.text", "&8[&c!&8] &c%sender% &7mentioned &c@everyone&7!");
+        setIfAbsent(config, "mentions.everyone.sound.enabled", true);
+        setIfAbsent(config, "mentions.everyone.actionbar.enabled", true);
+
+        setIfAbsent(config, "mentions.here.require-at-symbol", true);
+        setIfAbsent(config, "mentions.here.format", "&c@here");
+        setIfAbsent(config, "mentions.here.title.enabled", false);
+        setIfAbsent(config, "mentions.here.title.text", "&c&l@here");
+        setIfAbsent(config, "mentions.here.title.subtitle", "&7%sender% mentioned here!");
+        setIfAbsent(config, "mentions.here.title.fade-in", 10);
+        setIfAbsent(config, "mentions.here.title.stay", 70);
+        setIfAbsent(config, "mentions.here.title.fade-out", 20);
+        setIfAbsent(config, "mentions.here.chat-message.enabled", false);
+        setIfAbsent(config, "mentions.here.chat-message.text", "&8[&c!&8] &c%sender% &7mentioned &c@here&7!");
+        setIfAbsent(config, "mentions.here.sound.enabled", true);
+        setIfAbsent(config, "mentions.here.actionbar.enabled", true);
+
+        // Add PM hover component settings
+        setIfAbsent(config, "private-messages.hover.enabled", false);
+        setIfAbsent(config, "private-messages.hover.sender-hover", Arrays.asList(
+                "&bPlayer: &f%sender%",
+                "",
+                "&7Click to reply!"
+        ));
+        setIfAbsent(config, "private-messages.hover.sender-click-action", "/msg %player% ");
+        setIfAbsent(config, "private-messages.hover.sender-click-type", "suggest");
+        setIfAbsent(config, "private-messages.hover.receiver-hover", Arrays.asList(
+                "&bPlayer: &f%receiver%",
+                "",
+                "&7Click to send another message!"
+        ));
+        setIfAbsent(config, "private-messages.hover.receiver-click-action", "/msg %player% ");
+        setIfAbsent(config, "private-messages.hover.receiver-click-type", "suggest");
+        setIfAbsent(config, "private-messages.hover.message-hover", Arrays.asList("&7Click to copy message"));
+        setIfAbsent(config, "private-messages.hover.message-click-action", "%message%");
+        setIfAbsent(config, "private-messages.hover.message-click-type", "copy");
+
+        plugin.getLogger().info("    Added enhanced mention notifications (titles, chat messages, formats)");
+        plugin.getLogger().info("    Added PM hover component & click action support");
     }
 
     /**
