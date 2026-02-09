@@ -29,6 +29,14 @@ public class AwesomeChatCommand implements CommandExecutor {
             if (!(sender instanceof org.bukkit.entity.Player player)) {
                 return true;
             }
+
+            // Check if permission is required (configurable)
+            boolean requirePermission = plugin.getConfig().getBoolean("item-display.require-permission-to-view", false);
+            if (requirePermission && !player.hasPermission("awesomechat.display.view")) {
+                player.sendMessage(plugin.getChatPrefix() + ChatColor.RED + "You don't have permission to view item displays.");
+                return true;
+            }
+
             if (args.length < 2) return true;
             try {
                 java.util.UUID snapshotId = java.util.UUID.fromString(args[1]);

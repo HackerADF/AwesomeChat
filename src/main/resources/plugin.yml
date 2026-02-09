@@ -93,8 +93,8 @@ commands:
     permission-message: "You don't have permission to use this command."
 permissions:
   awesomechat.use:
-    description: Allows use of the /awesomechat command
-    default: op
+    description: Allows use of the /awesomechat command (includes internal _view for item display)
+    default: true
   awesomechat.reload:
     description: Allows reloading the plugin configuration
     default: op
@@ -134,6 +134,15 @@ permissions:
   awesomechat.mutechat.bypass:
     description: Allows chatting even when chat is muted
     default: op
+  awesomechat.filter.bypass:
+    description: Bypasses all chat filters
+    default: op
+  awesomechat.filter.bypass.cooldown:
+    description: Bypasses chat cooldown filter
+    default: op
+  awesomechat.filter.bypass.caps:
+    description: Bypasses caps converter (allows sending messages in all caps)
+    default: op
   awesomechat.mention.player:
     description: Can mention individual players with @player
     default: true
@@ -163,6 +172,9 @@ permissions:
     default: op
   awesomechat.display.command:
     description: Allows showing clickable commands in chat with [/command]
+    default: true
+  awesomechat.display.view:
+    description: Allows clicking and viewing item displays (only if require-permission-to-view is enabled)
     default: true
   awesomechat.command.chatcolor:
     description: Allows use of the /chatcolor command
