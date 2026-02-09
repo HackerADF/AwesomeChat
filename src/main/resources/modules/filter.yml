@@ -64,6 +64,17 @@ similarity:
   command-whitelist:
     - skill
 
+# --- Caps Converter ---
+# Automatically converts excessive caps to proper sentence case.
+# Examples:
+#   "A LOT OF CAPS, LOL" → "A lot of caps, lol"
+#   "HELLO WORLD! THIS IS CAPS." → "Hello world! This is caps."
+caps-converter:
+  enabled: false
+  min-caps-percentage: 70  # Only convert if 70% or more of letters are caps
+  min-length: 5            # Only check messages with 5+ characters
+  bypass-permission: "awesomechat.filter.bypass.caps"
+
 # Messages shown to the player and staff
 player-message: "&cYou cannot send this message."
 staff-message: "&c{player} triggered filter: &7{message}"

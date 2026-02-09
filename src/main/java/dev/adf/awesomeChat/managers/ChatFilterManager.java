@@ -59,6 +59,12 @@ public class ChatFilterManager {
     private List<String> similarityCommands;
     private List<String> similarityWhitelist;
 
+    // Caps converter settings
+    private boolean capsConverterEnabled;
+    private int capsMinPercentage;
+    private int capsMinLength;
+    private String capsConverterBypassPermission;
+
     // Banned words
     private List<String> bannedWords = Collections.emptyList();
     private final List<Pattern> wildcardBannedPatterns = new ArrayList<>();
@@ -194,6 +200,12 @@ public class ChatFilterManager {
         this.similarityCommands = similarityCmdsList.contains("*") ? Collections.emptyList() : similarityCmdsList;
         this.similarityWhitelist = config.getStringList("similarity.command-whitelist");
 
+        this.capsConverterEnabled = config.getBoolean("caps-converter.enabled", false);
+        this.capsMinPercentage = config.getInt("caps-converter.min-caps-percentage", 70);
+        this.capsMinLength = config.getInt("caps-converter.min-length", 5);
+        this.capsConverterBypassPermission = config.getString("caps-converter.bypass-permission",
+                "awesomechat.filter.bypass.caps");
+
         this.playerMessage = config.getString("player-message", "&cYou cannot send this message.");
         this.staffMessage = config.getString("staff-message", "&c{player} triggered filter: &7{message}");
         this.globalPunishments = Collections.emptyMap();
@@ -289,7 +301,6 @@ public class ChatFilterManager {
         if (bypassEnabled && player.hasPermission("awesomechat.filter.bypass")) return FilterResult.pass();
 
         UUID uuid = player.getUniqueId();
-        String normalized = message.toLowerCase();
         long now = System.currentTimeMillis();
         boolean censorMode = filterMode.equalsIgnoreCase("censor");
 
@@ -299,6 +310,21 @@ public class ChatFilterManager {
             String[] parts = message.substring(1).split(" ");
             baseCommand = parts[0].toLowerCase();
         }
+
+        // ================= Caps Converter (modifies message) =================
+        boolean capsConverted = false;
+        String originalMessage = message;
+        if (capsConverterEnabled && !isCommand) {
+            if (capsConverterBypassPermission == null || !player.hasPermission(capsConverterBypassPermission)) {
+                String converted = convertCaps(message);
+                if (!converted.equals(message)) {
+                    message = converted;
+                    capsConverted = true;
+                }
+            }
+        }
+
+        String normalized = message.toLowerCase();
 
         // ================= Cooldown Check (always blocks) =================
         if (cooldownEnabled && (cooldownBypassPermission == null
@@ -377,11 +403,24 @@ public class ChatFilterManager {
         }
 
         // ================= Content checks (block or censor) =================
+        FilterResult result;
         if (censorMode) {
-            return doCensorChecks(player, message, type);
+            result = doCensorChecks(player, message, type);
         } else {
-            return doBlockChecks(player, message, type);
+            result = doBlockChecks(player, message, type);
         }
+
+        // If caps were converted and no other filter blocked/censored, return the converted message
+        if (capsConverted && !result.blocked && !result.censored) {
+            return FilterResult.censor(message);
+        }
+
+        // If caps were converted and another filter already censored, preserve that censorship
+        if (capsConverted && result.censored) {
+            return result; // Already censored, keep that result
+        }
+
+        return result;
     }
 
     // =========================================================================
@@ -625,6 +664,72 @@ public class ChatFilterManager {
             else break;
         }
         return jaro + 0.1 * winklerPrefix * (1 - jaro);
+    }
+
+    // =========================================================================
+    //  Caps Converter
+    // =========================================================================
+
+    /**
+     * Converts excessive caps to proper sentence case.
+     * Examples:
+     *   "A LOT OF CAPS, LOL" → "A lot of caps, lol"
+     *   "HELLO WORLD! THIS IS CAPS." → "Hello world! This is caps."
+     */
+    private String convertCaps(String message) {
+        // Don't convert short messages
+        if (message.length() < capsMinLength) {
+            return message;
+        }
+
+        // Count uppercase and total letters
+        int upperCount = 0;
+        int letterCount = 0;
+
+        for (char c : message.toCharArray()) {
+            if (Character.isLetter(c)) {
+                letterCount++;
+                if (Character.isUpperCase(c)) {
+                    upperCount++;
+                }
+            }
+        }
+
+        // If not enough letters or not enough caps, don't convert
+        if (letterCount == 0) {
+            return message;
+        }
+
+        int capsPercentage = (upperCount * 100) / letterCount;
+        if (capsPercentage < capsMinPercentage) {
+            return message;
+        }
+
+        // Convert to proper sentence case
+        StringBuilder result = new StringBuilder();
+        boolean capitalizeNext = true;
+
+        for (int i = 0; i < message.length(); i++) {
+            char c = message.charAt(i);
+
+            if (Character.isLetter(c)) {
+                if (capitalizeNext) {
+                    result.append(Character.toUpperCase(c));
+                    capitalizeNext = false;
+                } else {
+                    result.append(Character.toLowerCase(c));
+                }
+            } else {
+                result.append(c);
+
+                // Capitalize after sentence-ending punctuation
+                if (c == '.' || c == '!' || c == '?') {
+                    capitalizeNext = true;
+                }
+            }
+        }
+
+        return result.toString();
     }
 
     // =========================================================================
