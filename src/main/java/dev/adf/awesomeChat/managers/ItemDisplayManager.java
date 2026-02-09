@@ -215,7 +215,9 @@ public class ItemDisplayManager {
     /**
      * Returns the item name component:
      * - If the item has a custom display name, that full component (colors + formatting).
-     * - Otherwise, a nicely formatted material name, colored with the current chat color.
+     * - Otherwise, a nicely formatted material name, colored with:
+     *   1. Item rarity color (if available)
+     *   2. Current chat color (fallback)
      */
     private Component getItemNameComponent(ItemStack item, TextColor baseColor) {
         ItemMeta meta = item.getItemMeta();
@@ -228,10 +230,42 @@ public class ItemDisplayManager {
 
         String materialName = formatMaterialName(item.getType().name());
         Component comp = Component.text(materialName);
-        if (baseColor != null) {
+
+        // Try to get rarity color first
+        TextColor rarityColor = getRarityColor(item);
+        if (rarityColor != null) {
+            comp = comp.color(rarityColor);
+        } else if (baseColor != null) {
             comp = comp.color(baseColor);
         }
+
         return comp;
+    }
+
+    /**
+     * Gets the color associated with an item's rarity.
+     * Returns null if rarity cannot be determined.
+     */
+    private TextColor getRarityColor(ItemStack item) {
+        try {
+            // Get the item's rarity (available in 1.16+)
+            Object rarity = item.getClass().getMethod("getRarity").invoke(item);
+            if (rarity == null) return null;
+
+            String rarityName = rarity.toString().toUpperCase();
+
+            // Map Minecraft rarity to colors
+            return switch (rarityName) {
+                case "COMMON" -> TextColor.color(255, 255, 255);      // White
+                case "UNCOMMON" -> TextColor.color(255, 255, 85);     // Yellow
+                case "RARE" -> TextColor.color(85, 255, 255);         // Aqua
+                case "EPIC" -> TextColor.color(255, 85, 255);         // Light Purple
+                default -> null;
+            };
+        } catch (Exception e) {
+            // getRarity() not available or failed - return null
+            return null;
+        }
     }
 
     /**
@@ -255,12 +289,8 @@ public class ItemDisplayManager {
         for (int i = 0; i < parts.length; i++) {
             String part = parts[i];
 
-            if (amount == 1) {
-                // Remove the `{count}` placeholders when it's a single item
-                part = part.replace(" x{count}", "").replace("x{count}", "");
-            } else {
-                part = part.replace("{count}", String.valueOf(amount));
-            }
+            // Always show count, including x1 for single items
+            part = part.replace("{count}", String.valueOf(amount));
 
             Component textComp = deserializeLegacy(formatColors(part));
             result = result.append(textComp);
