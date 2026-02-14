@@ -298,9 +298,16 @@ public class ChatFilterManager {
      */
     public FilterResult checkAndCensor(Player player, String message, String type) {
         if (!enabled) return FilterResult.pass();
-        if (bypassEnabled && player.hasPermission("awesomechat.filter.bypass")) return FilterResult.pass();
 
         UUID uuid = player.getUniqueId();
+
+        if (bypassEnabled && player.hasPermission("awesomechat.filter.bypass")) {
+            // Clear runtime spam state so stale counts don't persist after bypass is lost
+            lastMessageContent.remove(uuid);
+            spamCount.remove(uuid);
+            lastMessageTime.remove(uuid);
+            return FilterResult.pass();
+        }
         long now = System.currentTimeMillis();
         boolean censorMode = filterMode.equalsIgnoreCase("censor");
 
@@ -392,6 +399,7 @@ public class ChatFilterManager {
                         if (count >= spamLimit) {
                             handleViolation(player, message, "spam", "similar-message", type);
                             spamCount.put(uuid, 0);
+                            lastMessageContent.put(uuid, compareValue);
                             return FilterResult.block();
                         }
                     } else {
