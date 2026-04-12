@@ -294,8 +294,18 @@ channels:
     volume: 0.5
     pitch: 1.5
     auto-join: false
-
     command: /staffchat
+
+    # Message shown to the player when they join/leave this channel
+    # Placeholders: {player}, {channel}
+    join-message: "&aSwitched to channel &f{channel}&a. All messages will go to this channel."
+    leave-message: "&eLeft channel &f{channel}&e. You are now in global chat."
+
+    # Alerts broadcast to all channel members when someone joins/leaves
+    alerts:
+      enabled: false
+      join: "&7[&a+&7] &f{player} &7joined &f{channel}&7."
+      leave: "&7[&c-&7] &f{player} &7left &f{channel}&7."
 
   admin:
     display-name: "Admin"
@@ -306,8 +316,15 @@ channels:
     volume: 0.5
     pitch: 1.0
     auto-join: false
-
     command: /adminchat
+
+    join-message: "&aSwitched to channel &f{channel}&a. All messages will go to this channel."
+    leave-message: "&eLeft channel &f{channel}&e. You are now in global chat."
+
+    alerts:
+      enabled: false
+      join: "&7[&a+&7] &f{player} &7joined &f{channel}&7."
+      leave: "&7[&c-&7] &f{player} &7left &f{channel}&7."
 
   vip:
     display-name: "VIP"
@@ -318,8 +335,15 @@ channels:
     volume: 1.0
     pitch: 1.0
     auto-join: false
-
     command: none
+
+    join-message: "&aSwitched to channel &f{channel}&a. All messages will go to this channel."
+    leave-message: "&eLeft channel &f{channel}&e. You are now in global chat."
+
+    alerts:
+      enabled: false
+      join: "&7[&a+&7] &f{player} &7joined &f{channel}&7."
+      leave: "&7[&c-&7] &f{player} &7left &f{channel}&7."
 
   # Example: open channel anyone can join (empty permission = open)
   # general:
@@ -331,6 +355,13 @@ channels:
   #   volume: 1.0
   #   pitch: 1.0
   #   auto-join: false
+  #   command: none
+  #   join-message: "&aSwitched to channel &f{channel}&a. All messages will go to this channel."
+  #   leave-message: "&eLeft channel &f{channel}&e. You are now in global chat."
+  #   alerts:
+  #     enabled: false
+  #     join: "&7[&a+&7] &f{player} &7joined &f{channel}&7."
+  #     leave: "&7[&c-&7] &f{player} &7left &f{channel}&7."
 
 
 # ================================================================

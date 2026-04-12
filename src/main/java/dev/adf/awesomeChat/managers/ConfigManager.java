@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class ConfigManager {
 
-    private static final int CURRENT_VERSION = 18;
+    private static final int CURRENT_VERSION = 19;
 
     private final AwesomeChat plugin;
     private final File configFile;
@@ -66,6 +66,7 @@ public class ConfigManager {
         if (version < 16) migrateToV16(config);
         if (version < 17) migrateToV17(config);
         if (version < 18) migrateToV18(config);
+        if (version < 19) migrateToV19(config);
 
         config.set("config-version", CURRENT_VERSION);
 
@@ -674,6 +675,28 @@ public class ConfigManager {
 
         plugin.getLogger().info("    Added enhanced mention notifications (titles, chat messages, formats)");
         plugin.getLogger().info("    Added PM hover component & click action support");
+    }
+
+    // =========================================================================
+    //  v18 -> v19: Channel join/leave messages, alerts, and shortcut commands
+    // =========================================================================
+    private void migrateToV19(FileConfiguration config) {
+        plugin.getLogger().info("  Running v18 -> v19 migration...");
+
+        ConfigurationSection channels = config.getConfigurationSection("channels");
+        if (channels != null) {
+            for (String key : channels.getKeys(false)) {
+                String path = "channels." + key;
+                setIfAbsent(config, path + ".command", "none");
+                setIfAbsent(config, path + ".join-message", "&aSwitched to channel &f{channel}&a. All messages will go to this channel.");
+                setIfAbsent(config, path + ".leave-message", "&eLeft channel &f{channel}&e. You are now in global chat.");
+                setIfAbsent(config, path + ".alerts.enabled", false);
+                setIfAbsent(config, path + ".alerts.join", "&7[&a+&7] &f{player} &7joined &f{channel}&7.");
+                setIfAbsent(config, path + ".alerts.leave", "&7[&c-&7] &f{player} &7left &f{channel}&7.");
+            }
+        }
+
+        plugin.getLogger().info("    Added channel join/leave messages, alerts, and shortcut commands");
     }
 
     /**

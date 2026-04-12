@@ -45,7 +45,7 @@ public class ChannelCommand implements CommandExecutor {
             case "leave" -> handleLeave(player);
             case "send", "s" -> handleSend(player, args);
             default -> {
-                // Treat as shorthand: /ch <channel> or /ch <channel> <message>
+                // Shorthand: /ch <channel> or /ch <channel> <message>
                 ChatChannel channel = manager.getChannel(sub);
                 if (channel != null) {
                     if (args.length == 1) {
@@ -115,14 +115,7 @@ public class ChannelCommand implements CommandExecutor {
             return;
         }
 
-        String current = manager.getActiveChannel(player);
-        if (channel.getName().equalsIgnoreCase(current)) {
-            manager.setActiveChannel(player, null);
-            player.sendMessage(plugin.getChatPrefix() + ChatColor.YELLOW + "Left channel " + ChatColor.WHITE + channel.getDisplayName() + ChatColor.YELLOW + ". You are now in global chat.");
-        } else {
-            manager.setActiveChannel(player, channel.getName());
-            player.sendMessage(plugin.getChatPrefix() + ChatColor.GREEN + "Switched to channel " + ChatColor.WHITE + channel.getDisplayName() + ChatColor.GREEN + ". All messages will go to this channel.");
-        }
+        manager.joinChannel(player, channel);
     }
 
     private void handleLeave(Player player) {
@@ -134,10 +127,7 @@ public class ChannelCommand implements CommandExecutor {
             return;
         }
 
-        ChatChannel channel = manager.getChannel(current);
-        String name = channel != null ? channel.getDisplayName() : current;
-        manager.setActiveChannel(player, null);
-        player.sendMessage(plugin.getChatPrefix() + ChatColor.YELLOW + "Left channel " + ChatColor.WHITE + name + ChatColor.YELLOW + ". Back to global chat.");
+        manager.leaveChannel(player);
     }
 
     private void handleSend(Player player, String[] args) {
