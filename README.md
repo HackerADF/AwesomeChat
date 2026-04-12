@@ -26,6 +26,9 @@ A powerful, fully-featured chat management plugin for Paper/Spigot servers (1.19
 - **Custom channels** - Create unlimited permission-gated channels (staff, admin, VIP, etc.)
 - **Toggle mode** - `/ch join <channel>` routes all messages to that channel
 - **Quick send** - `/ch <channel> <message>` for one-off channel messages
+- **Shortcut commands** - Define a `/staffchat` or `/adminchat` alias per channel in config
+- **Join/leave messages** - Configurable per-channel messages with `{player}` and `{channel}` placeholders
+- **Channel alerts** - Optional broadcast to channel members when someone joins or leaves (off by default)
 - **Per-channel config** - Custom prefix, format, sound, and permission per channel
 - **Easy setup** - Define channels in `config.yml` with no code changes
 
@@ -97,7 +100,9 @@ A powerful, fully-featured chat management plugin for Paper/Spigot servers (1.19
 
 ### Chat Logging
 - **Database storage** - Log all chat messages to SQLite or MySQL
+- **Channel tracking** - Logs which channel a message was sent in (or global)
 - **`/chatlogs` search** - Search by player with time filters (`time:`, `after:`, `before:`)
+- **Rich log display** - Timestamp hover for full UTC date, channel tag hover for context, click-to-copy messages
 - **Clickable pagination** - Browse results with clickable page navigation
 - **Filtered message tracking** - Censored/blocked messages flagged in logs
 - **Async writes** - Zero performance impact on the main thread
@@ -130,6 +135,7 @@ A powerful, fully-featured chat management plugin for Paper/Spigot servers (1.19
 - **Chat clear bypass** - Staff exempt from `/clearchat all`
 - **Chat signing disable** - Disable 1.19+ chat signature enforcement
 - **Filter notifications** - Staff receive alerts when filters trigger
+- **DiscordSRV compatible** - Runs at HIGH priority so filters and channels process before DiscordSRV relays messages
 
 ### Sound System
 - **Per-group chat sounds** - Different sounds per LuckPerms group when chatting
