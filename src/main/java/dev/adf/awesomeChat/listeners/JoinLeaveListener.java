@@ -32,13 +32,13 @@ public class JoinLeaveListener implements Listener {
 
         if (!config.getBoolean("join-leave.enabled", false)) return;
 
-        // Check vanish (EssentialsX)
+        // Hide vanished players
         if (config.getBoolean("join-leave.hide-vanished", true) && isVanished(player)) {
             event.joinMessage(null);
             return;
         }
 
-        // Determine join message
+        // Pick the right join message (first-join > per-group > default)
         boolean firstJoin = !player.hasPlayedBefore();
         String joinMsg = null;
 
@@ -71,7 +71,7 @@ public class JoinLeaveListener implements Listener {
         if (config.getBoolean("join-leave.motd.enabled", false)) {
             List<String> motdLines = config.getStringList("join-leave.motd.lines");
             if (!motdLines.isEmpty()) {
-                // Delay MOTD slightly so it appears after join
+                // Small delay so the MOTD shows up after the join message
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     for (String line : motdLines) {
                         String formatted = applyPlaceholders(player, line);
@@ -152,7 +152,7 @@ public class JoinLeaveListener implements Listener {
     }
 
     private boolean isVanished(Player player) {
-        // Check EssentialsX vanish
+        // Try EssentialsX vanish check first
         if (Bukkit.getPluginManager().isPluginEnabled("Essentials")) {
             try {
                 com.earth2me.essentials.Essentials ess = (com.earth2me.essentials.Essentials)
@@ -163,7 +163,7 @@ public class JoinLeaveListener implements Listener {
             } catch (Exception ignored) {}
         }
 
-        // Fallback: check metadata
+        // Fallback to metadata tag
         return player.getMetadata("vanished").stream().anyMatch(m -> m.asBoolean());
     }
 }

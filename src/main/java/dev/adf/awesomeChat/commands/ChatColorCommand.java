@@ -26,7 +26,7 @@ public class ChatColorCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            // Allow console for list subcommand
+            // Console can still run the list subcommand
             if (args.length > 0 && args[0].equalsIgnoreCase("list")) {
                 return handleList(sender);
             }
@@ -89,7 +89,7 @@ public class ChatColorCommand implements CommandExecutor {
 
         String name = args[1].toLowerCase();
 
-        // Validate name (alphanumeric + underscores only)
+        // Name must be alphanumeric + underscores
         if (!name.matches("^[a-z0-9_]+$")) {
             player.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(
                     plugin.getChatPrefix() + "&cGradient name must be alphanumeric (a-z, 0-9, _)."));
@@ -131,7 +131,7 @@ public class ChatColorCommand implements CommandExecutor {
             return true;
         }
 
-        // Reload gradients in GUI
+        // Refresh the GUI
         if (plugin.getChatColorGUI() != null) {
             plugin.getChatColorGUI().loadGradients();
         }
@@ -162,7 +162,7 @@ public class ChatColorCommand implements CommandExecutor {
             return true;
         }
 
-        // Reload gradients in GUI
+        // Refresh the GUI
         if (plugin.getChatColorGUI() != null) {
             plugin.getChatColorGUI().loadGradients();
         }

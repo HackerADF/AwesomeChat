@@ -99,10 +99,10 @@ public class ChatFilterManager {
     public ChatFilterManager(JavaPlugin plugin, FileConfiguration filterConfig) {
         this.plugin = plugin;
 
-        // ensure data folder exists
+        // make sure the data folder is there
         if (!plugin.getDataFolder().exists()) plugin.getDataFolder().mkdirs();
 
-        // data file for offense counts
+        // offense tracking file
         this.dataFile = new File(plugin.getDataFolder(), "data/uuid.json");
         if (!dataFile.getParentFile().exists()) dataFile.getParentFile().mkdirs();
 
@@ -126,7 +126,7 @@ public class ChatFilterManager {
      */
     public void reload(FileConfiguration filterConfig) {
         loadFromConfig(filterConfig);
-        // Clear runtime caches on reload
+        // Wipe runtime caches on reload
         lastMessageTime.clear();
         lastMessageContent.clear();
         spamCount.clear();
@@ -302,7 +302,7 @@ public class ChatFilterManager {
         UUID uuid = player.getUniqueId();
 
         if (bypassEnabled && player.hasPermission("awesomechat.filter.bypass")) {
-            // Clear runtime spam state so stale counts don't persist after bypass is lost
+            // Wipe spam state so it doesn't come back to bite them if they lose bypass
             lastMessageContent.remove(uuid);
             spamCount.remove(uuid);
             lastMessageTime.remove(uuid);
@@ -418,14 +418,14 @@ public class ChatFilterManager {
             result = doBlockChecks(player, message, type);
         }
 
-        // If caps were converted and no other filter blocked/censored, return the converted message
+        // Caps were fixed but nothing else triggered, send back the fixed version
         if (capsConverted && !result.blocked && !result.censored) {
             return FilterResult.censor(message);
         }
 
-        // If caps were converted and another filter already censored, preserve that censorship
+        // Another filter already censored on top of caps, keep that
         if (capsConverted && result.censored) {
-            return result; // Already censored, keep that result
+            return result;
         }
 
         return result;
@@ -572,7 +572,7 @@ public class ChatFilterManager {
         }
 
         if (anyCensored) {
-            // Notify staff about the censor action
+            // Let staff know something got censored
             String staffNotify = replacePlaceholders(prefix + staffMessage, player, message);
             notifyStaff(player, staffNotify);
 
@@ -599,7 +599,7 @@ public class ChatFilterManager {
         ChatFilterViolationEvent event = new ChatFilterViolationEvent(player, "", ruleName, count);
         Bukkit.getPluginManager().callEvent(event);
 
-        // Check if a punishment threshold is reached
+        // See if they've hit a punishment threshold
         FilterRule rule = rules.get(ruleName);
         Map<String, Object> punishments;
         if (rule != null) {
@@ -685,12 +685,12 @@ public class ChatFilterManager {
      *   "HELLO WORLD! THIS IS CAPS." → "Hello world! This is caps."
      */
     private String convertCaps(String message) {
-        // Don't convert short messages
+        // Too short to bother with
         if (message.length() < capsMinLength) {
             return message;
         }
 
-        // Count uppercase and total letters
+        // Count how many letters are uppercase
         int upperCount = 0;
         int letterCount = 0;
 
@@ -703,7 +703,7 @@ public class ChatFilterManager {
             }
         }
 
-        // If not enough letters or not enough caps, don't convert
+        // Not enough caps to care about
         if (letterCount == 0) {
             return message;
         }
@@ -713,7 +713,7 @@ public class ChatFilterManager {
             return message;
         }
 
-        // Convert to proper sentence case
+        // Lowercase everything, capitalize after sentence endings
         StringBuilder result = new StringBuilder();
         boolean capitalizeNext = true;
 
@@ -730,7 +730,7 @@ public class ChatFilterManager {
             } else {
                 result.append(c);
 
-                // Capitalize after sentence-ending punctuation
+                // New sentence after . ! ?
                 if (c == '.' || c == '!' || c == '?') {
                     capitalizeNext = true;
                 }
@@ -845,14 +845,14 @@ public class ChatFilterManager {
     private String resolvePunishment(Map<String, Object> punishments, int count) {
         if (punishments == null || punishments.isEmpty()) return null;
 
-        // Direct match
+        // Exact count match
         Object actionObj = punishments.get(count);
         if (actionObj == null) {
             actionObj = punishments.get(String.valueOf(count));
         }
         if (actionObj != null) return String.valueOf(actionObj);
 
-        // Fallback: find best matching threshold
+        // No exact match, find the highest threshold we've passed
         int best = -1;
         boolean hasRepeat = false;
 
@@ -880,7 +880,7 @@ public class ChatFilterManager {
             if (bestObj == null) bestObj = punishments.get(String.valueOf(best));
             if (bestObj != null) return String.valueOf(bestObj);
         } else if (hasRepeat) {
-            // Only use repeat if all numeric thresholds are below count
+            // Only fall back to "repeat" if there's no higher threshold ahead
             boolean hasFutureNonRepeat = false;
             for (Object keyObj : punishments.keySet()) {
                 if ("repeat".equalsIgnoreCase(String.valueOf(keyObj))) continue;
@@ -1010,7 +1010,7 @@ public class ChatFilterManager {
 
     private void ensureDefaultWildcardFilters(File target) {
         try {
-            // Detect if target is meant to be a directory (path has no file extension or already is a directory)
+            // Figure out if we're looking at a directory or a single file
             boolean isDir = target.isDirectory()
                     || (!target.exists() && !target.getName().contains("."));
             File dir = isDir ? target : target.getParentFile();

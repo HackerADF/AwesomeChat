@@ -234,7 +234,7 @@ public final class AwesomeChat extends JavaPlugin {
         getLogger().info("Attempting to hook into PlaceholderAPI...");
         getLogger().info("AwesomeChat has been enabled!");
 
-        // Install PlaceholderAPI expansions, should find a better method to implement
+        // TODO: find a better way to hook PlaceholderAPI expansions
         //installPlaceholderExpansions();
     }
 

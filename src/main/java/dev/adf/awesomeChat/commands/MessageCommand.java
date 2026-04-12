@@ -77,18 +77,18 @@ public class MessageCommand implements CommandExecutor {
             return true;
         }
 
-        // Check if hover/click components are enabled
+        // Use rich components if hover is enabled, otherwise plain text
         boolean hoverEnabled = plugin.getConfig().getBoolean("private-messages.hover.enabled", false);
 
         if (hoverEnabled) {
-            // Send messages with hover/click components
+            // Rich hover/click version
             Component senderComponent = buildPMComponent(player, target, message, true);
             Component receiverComponent = buildPMComponent(player, target, message, false);
 
             player.sendMessage(senderComponent);
             target.sendMessage(receiverComponent);
         } else {
-            // Send simple messages
+            // Plain text version
             String senderFormat = plugin.getFormattedConfigString(
                             "private-messages.format.sender",
                             "&7[&bYou &7-> &b{receiver}&7] &f{message}"
@@ -159,7 +159,7 @@ public class MessageCommand implements CommandExecutor {
     private Component buildPMComponent(Player sender, Player receiver, String message, boolean isSender) {
         ConfigurationSection config = plugin.getConfig().getConfigurationSection("private-messages.hover");
         if (config == null) {
-            // Fallback to simple message
+            // No hover config, just format normally
             String format = isSender ?
                     "&7[&bYou &7-> &b{receiver}&7] &f{message}" :
                     "&7[&b{sender} &7-> &bYou&7] &f{message}";
@@ -169,7 +169,7 @@ public class MessageCommand implements CommandExecutor {
             return LegacyComponentSerializer.legacySection().deserialize(AwesomeChat.formatColors(format));
         }
 
-        // Parse format string to identify components
+        // Split format into static text and placeholder parts
         String format = isSender ?
                 plugin.getConfig().getString("private-messages.format.sender", "&7[&bYou &7-> &b{receiver}&7] &f{message}") :
                 plugin.getConfig().getString("private-messages.format.receiver", "&7[&b{sender} &7-> &bYou&7] &f{message}");
@@ -180,12 +180,12 @@ public class MessageCommand implements CommandExecutor {
 
         int placeholderIndex = 0;
         for (int i = 0; i < parts.length; i++) {
-            // Add static text
+            // Static text between placeholders
             if (!parts[i].isEmpty()) {
                 result = result.append(parseColoredText(parts[i]));
             }
 
-            // Add placeholder component with hover/click
+            // Interactive placeholder with hover/click
             if (placeholderIndex < placeholders.length) {
                 String placeholder = placeholders[placeholderIndex];
                 Component placeholderComp = buildPlaceholderComponent(
@@ -285,17 +285,16 @@ public class MessageCommand implements CommandExecutor {
             return Component.empty();
         }
 
-        // Check if MiniMessage is enabled and text contains MiniMessage tags
+        // Try MiniMessage if enabled, fall back to legacy
         boolean miniMessageEnabled = plugin.getConfig().getBoolean("minimessage.enabled", false);
         if (miniMessageEnabled && (text.contains("<gradient") || (text.contains("<") && text.contains(">")))) {
             try {
                 return MiniMessage.miniMessage().deserialize(text);
             } catch (Exception e) {
-                // Fallback to legacy parsing
+                // MiniMessage failed, try legacy below
             }
         }
 
-        // Parse as legacy color codes (including hex)
         String formatted = AwesomeChat.formatColors(text);
         return LegacyComponentSerializer.legacySection().deserialize(formatted);
     }

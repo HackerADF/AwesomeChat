@@ -34,7 +34,7 @@ public class ChatLogTabCompleter implements TabCompleter {
         List<String> completions = new ArrayList<>();
 
         if (args.length == 1) {
-            // First arg: player names + "page"
+            // Suggest player names and "page"
             String input = args[0].toLowerCase();
             for (Player p : Bukkit.getOnlinePlayers()) {
                 if (p.getName().toLowerCase().startsWith(input)) {
@@ -47,7 +47,7 @@ public class ChatLogTabCompleter implements TabCompleter {
             return completions;
         }
 
-        // If first arg is "page", suggest page numbers
+        // "page" subcommand: suggest available page numbers
         if (args[0].equalsIgnoreCase("page")) {
             if (args.length == 2) {
                 if (sender instanceof Player player) {
@@ -69,27 +69,27 @@ public class ChatLogTabCompleter implements TabCompleter {
             return completions;
         }
 
-        // After player name: suggest flags not already used
+        // After the player name, suggest unused filter flags
         String input = args[args.length - 1].toLowerCase();
 
-        // Check which flags are already used
+        // Figure out which flags were already typed
         List<String> usedFlags = new ArrayList<>();
         for (int i = 1; i < args.length - 1; i++) {
             String arg = args[i].toLowerCase();
             for (String flag : FLAGS) {
                 if (arg.startsWith(flag)) {
                     usedFlags.add(flag);
-                    // "time:" and "after:" are functionally similar, remove both if either used
+                    // time: and after: do the same thing, so exclude both if one is used
                     if (flag.equals("time:")) usedFlags.add("after:");
                     if (flag.equals("after:")) usedFlags.add("time:");
                 }
             }
         }
 
-        // Check if current input is a partial flag with a value being typed
+        // If they started typing a flag value, complete the duration part
         for (String flag : FLAGS) {
             if (input.startsWith(flag) && input.length() > flag.length()) {
-                // User is typing the duration after the flag, suggest flag+durations
+                // Typing duration after the flag prefix, suggest completions
                 String partial = input.substring(flag.length());
                 for (String dur : DURATIONS) {
                     if (dur.startsWith(partial)) {
@@ -100,10 +100,10 @@ public class ChatLogTabCompleter implements TabCompleter {
             }
         }
 
-        // Suggest available flags
+        // Show remaining flags with duration options
         for (String flag : FLAGS) {
             if (!usedFlags.contains(flag) && flag.startsWith(input)) {
-                // Suggest flag with common durations
+                // Pair each flag with common durations
                 for (String dur : DURATIONS) {
                     completions.add(flag + dur);
                 }

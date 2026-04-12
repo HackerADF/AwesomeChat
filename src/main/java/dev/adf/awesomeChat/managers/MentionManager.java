@@ -54,7 +54,7 @@ public class MentionManager {
         boolean canMentionHere = config.getBoolean("mentions.here.enabled", true)
                 && sender.hasPermission("awesomechat.mention.here");
 
-        // Build dynamic pattern based on optional @ settings
+        // Build the regex based on whether @ is required for each type
         boolean playerRequiresAt = config.getBoolean("mentions.player.require-at-symbol", true);
         boolean roleRequiresAt = config.getBoolean("mentions.role.require-at-symbol", true);
         boolean everyoneRequiresAt = config.getBoolean("mentions.everyone.require-at-symbol", true);
@@ -65,7 +65,7 @@ public class MentionManager {
         String herePattern = hereRequiresAt ? "@(here)" : "@?(here)";
         String playerPattern = playerRequiresAt ? "@(\\w{3,16})" : "@?(\\w{3,16})";
 
-        // Combined pattern: @?(role) | @?everyone/@?here | @?player
+        // One big pattern: role | everyone | here | player
         Pattern mentionPattern = Pattern.compile(
                 "(?:" + rolePattern + "|" + everyonePattern + "|" + herePattern + "|" + playerPattern + ")",
                 Pattern.CASE_INSENSITIVE
@@ -78,7 +78,7 @@ public class MentionManager {
             String replacement = matcher.group();
             String fullMatch = matcher.group();
 
-            // Check for role mention (group in parentheses)
+            // Role mention: has parentheses like @(admin)
             if (fullMatch.contains("(") && fullMatch.contains(")")) {
                 String roleName = fullMatch.replaceAll("[()@]", "");
                 if (canMentionRole) {
@@ -142,7 +142,7 @@ public class MentionManager {
             Player target = entry.getKey();
             String type = entry.getValue();
 
-            // Extract base type (before colon if role)
+            // Split type from role name (format is "role:admin" or just "player")
             String baseType = type.split(":")[0];
             String roleName = type.contains(":") ? type.split(":")[1] : null;
 
@@ -212,18 +212,15 @@ public class MentionManager {
         String configPath = "mentions." + type + ".format";
         String format = config.getString(configPath, text);
 
-        // Replace placeholders
         format = format.replace("%mention%", text)
                 .replace("%player%", text)
                 .replace("%sender%", sender.getName());
 
-        // Parse the format as colored text and return as string
+        // Return colored string, try MiniMessage first
         if (useMiniMessage || format.contains("<gradient") || format.contains("<")) {
-            // Parse as MiniMessage
             Component comp = miniMessage.deserialize(format);
             return LegacyComponentSerializer.legacySection().serialize(comp);
         } else {
-            // Parse as legacy color codes
             return AwesomeChat.formatColors(format);
         }
     }
@@ -242,13 +239,12 @@ public class MentionManager {
             text = text.replace("%role%", roleName);
         }
 
-        // Use PlaceholderAPI if available
+        // PlaceholderAPI support
         if (plugin.isPluginEnabled("PlaceholderAPI")) {
             try {
                 text = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(target, text);
-            } catch (Exception ignored) {
-                // PlaceholderAPI not available
-            }
+            } catch (Exception ignored) {}
+
         }
 
         return text;
@@ -262,16 +258,15 @@ public class MentionManager {
             return Component.empty();
         }
 
-        // Check if text contains MiniMessage tags
+        // Try MiniMessage first, fall back to legacy color codes
         if (text.contains("<gradient") || (text.contains("<") && text.contains(">"))) {
             try {
                 return miniMessage.deserialize(text);
             } catch (Exception e) {
-                // Fallback to legacy parsing
+                // MiniMessage failed, try legacy below
             }
         }
 
-        // Parse as legacy color codes (including hex)
         String formatted = AwesomeChat.formatColors(text);
         return LegacyComponentSerializer.legacySection().deserialize(formatted);
     }

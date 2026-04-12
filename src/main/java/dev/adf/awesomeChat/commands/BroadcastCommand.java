@@ -34,7 +34,7 @@ public class BroadcastCommand implements CommandExecutor {
             return true;
         }
 
-        // Get cooldown duration from permission node (e.g., awesomechat.broadcast.cooldown.10)
+        // Pull cooldown from their permission node (awesomechat.broadcast.cooldown.<seconds>)
         int cooldownSeconds = getCooldownFromPermissions(sender);
         if (sender instanceof Player player) {
             if (cooldownSeconds > 0 && plugin.isOnCooldown(player.getUniqueId(), cooldownSeconds)) {
@@ -88,6 +88,6 @@ public class BroadcastCommand implements CommandExecutor {
                 }
             }
         }
-        return 0; // Default: No cooldown
+        return 0; // no cooldown perm found
     }
 }

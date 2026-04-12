@@ -17,20 +17,20 @@ public class AwesomeChatCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // If the player just types "/awesomechat" with no arguments, show basic info
+        // No args, show plugin info
         if (args.length == 0) {
             sender.sendMessage(plugin.getChatPrefix() + ChatColor.GREEN + "AwesomeChat Plugin v" + plugin.getDescription().getVersion());
             sender.sendMessage(plugin.getChatPrefix() + ChatColor.YELLOW + "Use /awesomechat <reload|info> for more options.");
             return true;
         }
 
-        // Handle internal "_view" subcommand (snapshot viewer from item display clicks)
+        // Internal _view subcommand, opens the item display snapshot GUI
         if (args[0].equalsIgnoreCase("_view")) {
             if (!(sender instanceof org.bukkit.entity.Player player)) {
                 return true;
             }
 
-            // Check if permission is required (configurable)
+            // Permission gate is optional, controlled by config
             boolean requirePermission = plugin.getConfig().getBoolean("item-display.require-permission-to-view", false);
             if (requirePermission && !player.hasPermission("awesomechat.display.view")) {
                 player.sendMessage(plugin.getChatPrefix() + ChatColor.RED + "You don't have permission to view item displays.");
@@ -49,20 +49,17 @@ public class AwesomeChatCommand implements CommandExecutor {
             return true;
         }
 
-        // Handle "/awesomechat reload"
+        // Reload everything
         if (args[0].equalsIgnoreCase("reload")) {
             if (!sender.hasPermission("awesomechat.reload")) {
                 sender.sendMessage(plugin.getChatPrefix() + ChatColor.RED + "You do not have permission to reload AwesomeChat.");
                 return true;
             }
 
-            // Reload the main config file
             plugin.reloadConfig();
-
-            // Reload filter config and manager
             plugin.reloadFilterModule();
 
-            // Reload broadcaster manager
+            // Broadcaster
             AutoBroadcasterManager broadcaster = plugin.getAutoBroadcasterManager();
             if (broadcaster != null) {
                 broadcaster.loadConfig();
@@ -70,24 +67,24 @@ public class AwesomeChatCommand implements CommandExecutor {
                 broadcaster.start();
             }
 
-            // Reload channel manager
+            // Channels
             if (plugin.getChannelManager() != null) {
                 plugin.getChannelManager().loadChannels();
             }
 
-            // Reload item display manager (trigger pattern depends on config)
+            // Item display
             if (plugin.getItemDisplayManager() != null) {
                 plugin.getItemDisplayManager().reloadConfig();
             }
 
-            // Reload chat log manager (database connection may change)
+            // Chat logs (db connection might have changed)
             plugin.reloadChatLogManager();
 
             sender.sendMessage(plugin.getChatPrefix() + ChatColor.GREEN + "AwesomeChat reloaded (config.yml + modules/).");
             return true;
         }
 
-        // Handle "/awesomechat info"
+        // Info command
         if (args[0].equalsIgnoreCase("info")) {
             sender.sendMessage(ChatColor.GREEN + "AwesomeChat Plugin");
             sender.sendMessage(ChatColor.YELLOW + "Version: " + plugin.getDescription().getVersion());
@@ -95,7 +92,7 @@ public class AwesomeChatCommand implements CommandExecutor {
             return true;
         }
 
-        // If the player types an unknown argument, show a usage message
+        // Unknown subcommand
         sender.sendMessage(plugin.getChatPrefix() + ChatColor.RED + "Invalid usage. Try /awesomechat <reload|info>");
         return true;
     }
