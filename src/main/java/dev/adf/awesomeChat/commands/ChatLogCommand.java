@@ -44,7 +44,7 @@ public class ChatLogCommand implements CommandExecutor {
             return true;
         }
 
-        // Handle "page" subcommand
+        // Pagination
         if (args[0].equalsIgnoreCase("page")) {
             handlePage(player, args, label);
             return true;
@@ -95,11 +95,11 @@ public class ChatLogCommand implements CommandExecutor {
     }
 
     private void handleSearch(Player player, String[] args, String label) {
-        // First arg is player name
+        // Look up target player
         String targetName = args[0];
         OfflinePlayer target = Bukkit.getOfflinePlayerIfCached(targetName);
         if (target == null) {
-            // Try exact match from online players
+            // Fall back to online player exact match
             Player onlineTarget = Bukkit.getPlayerExact(targetName);
             if (onlineTarget != null) {
                 target = onlineTarget;
@@ -178,29 +178,56 @@ public class ChatLogCommand implements CommandExecutor {
         if (entries.isEmpty()) {
             player.sendMessage(Component.text("  No messages found.").color(NamedTextColor.GRAY));
         } else {
-            // Get configurable format
+            // Load format from config
             String format = plugin.getPluginConfig().getString("chat-logging.log-format",
                     "&7{timestamp} &8- &f{player}&7: &f{message}");
 
             for (ChatLogManager.ChatLogEntry entry : entries) {
                 String shortTs = ChatLogManager.formatShortTimestamp(entry.timestamp);
 
+                // Full UTC time for the hover tooltip
+                java.time.LocalDateTime utcTime = java.time.LocalDateTime.ofInstant(
+                        java.time.Instant.ofEpochMilli(entry.timestamp), java.time.ZoneId.of("UTC"));
+                String fullTimeUtc = utcTime.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + " UTC";
+
+                // Timestamp: shows relative time, hover reveals full date
+                Component timestampComponent = Component.text("[" + shortTs + "]").color(NamedTextColor.GRAY)
+                        .hoverEvent(HoverEvent.showText(
+                                Component.text(fullTimeUtc).color(NamedTextColor.YELLOW)));
+
                 Component line = Component.text("  ")
-                        .append(Component.text("[" + shortTs + "]").color(NamedTextColor.GRAY))
-                        .append(Component.text(" - ").color(NamedTextColor.DARK_GRAY))
-                        .append(Component.text(entry.username).color(NamedTextColor.AQUA))
-                        .append(Component.text(": ").color(NamedTextColor.GRAY))
-                        .append(Component.text(entry.message).color(
-                                entry.filtered ? NamedTextColor.RED : NamedTextColor.WHITE));
+                        .append(timestampComponent);
 
+                // Channel tag with hover explaining what it means
                 if (entry.channel != null) {
-                    line = line.append(Component.text(" [" + entry.channel + "]").color(NamedTextColor.DARK_AQUA));
+                    Component channelComponent = Component.text(" [" + entry.channel + "]").color(NamedTextColor.DARK_AQUA)
+                            .hoverEvent(HoverEvent.showText(
+                                    Component.text("Sent in channel: ").color(NamedTextColor.GRAY)
+                                            .append(Component.text(entry.channel).color(NamedTextColor.AQUA))
+                                            .append(Component.newline())
+                                            .append(Component.text("This message was only visible").color(NamedTextColor.DARK_GRAY))
+                                            .append(Component.newline())
+                                            .append(Component.text("to members of this channel.").color(NamedTextColor.DARK_GRAY))));
+                    line = line.append(channelComponent);
                 }
 
+                line = line.append(Component.text(" - ").color(NamedTextColor.DARK_GRAY))
+                        .append(Component.text(entry.username).color(NamedTextColor.AQUA))
+                        .append(Component.text(": ").color(NamedTextColor.GRAY));
+
+                // Message text, click to copy
+                Component messageComponent = Component.text(entry.message)
+                        .color(entry.filtered ? NamedTextColor.RED : NamedTextColor.WHITE)
+                        .clickEvent(ClickEvent.copyToClipboard(entry.message));
+
+                Component messageHover = Component.text("Click to copy message").color(NamedTextColor.YELLOW);
                 if (entry.filtered) {
-                    line = line.hoverEvent(HoverEvent.showText(
-                            Component.text("This message was filtered").color(NamedTextColor.RED)));
+                    messageHover = messageHover.append(Component.newline())
+                            .append(Component.text("This message was filtered").color(NamedTextColor.RED));
                 }
+                messageComponent = messageComponent.hoverEvent(HoverEvent.showText(messageHover));
+
+                line = line.append(messageComponent);
 
                 player.sendMessage(line);
             }

@@ -22,6 +22,7 @@ import org.bukkit.Sound;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import io.papermc.paper.event.player.AsyncChatEvent;
 
@@ -43,7 +44,7 @@ public class ChatListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerChat(AsyncChatEvent event) {
         Player player = event.getPlayer();
         FileConfiguration config = plugin.getPluginConfig();
@@ -51,7 +52,7 @@ public class ChatListener implements Listener {
         String plainMessage = PlainTextComponentSerializer.plainText().serialize(event.message());
         final String originalMessage = plainMessage;
 
-        // Custom gradient chat input interception
+        // Intercept chat if the player is typing custom gradient hex codes
         dev.adf.awesomeChat.managers.ChatColorManager chatColorMgr = plugin.getChatColorManager();
         if (chatColorMgr != null && chatColorMgr.isAwaitingCustomInput(player.getUniqueId())) {
             event.setCancelled(true);
@@ -132,6 +133,10 @@ public class ChatListener implements Listener {
                 plainMessage = radiusManager.stripShout(plainMessage);
             }
         }
+
+        // Sync the processed message back to the event so plugins like DiscordSRV
+        // pick up the censored/modified version instead of the raw input.
+        event.message(Component.text(plainMessage));
 
         ChannelManager channelManager = plugin.getChannelManager();
         if (channelManager != null && channelManager.hasActiveChannel(player)) {
@@ -241,7 +246,7 @@ public class ChatListener implements Listener {
             processedMessage = stripColorCodes(plainMessage);
         }
 
-        // Apply persistent chat color (LuckPerms meta chat-color takes priority)
+        // Apply persistent chat color (LuckPerms meta takes priority)
         if (chatColorMgr != null && metaColor == null) {
             processedMessage = chatColorMgr.applyColor(player.getUniqueId(), processedMessage, useMiniMessage);
         }
@@ -268,8 +273,8 @@ public class ChatListener implements Listener {
         IgnoreManager ignoreManager = plugin.getIgnoreManager();
 
         if (!config.getBoolean("disable-chat-signing")) {
-            // Remove ignored and out-of-range players from viewers entirely
-            // so they receive no message at all (no empty space, no hover)
+            // Strip out ignored players and anyone outside chat radius
+            // so they don't see the message at all (not even a blank line)
             event.viewers().removeIf(audience -> {
                 if (audience instanceof Player viewer && !viewer.equals(player)) {
                     if (ignoreManager != null && ignoreManager.isIgnoring(viewer, player)) {
@@ -699,7 +704,7 @@ public class ChatListener implements Listener {
 
                 if ((code >= '0' && code <= '9') || (code >= 'a' && code <= 'f')) {
                     if (lastColor.isEmpty()) {
-                        // Check if this §[hex] is part of a §x§.§.§.§.§.§. hex color sequence
+                        // Skip if this §[hex] char is part of a full §x§.§.§.§.§.§. color code
                         int hexStart = i - 12;
                         if (hexStart >= 0 && text.charAt(hexStart) == '§'
                                 && Character.toLowerCase(text.charAt(hexStart + 1)) == 'x') {
