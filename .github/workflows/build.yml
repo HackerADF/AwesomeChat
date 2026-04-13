@@ -40,10 +40,16 @@ jobs:
         env:
           JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
 
+      - name: Save Java 21 jar
+        run: cp build/libs/AwesomeChat-*.jar /tmp/
+
       - name: Build (26.x / Java 25)
         run: ./gradlew clean shadowJar -Pmc=26
         env:
           JAVA_HOME: ${{ env.JAVA_HOME_25_X64 }}
+
+      - name: Collect both jars
+        run: cp /tmp/AwesomeChat-*.jar build/libs/
 
       - name: Get version info
         id: info
