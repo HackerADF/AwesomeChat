@@ -7,10 +7,6 @@ on:
       - '*.md'
       - '.gitignore'
       - 'LICENSE'
-      - 'gradle/wrapper/**'
-      - 'gradlew'
-      - 'gradlew.bat'
-      - 'gradle.properties'
 
 jobs:
   build:
