@@ -1,0 +1,36 @@
+AwesomeChat License
+Version 1.0
+
+Copyright (c) 2026 HackerADF. All rights reserved.
+
+Permission is granted to any person who obtains a copy of this software
+and its associated documentation (the "Software") to use, copy, modify,
+and fork the Software for personal or commercial purposes, provided that
+all of the following conditions are met:
+
+1. ATTRIBUTION
+   Any use of the Software, or of substantial portions of it, must give
+   clear and visible credit to the original author (HackerADF) and must
+   include a link to the original repository.
+
+2. NO REDISTRIBUTION AS YOUR OWN
+   You may not redistribute, publish, or present the Software, or any
+   modified version of it, as your own work. Forks and modified versions
+   must clearly state that they are based on AwesomeChat by HackerADF.
+
+3. NO COMPONENT REUSE WITHOUT CREDIT OR PERMISSION
+   You may not take individual components, modules, or substantial
+   portions of code from the Software and use them in a separate project
+   or plugin without either prior written permission from the original
+   author or clear credit in the resulting work.
+
+4. NO CLAIM OF OWNERSHIP
+   You may not claim ownership of the Software or any substantial portion
+   of it.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
