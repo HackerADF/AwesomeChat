@@ -6,6 +6,12 @@ plugins {
 group = 'dev.adf'
 version = '1.0.9'
 
+// Pass -Pmc=26 to build for Minecraft 26.x (Java 25)
+// Default builds for 1.19-1.21.x (Java 21)
+def mc26 = project.hasProperty('mc') && project.property('mc').toString() == '26'
+def targetJavaVersion = mc26 ? 25 : 21
+def paperApiVersion = mc26 ? '26.1.2.build.5-alpha' : '1.21-R0.1-SNAPSHOT'
+
 repositories {
     mavenCentral()
 
@@ -33,7 +39,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:${paperApiVersion}")
     compileOnly("org.bstats:bstats-bukkit:3.1.0")
     compileOnly("net.luckperms:api:5.4")
     compileOnly("me.clip:placeholderapi:2.11.6")
@@ -41,7 +47,6 @@ dependencies {
     compileOnly fileTree(dir: 'libs', include: ['*.jar'])
 }
 
-def targetJavaVersion = 21
 java {
     def javaVersion = JavaVersion.toVersion(targetJavaVersion)
     sourceCompatibility = javaVersion
@@ -68,5 +73,5 @@ processResources {
 }
 
 shadowJar {
-    archiveClassifier.set("") // optional, was using for testing
+    archiveClassifier.set(mc26 ? 'mc26' : '')
 }

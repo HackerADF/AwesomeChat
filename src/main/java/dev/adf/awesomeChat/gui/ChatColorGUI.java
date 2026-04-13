@@ -214,7 +214,11 @@ public class ChatColorGUI implements Listener {
         // Row 6: Style toggles + glass
         setStyleItem(inv, 47, Material.IRON_INGOT,  "&f&lBold",          "bold",          current, player, "awesomechat.styling.bold");
         setStyleItem(inv, 48, Material.FEATHER,      "&f&lItalic",        "italic",        current, player, "awesomechat.styling.italic");
-        setStyleItem(inv, 49, Material.CHAIN,        "&f&lUnderline",     "underline",     current, player, "awesomechat.styling.underline");
+        // CHAIN was renamed to IRON_CHAIN in 26.x
+        Material chainMat = Material.matchMaterial("CHAIN");
+        if (chainMat == null) chainMat = Material.matchMaterial("IRON_CHAIN");
+        if (chainMat == null) chainMat = Material.IRON_INGOT;
+        setStyleItem(inv, 49, chainMat,              "&f&lUnderline",     "underline",     current, player, "awesomechat.styling.underline");
         setStyleItem(inv, 50, Material.STRING,       "&f&lStrikethrough", "strikethrough", current, player, "awesomechat.styling.strikethrough");
         setStyleItem(inv, 51, Material.ENDER_PEARL,  "&f&lObfuscated",   "obfuscated",    current, player, "awesomechat.styling.obfuscated");
 
