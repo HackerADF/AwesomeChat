@@ -152,13 +152,13 @@ public class JoinLeaveListener implements Listener {
     }
 
     private boolean isVanished(Player player) {
-        // Try EssentialsX vanish check first
+        // Try EssentialsX vanish check via reflection (soft dependency)
         if (Bukkit.getPluginManager().isPluginEnabled("Essentials")) {
             try {
-                com.earth2me.essentials.Essentials ess = (com.earth2me.essentials.Essentials)
-                        Bukkit.getPluginManager().getPlugin("Essentials");
+                Object ess = Bukkit.getPluginManager().getPlugin("Essentials");
                 if (ess != null) {
-                    return ess.getUser(player).isVanished();
+                    Object user = ess.getClass().getMethod("getUser", Player.class).invoke(ess, player);
+                    return (boolean) user.getClass().getMethod("isVanished").invoke(user);
                 }
             } catch (Exception ignored) {}
         }
