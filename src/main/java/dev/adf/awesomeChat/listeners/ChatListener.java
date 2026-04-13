@@ -512,7 +512,8 @@ public class ChatListener implements Listener {
         boolean hoverEnabled = config.getBoolean("hoverable-messages.enabled");
         boolean clickEnabled = config.getBoolean("clickable-messages.enabled");
 
-        Component usernameComponent = Component.text(playerName);
+        Component usernameComponent = playerName.equals(player.getName())
+                ? player.displayName() : Component.text(playerName);
         Component messageComponent;
 
         if (richMessage != null) {
