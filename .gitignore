@@ -1,12 +1,7 @@
 libs/
 build/
-gradle/
 .gradle/
 .idea/
 .data/
 .tools/
 .claude/
-
-gradlew
-gradlew.bat
-gradle.properties
