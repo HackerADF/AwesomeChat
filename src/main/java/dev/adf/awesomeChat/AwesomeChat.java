@@ -275,10 +275,6 @@ public final class AwesomeChat extends JavaPlugin {
      * Checks if a plugin is installed and logs its status
      */
     private void checkPluginDependency(String pluginName, String successMessage, String failureMessage) {
-        getLogger().info("Pulling server plugins:");
-        for (org.bukkit.plugin.Plugin plugin : Bukkit.getPluginManager().getPlugins()) {
-            getLogger().info(" - " + plugin.getName() + " v" + plugin.getDescription().getVersion());
-        }
         if (isPluginEnabled(pluginName)) {
             getLogger().info(successMessage);
         } else {

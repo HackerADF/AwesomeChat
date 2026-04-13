@@ -57,7 +57,9 @@ public class ChatLogManager {
         File dbFile = new File(plugin.getDataFolder(), fileName);
         plugin.getDataFolder().mkdirs();
         connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());
-        connection.createStatement().execute("PRAGMA journal_mode=WAL");
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute("PRAGMA journal_mode=WAL");
+        }
     }
 
     private void initMySQL() throws SQLException {
