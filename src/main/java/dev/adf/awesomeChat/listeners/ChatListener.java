@@ -25,7 +25,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import io.papermc.paper.event.player.AsyncChatEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.List;
@@ -39,6 +42,35 @@ public class ChatListener implements Listener {
                     .hexColors()
                     .character('\u00a7')
                     .build();
+
+    // Caches filter results briefly so we don't double-run the filter
+    // when both AsyncChatEvent and AsyncPlayerChatEvent fire for the same message.
+    // Whichever event fires first runs the real check; the second reuses the result.
+    private final ConcurrentHashMap<UUID, CachedFilter> filterCache = new ConcurrentHashMap<>();
+
+    private record CachedFilter(long timestamp, String message, ChatFilterManager.FilterResult result) {}
+
+    /**
+     * Runs the chat filter with a short-lived cache so it only executes once
+     * per player message, even if called from both event handlers.
+     */
+    private ChatFilterManager.FilterResult runFilterCached(Player player, String message) {
+        ChatFilterManager filter = plugin.getChatFilterManager();
+        if (filter == null) return null;
+
+        UUID uuid = player.getUniqueId();
+        CachedFilter cached = filterCache.get(uuid);
+        long now = System.currentTimeMillis();
+
+        // Reuse result if same player + same message within 500ms
+        if (cached != null && cached.message().equals(message) && (now - cached.timestamp()) < 500) {
+            return cached.result();
+        }
+
+        ChatFilterManager.FilterResult result = filter.checkAndCensor(player, message, "message");
+        filterCache.put(uuid, new CachedFilter(now, message, result));
+        return result;
+    }
 
     public ChatListener(AwesomeChat plugin) {
         this.plugin = plugin;
@@ -100,15 +132,14 @@ public class ChatListener implements Listener {
             return;
         }
 
-        ChatFilterManager filter = plugin.getChatFilterManager();
-        if (filter != null) {
-            ChatFilterManager.FilterResult result = filter.checkAndCensor(player, plainMessage, "message");
-            if (result.blocked) {
+        ChatFilterManager.FilterResult filterResult = runFilterCached(player, plainMessage);
+        if (filterResult != null) {
+            if (filterResult.blocked) {
                 event.setCancelled(true);
                 return;
             }
-            if (result.censored) {
-                plainMessage = result.censoredMessage;
+            if (filterResult.censored) {
+                plainMessage = filterResult.censoredMessage;
             }
         }
 
@@ -134,8 +165,8 @@ public class ChatListener implements Listener {
             }
         }
 
-        // Sync the processed message back to the event so plugins like DiscordSRV
-        // pick up the censored/modified version instead of the raw input.
+        // Sync the processed message back to the event so plugins reading
+        // the modern event see the censored/modified version.
         event.message(Component.text(plainMessage));
 
         ChannelManager channelManager = plugin.getChannelManager();
@@ -317,6 +348,56 @@ public class ChatListener implements Listener {
             ChannelManager chMgr = plugin.getChannelManager();
             String channel = (chMgr != null && chMgr.hasActiveChannel(player)) ? chMgr.getActiveChannel(player) : null;
             chatLogManager.logMessage(player.getUniqueId(), player.getName(), originalMessage, channel, false);
+        }
+    }
+
+    /**
+     * Runs the same cancellation/censoring checks on the legacy event that
+     * plugins like DiscordSRV still listen on. Without this, DiscordSRV
+     * would see unfiltered messages because it defaults to the deprecated event.
+     * The filter result is cached so it only actually runs once per message.
+     */
+    @SuppressWarnings("deprecation")
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onLegacyChat(AsyncPlayerChatEvent event) {
+        Player player = event.getPlayer();
+        FileConfiguration config = plugin.getPluginConfig();
+
+        // Custom gradient input intercept
+        dev.adf.awesomeChat.managers.ChatColorManager chatColorMgr = plugin.getChatColorManager();
+        if (chatColorMgr != null && chatColorMgr.isAwaitingCustomInput(player.getUniqueId())) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // Chat mute
+        if (plugin.isChatMuted() && !player.hasPermission("awesomechat.mutechat.bypass")) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // Chat filter (uses cached result to avoid double-counting violations)
+        ChatFilterManager.FilterResult filterResult = runFilterCached(player, event.getMessage());
+        if (filterResult != null) {
+            if (filterResult.blocked) {
+                event.setCancelled(true);
+                return;
+            }
+            if (filterResult.censored) {
+                event.setMessage(filterResult.censoredMessage);
+            }
+        }
+
+        // Channel routing - message goes to the channel, not global chat
+        ChannelManager channelManager = plugin.getChannelManager();
+        if (channelManager != null && channelManager.hasActiveChannel(player)) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // Chat signing disabled means we handle delivery manually
+        if (config.getBoolean("disable-chat-signing")) {
+            event.setCancelled(true);
         }
     }
 
