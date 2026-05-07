@@ -223,6 +223,7 @@ public final class AwesomeChat extends JavaPlugin {
         getCommand("unignore").setExecutor(new UnignoreCommand(this));
         getCommand("unignore").setTabCompleter(new UnignoreTabCompleter(this));
         getCommand("ignorelist").setExecutor(new IgnoreListCommand(this));
+        getCommand("togglechatsounds").setExecutor(new ToggleChatSoundsCommand(this));
         getCommand("clearchat").setExecutor(new ClearChatCommand(this));
         getCommand("clearchat").setTabCompleter(new ClearChatTabCompleter());
         getCommand("clearselfchat").setExecutor(new ClearSelfChatCommand(this));

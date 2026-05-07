@@ -67,6 +67,12 @@ commands:
     aliases: [ignored]
     permission: awesomechat.ignore
     permission-message: "You don't have permission to use this command."
+  togglechatsounds:
+    description: Toggle chat sounds on or off for yourself
+    usage: /togglechatsounds
+    aliases: [chatsounds, togglesounds]
+    permission: awesomechat.togglechatsounds
+    permission-message: "You don't have permission to use this command."
   clearchat:
     description: Clear the chat for yourself or all players
     usage: /clearchat [self|all]
@@ -125,6 +131,9 @@ permissions:
   awesomechat.ignore.bypass:
     description: Messages from this player cannot be ignored
     default: op
+  awesomechat.togglechatsounds:
+    description: Allows toggling personal chat sounds on/off
+    default: true
   awesomechat.clearchat:
     description: Allows use of /clearchat (self mode)
     default: op

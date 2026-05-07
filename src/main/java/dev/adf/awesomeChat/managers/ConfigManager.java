@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class ConfigManager {
 
-    private static final int CURRENT_VERSION = 19;
+    private static final int CURRENT_VERSION = 20;
 
     private final AwesomeChat plugin;
     private final File configFile;
@@ -67,6 +67,7 @@ public class ConfigManager {
         if (version < 17) migrateToV17(config);
         if (version < 18) migrateToV18(config);
         if (version < 19) migrateToV19(config);
+        if (version < 20) migrateToV20(config);
 
         config.set("config-version", CURRENT_VERSION);
 
@@ -697,6 +698,13 @@ public class ConfigManager {
         }
 
         plugin.getLogger().info("    Added channel join/leave messages, alerts, and shortcut commands");
+    }
+
+    private void migrateToV20(FileConfiguration config) {
+        plugin.getLogger().info("  Running v19 -> v20 migration...");
+        setIfAbsent(config, "messages.toggle-chat-sounds.enabled", "&aChat sounds &fenabled&a.");
+        setIfAbsent(config, "messages.toggle-chat-sounds.disabled", "&7Chat sounds &fdisabled&8.");
+        plugin.getLogger().info("    Added toggle-chat-sounds messages");
     }
 
     /**

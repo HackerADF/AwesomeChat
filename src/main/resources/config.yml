@@ -479,6 +479,9 @@ broadcast: # Command Permission: awesomechat.broadcast
 # manager plugin, configure the messages on there!
 messages:
   muted: "&cYou are currently muted and cannot speak!"
+  toggle-chat-sounds:
+    enabled: "&aChat sounds &fenabled&a."
+    disabled: "&7Chat sounds &fdisabled&8."
 
 
 # ================================================================
