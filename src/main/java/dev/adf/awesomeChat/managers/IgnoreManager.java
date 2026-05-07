@@ -45,9 +45,10 @@ public class IgnoreManager {
     }
 
     public boolean toggleIgnore(Player player, Player target) {
-        UUID playerId = player.getUniqueId();
-        UUID targetId = target.getUniqueId();
+        return toggleIgnore(player.getUniqueId(), target.getUniqueId());
+    }
 
+    public boolean toggleIgnore(UUID playerId, UUID targetId) {
         Set<UUID> ignored = ignoreMap.computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet());
 
         boolean nowIgnored;
@@ -64,9 +65,10 @@ public class IgnoreManager {
     }
 
     public void setIgnore(Player player, Player target, boolean ignore) {
-        UUID playerId = player.getUniqueId();
-        UUID targetId = target.getUniqueId();
+        setIgnore(player.getUniqueId(), target.getUniqueId(), ignore);
+    }
 
+    public void setIgnore(UUID playerId, UUID targetId, boolean ignore) {
         Set<UUID> ignored = ignoreMap.computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet());
 
         if (ignore) {

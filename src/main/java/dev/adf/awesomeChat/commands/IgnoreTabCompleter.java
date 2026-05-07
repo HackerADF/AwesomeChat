@@ -20,10 +20,6 @@ public class IgnoreTabCompleter implements TabCompleter {
         if (args.length == 1) {
             String partial = args[0].toLowerCase();
 
-            if ("list".startsWith(partial)) {
-                completions.add("list");
-            }
-
             for (Player online : Bukkit.getOnlinePlayers()) {
                 if (online.equals(player)) continue;
                 if (online.getName().toLowerCase().startsWith(partial)) {

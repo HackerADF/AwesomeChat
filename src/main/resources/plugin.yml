@@ -61,6 +61,12 @@ commands:
     aliases: [unblock]
     permission: awesomechat.ignore
     permission-message: "You don't have permission to use this command."
+  ignorelist:
+    description: View your list of ignored players
+    usage: /ignorelist
+    aliases: [ignored]
+    permission: awesomechat.ignore
+    permission-message: "You don't have permission to use this command."
   clearchat:
     description: Clear the chat for yourself or all players
     usage: /clearchat [self|all]
