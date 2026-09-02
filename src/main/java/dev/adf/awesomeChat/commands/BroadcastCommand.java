@@ -53,7 +53,7 @@ public class BroadcastCommand implements CommandExecutor {
             String formattedLine = line
                     .replace("%message%", rawMessage)
                     .replace("%player%", sender.getName());
-            formattedLine = ChatColor.translateAlternateColorCodes('&', formattedLine);
+            formattedLine = AwesomeChat.formatColors(formattedLine);
             Bukkit.broadcastMessage(formattedLine);
         }
 
