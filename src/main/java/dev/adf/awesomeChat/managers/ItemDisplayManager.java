@@ -6,9 +6,11 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -21,6 +23,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static dev.adf.awesomeChat.listeners.ChatListener.formatColors;
 import static dev.adf.awesomeChat.listeners.ChatListener.deserializeLegacy;
@@ -31,17 +34,99 @@ public class ItemDisplayManager {
     private final NamespacedKey displayTagKey;
     private final Map<UUID, InventorySnapshot> snapshots = new HashMap<>();
     private Pattern triggerPattern;
+    private Map<String, CustomTrigger> customTriggers = Collections.emptyMap();
 
     private static final String KEYWORDS = "item|hand|this|inventory|inv|enderchest|echest|ec";
+    private static final Set<String> RESERVED_KEYWORDS = Set.of(KEYWORDS.split("\\|"));
+    private static final Pattern VALID_TRIGGER_NAME = Pattern.compile("[A-Za-z0-9_-]+");
 
     public ItemDisplayManager(AwesomeChat plugin) {
         this.plugin = plugin;
         this.displayTagKey = new NamespacedKey(plugin, "display_item");
-        this.triggerPattern = buildTriggerPattern(plugin.getPluginConfig());
+        FileConfiguration config = plugin.getPluginConfig();
+        this.customTriggers = loadCustomTriggers(config);
+        this.triggerPattern = buildTriggerPattern(config);
     }
 
     public void reloadConfig() {
-        this.triggerPattern = buildTriggerPattern(plugin.getPluginConfig());
+        FileConfiguration config = plugin.getPluginConfig();
+        this.customTriggers = loadCustomTriggers(config);
+        this.triggerPattern = buildTriggerPattern(config);
+    }
+
+    /** A server-defined trigger that renders arbitrary text, usually PlaceholderAPI output. */
+    private static class CustomTrigger {
+        String text = "";
+        String hover = "";
+        String permission = "";
+        ClickEvent.Action clickAction;
+        String clickValue = "";
+    }
+
+    private Map<String, CustomTrigger> loadCustomTriggers(FileConfiguration config) {
+        ConfigurationSection section = config.getConfigurationSection("item-display.custom-triggers");
+        if (section == null) return Collections.emptyMap();
+
+        Map<String, CustomTrigger> loaded = new LinkedHashMap<>();
+        for (String key : section.getKeys(false)) {
+            String name = key.toLowerCase(Locale.ROOT);
+
+            if (!VALID_TRIGGER_NAME.matcher(name).matches()) {
+                plugin.getLogger().warning("Skipping custom trigger '" + key
+                        + "': names may only contain letters, numbers, _ and -.");
+                continue;
+            }
+            if (RESERVED_KEYWORDS.contains(name)) {
+                plugin.getLogger().warning("Skipping custom trigger '" + key
+                        + "': that name is reserved by a built-in trigger.");
+                continue;
+            }
+
+            CustomTrigger trigger = new CustomTrigger();
+            ConfigurationSection entry = section.getConfigurationSection(key);
+            if (entry == null) {
+                // Shorthand form: "name: <text>"
+                trigger.text = section.getString(key, "");
+            } else {
+                trigger.text = entry.getString("text", "");
+                trigger.hover = entry.getString("hover", "");
+                trigger.permission = entry.getString("permission", "");
+                String action = entry.getString("click.action", "");
+                if (!action.isEmpty()) {
+                    trigger.clickAction = parseClickAction(action);
+                    trigger.clickValue = entry.getString("click.value", "");
+                }
+            }
+
+            if (trigger.text.isEmpty()) {
+                plugin.getLogger().warning("Skipping custom trigger '" + key + "': no text configured.");
+                continue;
+            }
+            loaded.put(name, trigger);
+        }
+
+        if (!loaded.isEmpty()) {
+            plugin.getLogger().info("Loaded " + loaded.size() + " custom display trigger(s): "
+                    + String.join(", ", loaded.keySet()));
+        }
+        return loaded;
+    }
+
+    private ClickEvent.Action parseClickAction(String type) {
+        return switch (type.toLowerCase(Locale.ROOT)) {
+            case "execute", "run_command" -> ClickEvent.Action.RUN_COMMAND;
+            case "copy", "copy_to_clipboard" -> ClickEvent.Action.COPY_TO_CLIPBOARD;
+            case "open_url" -> ClickEvent.Action.OPEN_URL;
+            default -> ClickEvent.Action.SUGGEST_COMMAND;
+        };
+    }
+
+    /** Built-in and custom names in one alternation, longest first so prefixes don't win. */
+    private String buildKeywordAlternation() {
+        List<String> names = new ArrayList<>(Arrays.asList(KEYWORDS.split("\\|")));
+        names.addAll(customTriggers.keySet());
+        names.sort(Comparator.comparingInt(String::length).reversed());
+        return names.stream().map(Pattern::quote).collect(Collectors.joining("|"));
     }
 
     private Pattern buildTriggerPattern(FileConfiguration config) {
@@ -49,10 +134,11 @@ public class ItemDisplayManager {
         String suffix = config.getString("item-display.trigger-suffix", "]");
 
         String escapedPrefix = Pattern.quote(prefix);
+        String keywords = buildKeywordAlternation();
 
         if (suffix.isEmpty()) {
             return Pattern.compile(
-                    escapedPrefix + "(" + KEYWORDS + ")\\b",
+                    escapedPrefix + "(" + keywords + ")(?!\\w)",
                     Pattern.CASE_INSENSITIVE
             );
         }
@@ -61,7 +147,7 @@ public class ItemDisplayManager {
         String commandPart = "|/(?:(?!" + escapedSuffix + ").)+";
 
         return Pattern.compile(
-                escapedPrefix + "(" + KEYWORDS + commandPart + ")" + escapedSuffix,
+                escapedPrefix + "(" + keywords + commandPart + ")" + escapedSuffix,
                 Pattern.CASE_INSENSITIVE
         );
     }
@@ -163,7 +249,7 @@ public class ItemDisplayManager {
 
     private Component createTriggerComponent(Player player, String trigger, TextColor baseColor) {
         FileConfiguration config = plugin.getPluginConfig();
-        String lower = trigger.toLowerCase();
+        String lower = trigger.toLowerCase(Locale.ROOT);
 
         return switch (lower) {
             case "item", "hand", "this" -> {
@@ -198,6 +284,10 @@ public class ItemDisplayManager {
                                 buildSimpleFormatComponent(hoverText, "{player}", player.getName())));
             }
             default -> {
+                CustomTrigger custom = customTriggers.get(lower);
+                if (custom != null) {
+                    yield buildCustomTriggerComponent(player, custom, baseColor);
+                }
                 if (trigger.startsWith("/")) {
                     if (!player.hasPermission("awesomechat.display.command")) yield null;
                     String format = config.getString("item-display.formats.command", "&6[{command}]");
@@ -308,6 +398,36 @@ public class ItemDisplayManager {
         }
 
         return result.hoverEvent(item.asHoverEvent());
+    }
+
+    private Component buildCustomTriggerComponent(Player player, CustomTrigger trigger, TextColor baseColor) {
+        if (!trigger.permission.isEmpty() && !player.hasPermission(trigger.permission)) return null;
+
+        Component result = deserializeLegacy(formatColors(applyPlaceholders(player, trigger.text)));
+
+        // Inherit the surrounding chat color when the format sets none of its own
+        if (baseColor != null && result.color() == null) {
+            result = result.color(baseColor);
+        }
+
+        if (!trigger.hover.isEmpty()) {
+            result = result.hoverEvent(HoverEvent.showText(
+                    deserializeLegacy(formatColors(applyPlaceholders(player, trigger.hover)))));
+        }
+        if (trigger.clickAction != null && !trigger.clickValue.isEmpty()) {
+            result = result.clickEvent(ClickEvent.clickEvent(
+                    trigger.clickAction, applyPlaceholders(player, trigger.clickValue)));
+        }
+        return result;
+    }
+
+    /** Resolves {player} and any PlaceholderAPI placeholders against the sender. */
+    private String applyPlaceholders(Player player, String text) {
+        String result = text.replace("{player}", player.getName());
+        if (plugin.isPluginEnabled("PlaceholderAPI")) {
+            result = PlaceholderAPI.setPlaceholders(player, result);
+        }
+        return result;
     }
 
     private Component buildSimpleFormatComponent(String format, String... replacements) {
