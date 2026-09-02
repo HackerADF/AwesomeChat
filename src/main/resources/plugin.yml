@@ -188,6 +188,9 @@ permissions:
   awesomechat.display.command:
     description: Allows showing clickable commands in chat with [/command]
     default: true
+  awesomechat.display.custom.*:
+    description: Allows use of every custom item-display trigger (needs a permission plugin with wildcard support, e.g. LuckPerms)
+    default: op
   awesomechat.display.view:
     description: Allows clicking and viewing item displays (only if require-permission-to-view is enabled)
     default: true
