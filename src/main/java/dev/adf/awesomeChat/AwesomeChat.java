@@ -370,19 +370,36 @@ public final class AwesomeChat extends JavaPlugin {
         return org.bukkit.ChatColor.translateAlternateColorCodes('&', getConfig().getString(path, defaultValue));
     }
 
+    private static final Pattern SHORTHAND_HEX = Pattern.compile("&#([A-Fa-f0-9]{6})");
+    private static final Pattern LEGACY_HEX = Pattern.compile("(?i)&x(&[A-Fa-f0-9]){6}");
+
     public static String formatColors(String message) {
-        Pattern hexPattern = Pattern.compile("&#([A-Fa-f0-9]{6})");
-        Matcher matcher = hexPattern.matcher(message);
+        if (message == null) return "";
+
+        // &#RRGGBB
+        Matcher shorthand = SHORTHAND_HEX.matcher(message);
         StringBuffer buffer = new StringBuffer();
-
-        while (matcher.find()) {
-            String colorCode = matcher.group(1);
-            String replacement = ChatColor.of("#" + colorCode).toString();
-            matcher.appendReplacement(buffer, replacement);
+        while (shorthand.find()) {
+            shorthand.appendReplacement(buffer,
+                    Matcher.quoteReplacement(ChatColor.of("#" + shorthand.group(1)).toString()));
         }
-        matcher.appendTail(buffer);
+        shorthand.appendTail(buffer);
 
-        return ChatColor.translateAlternateColorCodes('&', buffer.toString());
+        // &x&R&R&G&G&B&B
+        Matcher legacyHex = LEGACY_HEX.matcher(buffer.toString());
+        StringBuffer out = new StringBuffer();
+        while (legacyHex.find()) {
+            String raw = legacyHex.group();
+            StringBuilder hex = new StringBuilder();
+            for (int i = 3; i < raw.length(); i += 2) {
+                hex.append(raw.charAt(i));
+            }
+            legacyHex.appendReplacement(out,
+                    Matcher.quoteReplacement(ChatColor.of("#" + hex).toString()));
+        }
+        legacyHex.appendTail(out);
+
+        return ChatColor.translateAlternateColorCodes('&', out.toString());
     }
 
     public static String convertToMiniMessageFormat(String message) {
