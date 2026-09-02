@@ -715,6 +715,7 @@ item-display:
   # Default: "[" and "]" → [item], [inv], [echest], [/command]
   # Example: "!" and "" → !item, !inv, !echest (commands disabled without suffix)
   # Supported keywords: item, hand, this, inventory, inv, enderchest, echest, ec
+  #                     plus anything defined under custom-triggers below
   trigger-prefix: "["
   trigger-suffix: "]"
   formats:
@@ -731,6 +732,28 @@ item-display:
     item: "{player}'s Item"
     inventory: "{player}'s Inventory"
     enderchest: "{player}'s Ender Chest"
+  # Custom triggers - define your own triggers that print whatever you want,
+  # typically PlaceholderAPI output. Used as <trigger-prefix><name><trigger-suffix>,
+  # so with the defaults below "ping" becomes [ping].
+  #
+  # Names may only contain letters, numbers, _ and -, and cannot reuse a built-in
+  # keyword (item, hand, this, inventory, inv, enderchest, echest, ec).
+  #
+  # {player} is the sender's name. PlaceholderAPI placeholders are resolved against
+  # the sender, so every viewer sees the same value.
+  #
+  # Shorthand form - text only:
+  #   ping: "&e[Ping: &a%player_ping%ms&e]"
+  #
+  # Full form - text plus optional hover, permission and click:
+  #   ping:
+  #     text: "&e[Ping: &a%player_ping%ms&e]"
+  #     hover: "&7{player}'s current latency"
+  #     permission: "awesomechat.display.custom.ping"  # omit or leave empty to allow everyone
+  #     click:
+  #       action: "run_command"  # run_command, suggest_command, copy_to_clipboard, open_url
+  #       value: "/ping {player}"
+  custom-triggers: {}
 
 
 # ================================================================
@@ -814,4 +837,4 @@ chat-formatting:
 disable-chat-signing: false
 
 # DO NOT TOUCH
-config-version: 18
+config-version: 21
