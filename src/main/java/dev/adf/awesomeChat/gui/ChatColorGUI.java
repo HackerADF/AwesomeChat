@@ -339,8 +339,6 @@ public class ChatColorGUI implements Listener {
             setGlass(inv, 48);
         }
 
-        setGlass(inv, 48);
-
         // Page indicator (slot 49)
         inv.setItem(49, createItem(Material.PAPER, "&7Page &f" + (page + 1) + "&7/&f" + totalPages,
                 List.of()));
