@@ -787,14 +787,35 @@ chat-logging:
 # Allow players to set a persistent chat color via a GUI.
 # Colors are saved per-player in data/chatcolors/{UUID}.json.
 #
+# Nothing in the GUI is granted by default - a player with only
+# awesomechat.command.chatcolor opens the picker and sees empty slots. Grant the
+# nodes below (wildcards need a permission plugin such as LuckPerms).
+#
 # Permissions:
-#   awesomechat.command.chatcolor   - Use /chatcolor (opens GUI)
-#   awesomechat.chatcolor.gradient  - Access gradient presets
-#   awesomechat.chatcolor.custom    - Create custom gradients
+#   awesomechat.command.chatcolor          - Use /chatcolor (opens the GUI)
+#   awesomechat.chatcolor.color.<name>     - One per solid color, e.g. .red
+#                                            Grant all 16: awesomechat.chatcolor.color.*
+#                                            Names: black, darkblue, darkgreen, darkaqua,
+#                                            darkred, darkpurple, gold, gray, darkgray,
+#                                            blue, green, aqua, red, lightpurple,
+#                                            yellow, white
+#   awesomechat.chatcolor.gradient.<name>  - One per gradient, e.g. .sunset
+#                                            Grant all: awesomechat.chatcolor.gradient.*
+#                                            Built in: sunset, ocean, royal, mint, sakura,
+#                                            ember, golden, teal, ice, fire, aurora,
+#                                            cottoncandy, forest
+#   awesomechat.chatcolor.custom           - Show the Custom Gradient button in the GUI
+#   awesomechat.chatcolor.admin            - /chatcolor create, delete and list
+#   awesomechat.styling.<style>            - Style toggles in the GUI: bold, italic,
+#                                            underline, strikethrough, obfuscated
+#
+# Note: awesomechat.chatcolor.gradient (no suffix) is NOT checked anywhere.
+# Use awesomechat.chatcolor.gradient.* instead.
 chatcolor:
   enabled: true
   # Admin-created custom gradients. Use /chatcolor create <name> <material> <color1> <color2> [color3] [color4]
-  # Each gradient requires permission: awesomechat.chatcolor.gradient.<name>
+  # Creating and deleting requires awesomechat.chatcolor.admin.
+  # Each gradient then requires permission: awesomechat.chatcolor.gradient.<name>
   custom-gradients: {}
 
 
