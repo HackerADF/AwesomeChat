@@ -293,3 +293,81 @@ permissions:
   awesomechat.chatcolor.gradient.forest:
     description: Allows using the Forest gradient
     default: op
+  awesomechat.chat.color:
+    description: Allows using color codes in your own chat messages
+    default: op
+  awesomechat.format.color:
+    description: Alias of awesomechat.chat.color
+    default: op
+  awesomechat.format.minimessage:
+    description: Allows using MiniMessage tags in chat, including gradient and rainbow
+    default: op
+  awesomechat.format.minimessage.advanced:
+    description: Allows using click, hover and insertion MiniMessage tags in chat
+    default: op
+  awesomechat.styling.bold:
+    description: Allows using bold (&l) in chat and the /chatcolor style toggle
+    default: op
+  awesomechat.styling.italic:
+    description: Allows using italic (&o) in chat and the /chatcolor style toggle
+    default: op
+  awesomechat.styling.underline:
+    description: Allows using underline (&n) in chat and the /chatcolor style toggle
+    default: op
+  awesomechat.styling.strikethrough:
+    description: Allows using strikethrough (&m) in chat and the /chatcolor style toggle
+    default: op
+  awesomechat.styling.obfuscated:
+    description: Allows using obfuscated (&k) in chat and the /chatcolor style toggle
+    default: op
+  awesomechat.styling.color.hex:
+    description: Allows using hex colors (&#RRGGBB or MiniMessage <#RRGGBB>) in chat
+    default: op
+  awesomechat.styling.color.0:
+    description: Allows using the &0 (Black) color code in chat
+    default: op
+  awesomechat.styling.color.1:
+    description: Allows using the &1 (Dark Blue) color code in chat
+    default: op
+  awesomechat.styling.color.2:
+    description: Allows using the &2 (Dark Green) color code in chat
+    default: op
+  awesomechat.styling.color.3:
+    description: Allows using the &3 (Dark Aqua) color code in chat
+    default: op
+  awesomechat.styling.color.4:
+    description: Allows using the &4 (Dark Red) color code in chat
+    default: op
+  awesomechat.styling.color.5:
+    description: Allows using the &5 (Dark Purple) color code in chat
+    default: op
+  awesomechat.styling.color.6:
+    description: Allows using the &6 (Gold) color code in chat
+    default: op
+  awesomechat.styling.color.7:
+    description: Allows using the &7 (Gray) color code in chat
+    default: op
+  awesomechat.styling.color.8:
+    description: Allows using the &8 (Dark Gray) color code in chat
+    default: op
+  awesomechat.styling.color.9:
+    description: Allows using the &9 (Blue) color code in chat
+    default: op
+  awesomechat.styling.color.a:
+    description: Allows using the &a (Green) color code in chat
+    default: op
+  awesomechat.styling.color.b:
+    description: Allows using the &b (Aqua) color code in chat
+    default: op
+  awesomechat.styling.color.c:
+    description: Allows using the &c (Red) color code in chat
+    default: op
+  awesomechat.styling.color.d:
+    description: Allows using the &d (Light Purple) color code in chat
+    default: op
+  awesomechat.styling.color.e:
+    description: Allows using the &e (Yellow) color code in chat
+    default: op
+  awesomechat.styling.color.f:
+    description: Allows using the &f (White) color code in chat
+    default: op
