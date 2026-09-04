@@ -368,6 +368,8 @@ channels:
 #            Private Messaging System (PM) Config                =
 # ================================================================
 private-messages:
+  # Turn this off to hand /msg, /tell, /pm and /reply back to another
+  # chat plugin such as Essentials. Needs a restart to fully release them.
   enabled: true
 
   # Allows users with the "awesomechat.socialspy" permission

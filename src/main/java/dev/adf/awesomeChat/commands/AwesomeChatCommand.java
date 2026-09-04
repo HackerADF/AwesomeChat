@@ -80,6 +80,9 @@ public class AwesomeChatCommand implements CommandExecutor {
             // Chat logs (db connection might have changed)
             plugin.reloadChatLogManager();
 
+            // Private messaging might have been toggled on or off
+            plugin.applyPrivateMessageCommands();
+
             sender.sendMessage(plugin.getChatPrefix() + ChatColor.GREEN + "AwesomeChat reloaded (config.yml + modules/).");
             return true;
         }

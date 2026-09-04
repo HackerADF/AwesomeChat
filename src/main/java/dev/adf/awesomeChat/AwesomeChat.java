@@ -7,11 +7,14 @@ import dev.adf.awesomeChat.listeners.JoinLeaveListener;
 import dev.adf.awesomeChat.managers.*;
 
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandMap;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginEnableEvent;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -45,6 +48,9 @@ public final class AwesomeChat extends JavaPlugin {
     private ChatLogManager chatLogManager;
     private ChatColorManager chatColorManager;
     private dev.adf.awesomeChat.gui.ChatColorGUI chatColorGUI;
+
+    // Kept around because the PM commands can leave the command map at runtime
+    private final Map<String, PluginCommand> messageCommands = new HashMap<>();
 
     private File filterFile;
     private FileConfiguration filterConfig;
@@ -209,13 +215,8 @@ public final class AwesomeChat extends JavaPlugin {
         getCommand("awesomechat").setExecutor(new AwesomeChatCommand(this));
         getCommand("awesomechat").setTabCompleter(new AwesomeChatTabCompleter());
         getCommand("broadcast").setExecutor(new BroadcastCommand(this));
-        getCommand("msg").setExecutor(new MessageCommand(this));
-        getCommand("message").setTabCompleter(new MessageTabCompleter());
-        getCommand("reply").setExecutor(new ReplyCommand(this));
-        getCommand("msgtoggle").setExecutor(new MsgToggleCommand(this));
-        getCommand("msgtoggle").setTabCompleter(new MsgToggleTabCompleter());
-        getCommand("socialspy").setExecutor(new SocialSpyCommand(this));
-        getCommand("socialspy").setTabCompleter(new SocialSpyTabCompleter());
+        cachePrivateMessageCommands();
+        applyPrivateMessageCommands();
         getCommand("channel").setExecutor(new ChannelCommand(this));
         getCommand("channel").setTabCompleter(new ChannelTabCompleter(this));
         getCommand("ignore").setExecutor(new IgnoreCommand(this));
@@ -246,6 +247,88 @@ public final class AwesomeChat extends JavaPlugin {
             chatLogManager.close();
         }
         getLogger().info("AwesomeChat has been disabled!");
+    }
+
+    private void cachePrivateMessageCommands() {
+        for (String name : List.of("msg", "reply", "msgtoggle", "socialspy")) {
+            PluginCommand command = getCommand(name);
+            if (command != null) {
+                messageCommands.put(name, command);
+            }
+        }
+    }
+
+    /**
+     * Registers or releases the private messaging commands based on the config.
+     * Releasing them hands /msg, /tell, /pm and /reply back to whatever other
+     * chat plugin wants them, which is the whole point of the enabled toggle.
+     */
+    public void applyPrivateMessageCommands() {
+        boolean pmEnabled = getPluginConfig().getBoolean("private-messages.enabled", true);
+        boolean spyEnabled = pmEnabled && getPluginConfig().getBoolean("private-messages.socialspy.enabled", true);
+
+        if (pmEnabled) {
+            PluginCommand msg = claimCommand("msg");
+            if (msg != null) {
+                msg.setExecutor(new MessageCommand(this));
+                msg.setTabCompleter(new MessageTabCompleter());
+            }
+
+            PluginCommand reply = claimCommand("reply");
+            if (reply != null) {
+                reply.setExecutor(new ReplyCommand(this));
+            }
+
+            PluginCommand msgToggle = claimCommand("msgtoggle");
+            if (msgToggle != null) {
+                msgToggle.setExecutor(new MsgToggleCommand(this));
+                msgToggle.setTabCompleter(new MsgToggleTabCompleter());
+            }
+        } else {
+            releaseCommand("msg");
+            releaseCommand("reply");
+            releaseCommand("msgtoggle");
+            getLogger().info("Private messages are disabled, leaving /msg, /reply and /msgtoggle to other plugins.");
+        }
+
+        if (spyEnabled) {
+            PluginCommand socialSpy = claimCommand("socialspy");
+            if (socialSpy != null) {
+                socialSpy.setExecutor(new SocialSpyCommand(this));
+                socialSpy.setTabCompleter(new SocialSpyTabCompleter());
+            }
+        } else {
+            releaseCommand("socialspy");
+        }
+
+        // Clients cache the command list, so push a fresh one after a reload
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.updateCommands();
+        }
+    }
+
+    private PluginCommand claimCommand(String name) {
+        PluginCommand command = messageCommands.get(name);
+        if (command == null) {
+            return null;
+        }
+
+        CommandMap commandMap = Bukkit.getServer().getCommandMap();
+        if (commandMap.getCommand(name) != command) {
+            commandMap.register(getDescription().getName().toLowerCase(), command);
+        }
+        return command;
+    }
+
+    private void releaseCommand(String name) {
+        PluginCommand command = messageCommands.get(name);
+        if (command == null) {
+            return;
+        }
+
+        CommandMap commandMap = Bukkit.getServer().getCommandMap();
+        commandMap.getKnownCommands().entrySet().removeIf(entry -> entry.getValue() == command);
+        command.unregister(commandMap);
     }
 
     private void registerPluginDependencyChecks() {
