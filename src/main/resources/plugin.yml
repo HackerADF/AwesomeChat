@@ -113,6 +113,15 @@ permissions:
   awesomechat.broadcast:
     description: Allows the player to broadcast messages in chat
     default: op
+  awesomechat.msg:
+    description: Allows use of /msg, /tell, /pm and /reply
+    default: true
+  awesomechat.msgtoggle:
+    description: Allows toggling your own incoming private messages on/off
+    default: true
+  awesomechat.socialspy:
+    description: Allows use of /socialspy to monitor private messages
+    default: op
   awesomechat.channel:
     description: Allows use of the /channel command
     default: true
@@ -137,6 +146,9 @@ permissions:
   awesomechat.clearchat:
     description: Allows use of /clearchat (self mode)
     default: op
+  awesomechat.clearchat.self:
+    description: Allows use of /clearselfchat
+    default: true
   awesomechat.clearchat.all:
     description: Allows clearing chat for all players
     default: op
