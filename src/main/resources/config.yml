@@ -860,4 +860,4 @@ chat-formatting:
 disable-chat-signing: false
 
 # DO NOT TOUCH
-config-version: 21
+config-version: 22

@@ -2,7 +2,6 @@ package dev.adf.awesomeChat.commands;
 
 import dev.adf.awesomeChat.AwesomeChat;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -21,16 +20,19 @@ public class MuteChatCommand implements CommandExecutor {
 
         String senderName = sender.getName();
         String muteMsg = plugin.getFormattedConfigString("mutechat.muted-message",
-                "&c&lChat has been muted by {player}.");
+                "{prefix}&c&lChat has been muted by {player}.");
         String unmuteMsg = plugin.getFormattedConfigString("mutechat.unmuted-message",
-                "&a&lChat has been unmuted by {player}.");
+                "{prefix}&a&lChat has been unmuted by {player}.");
 
-        String announcement = (nowMuted ? muteMsg : unmuteMsg).replace("{player}", senderName);
+        String announcement = (nowMuted ? muteMsg : unmuteMsg)
+                .replace("{sender}", senderName)
+                .replace("{player}", senderName)
+                .replace("{prefix}", plugin.getChatPrefix());
 
         if (plugin.getConfig().getBoolean("mutechat.announce", true)) {
-            Bukkit.broadcastMessage(plugin.getChatPrefix() + announcement);
+            Bukkit.broadcastMessage(announcement);
         } else {
-            sender.sendMessage(plugin.getChatPrefix() + announcement);
+            sender.sendMessage(announcement);
         }
 
         if (plugin.getConfig().getBoolean("mutechat.log", true)) {

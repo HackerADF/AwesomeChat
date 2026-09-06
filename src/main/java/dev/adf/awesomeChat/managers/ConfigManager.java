@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class ConfigManager {
 
-    private static final int CURRENT_VERSION = 21;
+    private static final int CURRENT_VERSION = 22;
 
     private final AwesomeChat plugin;
     private final File configFile;
@@ -69,6 +69,7 @@ public class ConfigManager {
         if (version < 19) migrateToV19(config);
         if (version < 20) migrateToV20(config);
         if (version < 21) migrateToV21(config);
+        if (version < 22) migrateToV22(config);
 
         config.set("config-version", CURRENT_VERSION);
 
@@ -240,8 +241,8 @@ public class ConfigManager {
         if (!config.contains("mutechat")) {
             config.set("mutechat.announce", true);
             config.set("mutechat.log", true);
-            config.set("mutechat.muted-message", "&c&lChat has been muted by {player}.");
-            config.set("mutechat.unmuted-message", "&a&lChat has been unmuted by {player}.");
+            config.set("mutechat.muted-message", "{prefix}&c&lChat has been muted by {player}.");
+            config.set("mutechat.unmuted-message", "{prefix}&a&lChat has been unmuted by {player}.");
             config.set("mutechat.player-message", "&cChat is currently muted.");
             plugin.getLogger().info("    Added mutechat section.");
         }
@@ -716,6 +717,24 @@ public class ConfigManager {
         if (config.getConfigurationSection("item-display.custom-triggers") == null) {
             config.createSection("item-display.custom-triggers");
             plugin.getLogger().info("    Added item-display.custom-triggers");
+        }
+    }
+
+    // =========================================================================
+    //  v21 -> v22: Mutechat messages carry their own {prefix} placeholder
+    // =========================================================================
+    private void migrateToV22(FileConfiguration config) {
+        plugin.getLogger().info("  Running v21 -> v22 migration...");
+
+        // /mutechat used to prepend the chat prefix itself, so existing messages
+        // have no {prefix} of their own. Add it so they keep their prefix now
+        // that the command renders the placeholder instead.
+        for (String path : new String[]{"mutechat.muted-message", "mutechat.unmuted-message"}) {
+            String message = config.getString(path);
+            if (message != null && !message.contains("{prefix}")) {
+                config.set(path, "{prefix}" + message);
+                plugin.getLogger().info("    Added {prefix} to " + path);
+            }
         }
     }
 

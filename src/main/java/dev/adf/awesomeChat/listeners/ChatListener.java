@@ -126,7 +126,9 @@ public class ChatListener implements Listener {
         }
 
         if (plugin.isChatMuted() && !player.hasPermission("awesomechat.mutechat.bypass")) {
-            String mutedMsg = plugin.getFormattedConfigString("mutechat.player-message", "&cChat is currently muted.");
+            String mutedMsg = plugin.getFormattedConfigString("mutechat.player-message", "&cChat is currently muted.")
+                    .replace("{player}", player.getName())
+                    .replace("{prefix}", plugin.getChatPrefix());
             player.sendMessage(mutedMsg);
             event.setCancelled(true);
             return;
