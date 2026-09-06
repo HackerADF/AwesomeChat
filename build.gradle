@@ -10,7 +10,7 @@ version = '1.0.9'
 // Default builds for 1.19-1.21.x (Java 21)
 def mc26 = project.hasProperty('mc') && project.property('mc').toString() == '26'
 def targetJavaVersion = mc26 ? 25 : 21
-def paperApiVersion = mc26 ? '26.1.2.build.5-alpha' : '1.21-R0.1-SNAPSHOT'
+def paperApiVersion = mc26 ? '26.2.build.82-beta' : '1.21-R0.1-SNAPSHOT'
 
 repositories {
     mavenCentral()

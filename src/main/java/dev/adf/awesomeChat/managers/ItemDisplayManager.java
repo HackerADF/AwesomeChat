@@ -59,7 +59,7 @@ public class ItemDisplayManager {
         String text = "";
         String hover = "";
         String permission = "";
-        ClickEvent.Action clickAction;
+        String clickAction = "";
         String clickValue = "";
     }
 
@@ -112,12 +112,29 @@ public class ItemDisplayManager {
         return loaded;
     }
 
-    private ClickEvent.Action parseClickAction(String type) {
+    private String parseClickAction(String type) {
         return switch (type.toLowerCase(Locale.ROOT)) {
-            case "execute", "run_command" -> ClickEvent.Action.RUN_COMMAND;
-            case "copy", "copy_to_clipboard" -> ClickEvent.Action.COPY_TO_CLIPBOARD;
-            case "open_url" -> ClickEvent.Action.OPEN_URL;
-            default -> ClickEvent.Action.SUGGEST_COMMAND;
+            case "execute", "run_command" -> "run_command";
+            case "copy", "copy_to_clipboard" -> "copy_to_clipboard";
+            case "open_url" -> "open_url";
+            default -> "suggest_command";
+        };
+    }
+
+    /**
+     * Attaches the configured click action to a component.
+     * <p>
+     * Goes through the single-argument factories rather than
+     * {@code ClickEvent.clickEvent(Action, value)}: that overload became generic over a
+     * payload type in Adventure 5 (Paper 26.x), so the two-argument form no longer compiles
+     * against both API generations from one source tree.
+     */
+    private static Component applyClickAction(Component component, String action, String value) {
+        return switch (action) {
+            case "run_command" -> component.clickEvent(ClickEvent.runCommand(value));
+            case "copy_to_clipboard" -> component.clickEvent(ClickEvent.copyToClipboard(value));
+            case "open_url" -> component.clickEvent(ClickEvent.openUrl(value));
+            default -> component.clickEvent(ClickEvent.suggestCommand(value));
         };
     }
 
@@ -414,9 +431,9 @@ public class ItemDisplayManager {
             result = result.hoverEvent(HoverEvent.showText(
                     deserializeLegacy(formatColors(applyPlaceholders(player, trigger.hover)))));
         }
-        if (trigger.clickAction != null && !trigger.clickValue.isEmpty()) {
-            result = result.clickEvent(ClickEvent.clickEvent(
-                    trigger.clickAction, applyPlaceholders(player, trigger.clickValue)));
+        if (!trigger.clickAction.isEmpty() && !trigger.clickValue.isEmpty()) {
+            result = applyClickAction(result, trigger.clickAction,
+                    applyPlaceholders(player, trigger.clickValue));
         }
         return result;
     }

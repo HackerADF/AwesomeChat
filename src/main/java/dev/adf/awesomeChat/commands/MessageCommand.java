@@ -256,17 +256,27 @@ public class MessageCommand implements CommandExecutor {
 
         // Add click action
         if (clickAction != null && !clickAction.isEmpty() && clickType != null) {
-            ClickEvent.Action action = switch (clickType.toLowerCase()) {
-                case "execute", "run_command" -> ClickEvent.Action.RUN_COMMAND;
-                case "suggest", "suggest_command" -> ClickEvent.Action.SUGGEST_COMMAND;
-                case "copy", "copy_to_clipboard" -> ClickEvent.Action.COPY_TO_CLIPBOARD;
-                case "open_url" -> ClickEvent.Action.OPEN_URL;
-                default -> ClickEvent.Action.SUGGEST_COMMAND;
-            };
-            comp = comp.clickEvent(ClickEvent.clickEvent(action, clickAction));
+            comp = applyClickAction(comp, clickType, clickAction);
         }
 
         return comp;
+    }
+
+    /**
+     * Attaches the configured click action to a component.
+     * <p>
+     * Goes through the single-argument factories rather than
+     * {@code ClickEvent.clickEvent(Action, value)}: that overload became generic over a
+     * payload type in Adventure 5 (Paper 26.x), so the two-argument form no longer compiles
+     * against both API generations from one source tree.
+     */
+    private static Component applyClickAction(Component component, String type, String value) {
+        return switch (type.toLowerCase()) {
+            case "execute", "run_command" -> component.clickEvent(ClickEvent.runCommand(value));
+            case "copy", "copy_to_clipboard" -> component.clickEvent(ClickEvent.copyToClipboard(value));
+            case "open_url" -> component.clickEvent(ClickEvent.openUrl(value));
+            default -> component.clickEvent(ClickEvent.suggestCommand(value));
+        };
     }
 
     /**
