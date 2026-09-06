@@ -3,7 +3,7 @@
 
 [SIZE=4]The all-in-one chat management plugin for Paper servers.[/SIZE]
 
-[IMG]https://img.shields.io/badge/Paper-1.19--1.21.11%2B-blue[/IMG] [IMG]https://img.shields.io/badge/Java-21%2B-orange?logo=openjdk&logoColor=white[/IMG]
+[IMG]https://img.shields.io/badge/Paper-1.19--1.21.11%2B%20%7C%2026.2-blue[/IMG] [IMG]https://img.shields.io/badge/Java-21%20%7C%2025-orange?logo=openjdk&logoColor=white[/IMG]
 
 [IMG]https://img.shields.io/github/stars/HackerADF/AwesomeChat?style=flat&logo=github[/IMG] [IMG]https://img.shields.io/github/issues/HackerADF/AwesomeChat?logo=github[/IMG] [IMG]https://img.shields.io/github/license/HackerADF/AwesomeChat[/IMG]
 [/CENTER]
@@ -100,6 +100,7 @@ Most servers need 3–5 separate plugins to handle chat formatting, filtering, p
 [SIZE=4][B][COLOR=#00BFFF]Item Display[/COLOR][/B][/SIZE]
 [LIST]
 [*][ICODE][item][/ICODE], [ICODE][inventory][/ICODE], [ICODE][enderchest][/ICODE], [ICODE][/command][/ICODE]
+[*][B]Custom triggers[/B] – Define your own [ICODE][name][/ICODE] triggers with PlaceholderAPI output
 [*]Hover tooltips & inventory snapshots
 [*]Read-only GUI with expiry
 [*]Permission-gated triggers
@@ -139,10 +140,58 @@ Most servers need 3–5 separate plugins to handle chat formatting, filtering, p
 [/LIST]
 
 
+[SIZE=5][B][COLOR=#FFD700]What's New in 1.0.10.1[/COLOR][/B][/SIZE]
+
+[SIZE=4][B][COLOR=#00BFFF]Custom Item-Display Triggers[/COLOR][/B][/SIZE]
+Define your own inline chat triggers under [ICODE]item-display.custom-triggers[/ICODE]. They print whatever you want — typically PlaceholderAPI output — and support optional hover text, a permission, and a click action.
+
+[CODE]
+item-display:
+  custom-triggers:
+    # Shorthand - text only
+    ping: "&e[Ping: &a%player_ping%ms&e]"
+
+    # Full form
+    discord:
+      text: "&9[Discord]"
+      hover: "&7Click to join our server"
+      permission: "awesomechat.display.custom.discord"
+      click:
+        action: "open_url"
+        value: "https://discord.gg/Z4gtF25jpC"
+[/CODE]
+
+[LIST]
+[*]Used in chat as [ICODE][name][/ICODE], following your configured trigger prefix / suffix
+[*][ICODE]{player}[/ICODE] and PlaceholderAPI placeholders resolve against the sender, so every viewer sees the same value
+[*]Click actions: [ICODE]run_command[/ICODE], [ICODE]suggest_command[/ICODE], [ICODE]copy_to_clipboard[/ICODE], [ICODE]open_url[/ICODE]
+[*]Optional per-trigger permission — grant them all with [ICODE]awesomechat.display.custom.*[/ICODE]
+[*]Names that reuse a built-in keyword or contain invalid characters are skipped with a console warning
+[/LIST]
+
+[SIZE=4][B][COLOR=#00BFFF]Minecraft 26.x[/COLOR][/B][/SIZE]
+[LIST]
+[*]The 26.x build now targets [B]Paper 26.2[/B] (previously 26.1)
+[*]Shipped as a separate [ICODE]-mc26[/ICODE] jar, built for Java 25
+[/LIST]
+
+[SIZE=4][B][COLOR=#00BFFF]Fixes[/COLOR][/B][/SIZE]
+[LIST]
+[*][B]Private messaging was operator-only.[/B] [ICODE]awesomechat.msg[/ICODE], [ICODE]awesomechat.msgtoggle[/ICODE], [ICODE]awesomechat.socialspy[/ICODE] and [ICODE]awesomechat.clearchat.self[/ICODE] were never declared, so Bukkit fell back to an OP-only default and normal players got "unknown command" for [ICODE]/msg[/ICODE], [ICODE]/tell[/ICODE] and [ICODE]/pm[/ICODE].
+[*][B][ICODE]private-messages.enabled[/ICODE] did nothing.[/B] The PM commands were registered unconditionally and kept taking priority over EssentialsX even with the feature switched off. That toggle — and [ICODE]private-messages.socialspy.enabled[/ICODE] — are now honoured, and [ICODE]/awesomechat reload[/ICODE] re-applies them.
+[*][B]Hex colors printed literally in broadcasts.[/B] [ICODE]&#RRGGBB[/ICODE] and [ICODE]&x&R&R&G&G&B&B[/ICODE] now render in [ICODE]/broadcast[/ICODE] and in auto-broadcasts.
+[*][B][ICODE]/chatcolor[/ICODE] could not page back.[/B] The gradient menu overwrote its own Previous button with glass on every page, stranding you past the first 21 gradients.
+[*][B][ICODE]/mutechat[/ICODE] leaked a raw placeholder.[/B] Its announcement rendered as [ICODE][AwesomeChat] {prefix}Chat has been muted by ...[/ICODE]; the configured message now owns its [ICODE]{prefix}[/ICODE] the same way [ICODE]/clearchat[/ICODE] does.
+[*][B]Permission nodes were invisible to admins.[/B] [ICODE]awesomechat.styling.*[/ICODE], [ICODE]awesomechat.format.*[/ICODE] and [ICODE]awesomechat.display.custom.*[/ICODE] are now declared, so permission plugins tab-complete them.
+[*][B]The shipped config claimed the wrong version[/B], so fresh installs re-ran migrations on their second startup.
+[*][B]Corrected the [ICODE]/chatcolor[/ICODE] permission comments[/B] in [ICODE]config.yml[/ICODE], which listed a node the plugin never checks and omitted the real per-color and per-gradient nodes.
+[/LIST]
+
+
 [SIZE=5][B][COLOR=#FFD700]Requirements[/COLOR][/B][/SIZE]
 [LIST]
-[*][B]Server:[/B] Paper 1.19 – 1.21.11+
-[*][B]Java:[/B] 21+
+[*][B]Server:[/B] Paper 1.19 – 1.21.11+ — [ICODE]AwesomeChat-<version>.jar[/ICODE], Java 21+
+[*][B]Server:[/B] Paper 26.2 — [ICODE]AwesomeChat-<version>-mc26.jar[/ICODE], Java 25
 [*][B]Required:[/B] [URL='https://luckperms.net']LuckPerms[/URL]
 [*][B]Optional:[/B] [URL='https://www.spigotmc.org/resources/placeholderapi.6245/']PlaceholderAPI[/URL]
 [/LIST]
@@ -159,6 +208,8 @@ Most servers need 3–5 separate plugins to handle chat formatting, filtering, p
 /socialspy (/sspy)
 /channel (/ch)
 /ignore (/block)
+/ignorelist
+/togglechatsounds
 /clearchat (/cc)
 /mutechat (/mc)
 /chatlogs (/cl)

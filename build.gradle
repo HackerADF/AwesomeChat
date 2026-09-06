@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'dev.adf'
-version = '1.0.9'
+version = '1.0.10.1'
 
 // Pass -Pmc=26 to build for Minecraft 26.x (Java 25)
 // Default builds for 1.19-1.21.x (Java 21)
